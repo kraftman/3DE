@@ -1,1 +1,1 @@
-fleshing out and idea for a 3 multi dimensional IDE
+fleshing out and idea for a multi dimensional IDE
