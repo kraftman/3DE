@@ -2,12 +2,10 @@ import React, { memo, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
 import { Box } from './Box';
 import { ItemTypes } from './ItemTypes.js';
-import * as monaco from 'monaco-editor';
 import { loader } from '@monaco-editor/react';
-
-loader.config({ monaco });
-
 import Editor from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
+loader.config({ monaco });
 
 function getStyles(left, top, isDragging) {
   const transform = `translate3d(${left}px, ${top}px, 0)`;
@@ -15,6 +13,11 @@ function getStyles(left, top, isDragging) {
     position: 'absolute',
     transform,
     WebkitTransform: transform,
+    padding: '10px',
+    backgroundColor: '#1E1E1E',
+    color: '#E0E0E0',
+    borderRadius: '10px',
+    border: '1px solid #2A2A2A',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
   };
@@ -46,11 +49,13 @@ export const DraggableBox = memo(function DraggableBox(props) {
       />
 
       {/* Non-draggable content */}
-      <div style={{ padding: '10px' }}>
+      <div>
         <Editor
-          height="90vh"
+          height="40vh"
+          width="40vw"
           defaultLanguage="javascript"
           defaultValue="// some comment"
+          theme="vs-dark" // Assuming you are using Monaco Editor
         />
       </div>
     </div>

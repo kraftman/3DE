@@ -25,9 +25,5 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx'],
   },
-  plugins: [
-    new MonacoWebpackPlugin({
-      languages: ['json'],
-    }),
-  ],
+  plugins: [new MonacoWebpackPlugin()],
 };

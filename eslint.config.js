@@ -1,8 +1,8 @@
-const standard = require('eslint-config-standard');
-
 module.exports = [
-  standard,
   {
-    // your overrides here
+    rules: {
+      semi: 'error',
+      'prefer-const': 'error',
+    },
   },
 ];
