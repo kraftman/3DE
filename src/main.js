@@ -1,5 +1,10 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+const { exec } = require('child_process');
+const util = require('util');
+const runTest = require('./run-tests');
+
+const execPromise = util.promisify(exec);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -27,6 +32,10 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  ipcMain.on('run-node-process', async (event, arg) => {
+    console.log(`Received data from renderer: ${arg}`);
+    runTest(arg.code, arg.test);
+  });
   createWindow();
 
   // On OS X it's common to re-create a window in the app when the

@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { DraggableBox } from './DraggableBox';
 import { ItemTypes } from './ItemTypes.js';
+import { Button, Box, TextField } from '@mui/material';
 
 const styles = {
   width: 800,
@@ -9,7 +10,29 @@ const styles = {
   border: '1px solid black',
   position: 'relative',
 };
+
+const tempCommand = {
+  code: 'module.exports = () => {return 5}',
+  test: `
+    import { expect, test } from 'vitest'
+    import code from './code'
+    
+    test('runs code', () => {
+      expect(code()).toBe(5)
+    })
+  `,
+};
+
 export const Container = ({}) => {
+  const handleCommandChange = (event) => {
+    setCommand(event.target.value);
+  };
+
+  const handleRunCommand = () => {
+    window.electronAPI.sendToMain('run-node-process', tempCommand);
+  };
+
+  const [command, setCommand] = useState('');
   const [boxes, setBoxes] = useState({
     a: { top: 20, left: 80, title: 'Drag me around' },
     b: { top: 180, left: 20, title: 'Drag me too' },
@@ -42,10 +65,24 @@ export const Container = ({}) => {
     [moveBox]
   );
   return (
-    <div ref={drop} style={styles}>
-      {Object.keys(boxes).map((key) => (
-        <DraggableBox key={key} id={key} {...boxes[key]} />
-      ))}
-    </div>
+    <>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <TextField
+          label="Enter a command"
+          variant="outlined"
+          value={command}
+          onChange={handleCommandChange}
+          sx={{ mr: 2 }}
+        />
+        <Button variant="contained" onClick={handleRunCommand}>
+          Run Command
+        </Button>
+      </Box>
+      <div ref={drop} style={styles}>
+        {Object.keys(boxes).map((key) => (
+          <DraggableBox key={key} id={key} {...boxes[key]} />
+        ))}
+      </div>
+    </>
   );
 };
