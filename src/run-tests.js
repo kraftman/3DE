@@ -27,21 +27,42 @@ const runTest = async (code, test) => {
 
     // Run Vitest with the temp files
     console.log(`Running test: ${testFile}`);
-    const { stdout, stderr } = await execAsync(`vitest run`);
+    const { stdout, stderr } =
+      await execAsync(`vitest run --reporter=json --outputFile=report.json
+    `);
 
     if (stderr) {
+      console.log('==== errorin run tests', stderr);
       throw new Error(stderr);
     }
     console.log('==== result', stdout);
 
-    return stdout;
-  } catch (error) {
-    throw error;
+    return { success: 'true', result: stdout };
+  } catch (e) {
+    const data = await fs.readFile('./report.json', 'utf8');
+    console.log(data);
+
+    const report = JSON.parse(data);
+
+    // Traverse the report to extract failure messages, rows, and columns
+    report.testResults.forEach((testResult) => {
+      testResult.assertionResults.forEach((assertion) => {
+        if (assertion.status === 'failed') {
+          const { failureMessages, location } = assertion;
+          return {
+            success: false,
+            result: {
+              messages: failureMessages,
+              location,
+            },
+          };
+        }
+      });
+    });
   } finally {
     // Clean up temp files
-    // await fs.unlink(codeFile);
-    // await fs.unlink(testFile);
-    // await fs.rmdir(tempDir);
+    await fs.unlink(codeFile);
+    await fs.unlink(testFile);
   }
 };
 

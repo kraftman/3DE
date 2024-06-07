@@ -34,9 +34,54 @@ export const Container = ({}) => {
 
   const [command, setCommand] = useState('');
   const [boxes, setBoxes] = useState({
-    a: { top: 20, left: 80, title: 'Drag me around' },
-    b: { top: 180, left: 20, title: 'Drag me too' },
+    a: { top: 20, left: 80, value: 'Drag me around', type: 'code' },
+    b: {
+      top: 180,
+      left: 20,
+      value: 'module.exports = () => {return 5}',
+      type: 'code',
+      tests: 'c',
+    },
+    c: {
+      top: 180,
+      left: 250,
+      value: `
+      import { expect, test } from 'vitest'
+      import code from './code'
+      
+      test('runs code', () => {
+        expect(code()).toBe(5)
+      })
+    `,
+      type: 'test',
+      parent: 'b',
+      hidden: false,
+    },
   });
+
+  const showTest = (id) => {
+    const thisBox = boxes[id];
+    const testBoxId = thisBox.tests;
+    const hidden = boxes[testBoxId].hidden;
+    setBoxes((boxes) => ({
+      ...boxes,
+      [testBoxId]: {
+        ...boxes[testBoxId],
+        hidden: !hidden,
+      },
+    }));
+  };
+
+  const onTextChange = (id, value) => {
+    setBoxes((boxes) => ({
+      ...boxes,
+      [id]: {
+        ...boxes[id],
+        value,
+      },
+    }));
+  };
+
   const moveBox = useCallback(
     (id, left, top) => {
       setBoxes((boxes) => ({
@@ -50,6 +95,43 @@ export const Container = ({}) => {
     },
     [boxes]
   );
+
+  const onTest = (id) => {
+    console.log('==== id', id);
+    const thisBox = boxes[id];
+    const parentBox = boxes[thisBox.parent];
+    window.electronAPI.sendToMain('run-node-process', {
+      id: id,
+      test: thisBox.value,
+      code: parentBox.value,
+    });
+  };
+
+  window.electronAPI.receiveFromMain('process-response', (response) => {
+    console.log('==== response', response);
+
+    const id = response.id;
+    const testBox = boxes[id];
+    console.log('==== set passing to ', response.status === 'success');
+    const newBox = {
+      ...boxes[id],
+      passing: response.status === 'success',
+    };
+    setBoxes((boxes) => ({
+      ...boxes,
+      [id]: newBox,
+    }));
+    //do the same for parent box
+    const newParentBox = {
+      ...boxes[testBox.parent],
+      passing: response.status === 'success',
+    };
+    setBoxes((boxes) => ({
+      ...boxes,
+      [testBox.parent]: newParentBox,
+    }));
+  });
+
   const [, drop] = useDrop(
     () => ({
       accept: ItemTypes.BOX,
@@ -79,9 +161,22 @@ export const Container = ({}) => {
         </Button>
       </Box>
       <div ref={drop} style={styles}>
-        {Object.keys(boxes).map((key) => (
-          <DraggableBox key={key} id={key} {...boxes[key]} />
-        ))}
+        {Object.keys(boxes).map(
+          (key) =>
+            (!boxes[key].hidden && (
+              <DraggableBox
+                key={key}
+                id={key}
+                {...boxes[key]}
+                type={boxes[key].type}
+                onShowTest={showTest}
+                passing={boxes[key].passing}
+                onTextChange={onTextChange}
+                onTest={onTest}
+              />
+            )) ||
+            null
+        )}
       </div>
     </>
   );

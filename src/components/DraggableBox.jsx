@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { Box } from './Box';
 import { ItemTypes } from './ItemTypes.js';
@@ -44,7 +44,7 @@ const getExports = (code) => {
   return exports;
 };
 
-function getStyles(left, top, isDragging) {
+function getStyles(left, top, isDragging, passing) {
   const transform = `translate3d(${left}px, ${top}px, 0)`;
   return {
     position: 'absolute',
@@ -59,46 +59,62 @@ function getStyles(left, top, isDragging) {
     // because IE will ignore our custom "empty image" drag preview.
   };
 }
+
 export const DraggableBox = memo(function DraggableBox(props) {
-  const { id, title, left, top } = props;
+  const {
+    id,
+    value,
+    left,
+    top,
+    onShowTest,
+    onTextChange,
+    onTest,
+    type,
+    passing,
+  } = props;
+  const editorRef = useRef(null);
   const [{ isDragging }, drag, preview] = useDrag(
     () => ({
       type: ItemTypes.BOX,
-      item: { id, left, top, title },
+      item: { id, left, top },
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
       }),
     }),
-    [id, left, top, title]
+    [id, left, top]
   );
 
   const [details, setDetails] = useState('');
 
-  const checkDetails = (value) => {
-    try {
-      const exports = getExports(value);
-      console.log('exports:', exports);
-      const details = `Exports: ${exports.join(', ')}`;
-      setDetails(details);
-    } catch (e) {}
+  const onChange = (value) => {
+    // try {
+    //   const exports = getExports(value);
+    //   console.log('exports:', exports);
+    //   const details = `Exports: ${exports.join(', ')}`;
+    //   setDetails(details);
+    // } catch (e) {}
+    onTextChange(id, value);
   };
 
   const [showDetails, setShowDetails] = useState(false);
 
   const changeDetails = () => {
     setShowDetails(!showDetails);
+
     console.log('showDetails:', showDetails);
   };
 
   const changeTests = () => {
     setShowTests(!showTests);
+    console.log('==== showing test for parent', id);
+    onShowTest(id);
     console.log('showTests:', showTests);
   };
 
   const [showTests, setShowTests] = useState(false);
 
   return (
-    <div style={getStyles(left, top, isDragging)} role="DraggableBox">
+    <div style={getStyles(left, top, isDragging, passing)} role="DraggableBox">
       {/* Draggable handle */}
       <div
         ref={drag}
@@ -106,7 +122,7 @@ export const DraggableBox = memo(function DraggableBox(props) {
           width: '100%',
           height: '10px',
           cursor: 'move',
-          backgroundColor: 'gray',
+          backgroundColor: passing ? '#004d00' : '#4d0000',
         }}
       />
       <Button
@@ -117,24 +133,34 @@ export const DraggableBox = memo(function DraggableBox(props) {
         Details
       </Button>
 
-      <Button
-        variant={showTests ? 'contained' : 'outlined'}
-        color="primary"
-        onClick={changeTests}
-      >
-        Tests
-      </Button>
+      {(type === 'test' && (
+        <Button
+          variant={showTests ? 'contained' : 'outlined'}
+          color="primary"
+          onClick={() => onTest(id)}
+        >
+          Run test
+        </Button>
+      )) || (
+        <Button
+          variant={showTests ? 'contained' : 'outlined'}
+          color="primary"
+          onClick={changeTests}
+        >
+          Tests
+        </Button>
+      )}
 
       {/* Non-draggable content */}
       <div>
         {!showDetails ? (
           <Editor
-            onChange={checkDetails}
+            onChange={onChange}
             height="500px"
             width="400px"
             defaultLanguage="javascript"
             automaticLayout="true"
-            defaultValue="// some comment"
+            value={value}
             theme="vs-dark" // Assuming you are using Monaco Editor
           />
         ) : null}

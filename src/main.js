@@ -34,7 +34,21 @@ const createWindow = () => {
 app.whenReady().then(() => {
   ipcMain.on('run-node-process', async (event, arg) => {
     console.log(`Received data from renderer: ${arg}`);
-    runTest(arg.code, arg.test);
+    try {
+      const res = await runTest(arg.code, arg.test);
+      event.reply('process-response', {
+        id: arg.id,
+        status: 'success',
+        detail: res,
+      });
+    } catch (e) {
+      console.log('==== error in main ', e);
+      event.reply('process-response', {
+        id: arg.id,
+        status: 'error',
+        detail: e.message,
+      });
+    }
   });
   createWindow();
 
