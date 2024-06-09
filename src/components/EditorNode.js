@@ -15,6 +15,27 @@ loader.config({ monaco });
 
 const handleStyle = { left: 10 };
 
+const getImports = (code) => {
+  try {
+    const ast = parse(code, { sourceType: 'module', locations: true });
+    const imports = [];
+    estraverse.traverse(ast, {
+      enter: (node) => {
+        if (node.type === 'ImportDeclaration') {
+          console.log('ImportDeclaration', node);
+          const values = { line: node.loc.start.line, name: node.source.value };
+          console.log('values', values);
+          imports.push(values);
+        }
+      },
+    });
+    return imports;
+  } catch (e) {
+    console.log('bad syntax', e);
+    return [];
+  }
+};
+
 const getExports = (code) => {
   try {
     const ast = parse(code, { sourceType: 'module', locations: true });
@@ -59,7 +80,8 @@ export const EditorNode = ({ id, data, onTextChange }) => {
     onTextChange(data.id, value);
     addDecorators();
     const exports = getExports(value);
-    console.log('exports', exports);
+    const imports = getImports(value);
+    //console.log('exports', exports);
     const handles = exports.map((exp) => (
       <Handle
         key={exp.name}
@@ -72,7 +94,21 @@ export const EditorNode = ({ id, data, onTextChange }) => {
         }}
       />
     ));
-    setHandles(handles);
+    const importHandles = imports.map((imp) => (
+      <Handle
+        key={imp.name}
+        type="target"
+        position={Position.Top}
+        id={imp.name}
+        style={{
+          left: 330,
+          top: -5 + 16 * imp.line,
+        }}
+      />
+    ));
+
+    console.log('handles', handles.concat(importHandles));
+    setHandles(handles.concat(importHandles));
     updateNodeInternals(id);
   };
 
@@ -124,7 +160,6 @@ export const EditorNode = ({ id, data, onTextChange }) => {
     <>
       {handles}
       <div className="text-updater-node">
-        <Handle type="source" position={Position.Right} />
         <NodeToolbar
           className="node-toolbar"
           isVisible={true}
