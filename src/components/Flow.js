@@ -37,7 +37,7 @@ export const Flow = () => {
   );
 
   function onTextChange(id, value) {
-    console.log('=== onTextChange', id, value);
+    //console.log('=== onTextChange', id, value);
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === id) {
@@ -54,8 +54,6 @@ export const Flow = () => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === '1') {
-          // it's important that you create a new object here
-          // in order to notify react flow about the change
           node.data = {
             ...node.data,
             label: nodeName,
@@ -71,8 +69,6 @@ export const Flow = () => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === '1') {
-          // it's important that you create a new object here
-          // in order to notify react flow about the change
           node.style = { ...node.style, backgroundColor: nodeBg };
         }
 
