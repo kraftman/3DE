@@ -19,7 +19,7 @@ export const myfunction = () => {
   return 'hello world';
 }
 
-export const myfunction = () => {
+export const myfunction2 = () => {
   return 'hello world';
 }
 

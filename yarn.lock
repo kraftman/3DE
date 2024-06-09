@@ -1375,6 +1375,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/standalone@npm:^7.24.7":
+  version: 7.24.7
+  resolution: "@babel/standalone@npm:7.24.7"
+  checksum: 10c0/65be53c4145b5254b4a6182ffe4fec64b41eebaaee35b1062a89ef3060b26cc2d3b496b32182d57b3f6ade1a977cf9f7ddb682b0cbec70930c792f5c8a33f058
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.24.7":
   version: 7.24.7
   resolution: "@babel/template@npm:7.24.7"
@@ -9148,8 +9155,11 @@ __metadata:
   resolution: "my-new-app@workspace:."
   dependencies:
     "@babel/core": "npm:^7.24.7"
+    "@babel/parser": "npm:^7.24.7"
     "@babel/preset-env": "npm:^7.24.7"
     "@babel/preset-react": "npm:^7.24.7"
+    "@babel/standalone": "npm:^7.24.7"
+    "@babel/traverse": "npm:^7.24.7"
     "@electron-forge/cli": "npm:^7.4.0"
     "@electron-forge/maker-deb": "npm:^7.4.0"
     "@electron-forge/maker-rpm": "npm:^7.4.0"

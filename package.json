@@ -54,6 +54,9 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@babel/parser": "^7.24.7",
+    "@babel/standalone": "^7.24.7",
+    "@babel/traverse": "^7.24.7",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@fontsource/roboto": "^5.0.13",

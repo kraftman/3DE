@@ -1,20 +1,79 @@
 import React from 'react';
 import { useCallback, useRef, useState } from 'react';
-import { Handle, Position, NodeToolbar } from 'reactflow';
+import {
+  Handle,
+  Position,
+  NodeToolbar,
+  useUpdateNodeInternals,
+} from 'reactflow';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+import { parse } from 'acorn';
+import estraverse from 'estraverse';
 loader.config({ monaco });
 
 const handleStyle = { left: 10 };
 
-export const EditorNode = ({ data, onTextChange }) => {
+const getExports = (code) => {
+  try {
+    const ast = parse(code, { sourceType: 'module', locations: true });
+    const exports = [];
+    estraverse.traverse(ast, {
+      enter: (node) => {
+        if (node.type === 'ExportNamedDeclaration') {
+          //console.log('ExportNamedDeclaration', node);
+          const identifier = node.declaration.declarations.find(
+            (d) => d.id.type === 'Identifier'
+          );
+          //console.log('identifier', identifier);
+          const name = identifier.id.name;
+          const line = node.loc.start.line;
+          exports.push({ name, line });
+        } else if (node.type === 'ExportDefaultDeclaration') {
+          if (node.declaration.type === 'Identifier') {
+            exports.push({
+              name: node.declaration.name,
+              line: node.loc.start.line,
+            });
+          } else {
+            exports.push({ name: 'default', line: node.loc.start.line });
+          }
+        }
+      },
+    });
+    return exports;
+  } catch (e) {
+    console.log('bad syntax', e);
+    return [];
+  }
+};
+
+export const EditorNode = ({ id, data, onTextChange }) => {
   const editorRef = useRef(null);
   const [decorations, setDecorations] = useState([]);
+  const [handles, setHandles] = useState([]);
+  const updateNodeInternals = useUpdateNodeInternals();
 
   const onChange = (value) => {
     onTextChange(data.id, value);
     addDecorators();
+    const exports = getExports(value);
+    console.log('exports', exports);
+    const handles = exports.map((exp) => (
+      <Handle
+        key={exp.name}
+        type="source"
+        position={Position.Top}
+        id={exp.name}
+        style={{
+          left: -5,
+          top: -5 + 16 * exp.line,
+        }}
+      />
+    ));
+    setHandles(handles);
+    updateNodeInternals(id);
   };
 
   const addDecorators = () => {
@@ -63,8 +122,9 @@ export const EditorNode = ({ data, onTextChange }) => {
 
   return (
     <>
-      <Handle type="target" position={Position.Top} />
+      {handles}
       <div className="text-updater-node">
+        <Handle type="source" position={Position.Right} />
         <NodeToolbar
           className="node-toolbar"
           isVisible={true}
@@ -95,7 +155,6 @@ export const EditorNode = ({ data, onTextChange }) => {
           }}
         />
       </div>
-      <Handle type="source" position={Position.Bottom} id="a" />
     </>
   );
 };
