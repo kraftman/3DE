@@ -47,6 +47,12 @@ export const Flow = () => {
       type: 'editor',
       position: { x: 100, y: 100 },
     },
+    // {
+    //   id: '1',
+    //   data: { id: '1', label: '-', value: 'test string' },
+    //   type: 'preview',
+    //   position: { x: 100, y: 100 },
+    // },
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -57,7 +63,6 @@ export const Flow = () => {
   const { screenToFlowPosition } = useReactFlow();
 
   const onChangeHandles = (nodeId, handles) => {
-    console.log('=== handles', handles);
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === nodeId) {
@@ -76,6 +81,7 @@ export const Flow = () => {
         if (node.id === nodeId) {
           node.data = { ...node.data, fileName };
         }
+
         return node;
       })
     );
@@ -137,65 +143,57 @@ export const Flow = () => {
     (event) => {
       const targetIsPane = event.target.classList.contains('react-flow__pane');
 
-      if (!targetIsPane) {
-        return;
-      }
-      const fromNode = nodes.find(
-        (node) => node.id === connectingNodeId.current
-      );
-      const fileName = fromNode.data.fileName;
-      const fromHandle = fromNode.data.handles.find(
-        (handle) => handle.id === connectingHandleId.current
-      );
+      if (targetIsPane) {
+        // we need to remove the wrapper bounds, in order to get the correct position
+        const fromNode = nodes.find(
+          (node) => node.id === connectingNodeId.current
+        );
+        const fileName = fromNode.data.fileName;
+        console.log('=== all nodes', nodes);
+        console.log('===== fromNode.data.handles', fromNode.data.handles);
+        const fromHandle = fromNode.data.handles.find(
+          (handle) => handle.key === connectingHandleId.current
+        );
+        console.log('==== fromHandle', fromHandle);
+        const content = `import ${fromHandle.name} from '${fileName}';`;
 
-      const content = `import ${fromHandle.name} from '${fileName}';`;
+        const id = (nodes.length + 1).toString();
 
-      const newNodeId = (nodes.length + 1).toString();
-
-      const handles = [
-        {
-          id: 'import-' + fromHandle.name,
-          type: 'source',
-          position: Position.Right,
-          name: fromHandle.name,
-          style: {
-            left: 330,
-            top: -5 + 16 * 1,
+        const handles = [
+          {
+            key: id,
+            type: 'target',
+            position: Position.Right,
+            id,
+            style: {
+              left: 330,
+              top: -5 + 16 * 1,
+            },
           },
-        },
-      ];
+        ];
+        const newNode = {
+          id,
+          position: screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          }),
 
-      console.log('==== new handle', handles);
-      // const newNode = {
-      //   newNodeId,
-      //   position: screenToFlowPosition({
-      //     x: event.clientX,
-      //     y: event.clientY,
-      //   }),
+          data: { id, label: '-', value: content, handles },
+          type: 'editor',
+          origin: [0.5, 0.0],
+        };
 
-      //   data: { newNodeId, label: '-', value: content, handles },
-      //   type: 'editor',
-      //   origin: [0.5, 0.0],
-      // };
-
-      const newNode = {
-        newNodeId,
-        position: screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        }),
-        data: { label: `Node ${newNodeId}` },
-        origin: [0.5, 0.0],
-      };
-
-      setNodes((nds) => nds.concat(newNode));
-      setEdges((eds) =>
-        eds.concat({
-          id: newNodeId,
-          source: connectingNodeId.current,
-          target: newNodeId,
-        })
-      );
+        setNodes((nds) => nds.concat(newNode));
+        setEdges((eds) =>
+          eds.concat({
+            id: 'edge' + id,
+            source: connectingNodeId.current,
+            target: id,
+            sourceHandle: connectingHandleId.current,
+            targetHandle: id,
+          })
+        );
+      }
     },
     [screenToFlowPosition, nodes]
   );
@@ -214,7 +212,6 @@ export const Flow = () => {
         attributionPosition="bottom-left"
         onConnectEnd={onConnectEnd}
         onConnectStart={onConnectStart}
-        connectionMode="loose"
       >
         <div className="updatenode__controls">
           <button onClick={createNode}> ➕ Add Node</button>
