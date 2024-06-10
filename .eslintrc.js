@@ -11,6 +11,8 @@ module.exports = {
     node: true,
   },
   plugins: ['@typescript-eslint'],
-  rules: {},
+  rules: {
+    'int@typescript-eslint/no-unused-vars': 0,
+  },
   overrides: [],
 };

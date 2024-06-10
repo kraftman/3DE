@@ -10,8 +10,10 @@ import ReactFlow, {
   useEdgesState,
   MiniMap,
   Controls,
+  Position,
   Background,
   useReactFlow,
+  useUpdateNodeInternals,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { EditorNode } from './EditorNode';
@@ -37,30 +39,58 @@ export const Flow = () => {
   const initialNodes = [
     {
       id: '1',
-      data: { id: '1', label: '-', value: tempInput },
+      data: {
+        fileName: 'MyComponent.js',
+        value: tempInput,
+        handles: [],
+      },
       type: 'editor',
       position: { x: 100, y: 100 },
     },
-    // {
-    //   id: '1',
-    //   data: { id: '1', label: '-', value: 'test string' },
-    //   type: 'preview',
-    //   position: { x: 100, y: 100 },
-    // },
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  const [nodeName, setNodeName] = useState('Node 1');
-  const [nodeBg, setNodeBg] = useState('#eee');
-  const [nodeHidden, setNodeHidden] = useState(false);
+  const updateNodeInternals = useUpdateNodeInternals();
   const connectingNodeId = useRef(null);
-  const reactFlowWrapper = useRef(null);
+  const connectingHandleId = useRef(null);
   const { screenToFlowPosition } = useReactFlow();
+
+  const onChangeHandles = (nodeId, handles) => {
+    console.log('=== handles', handles);
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === nodeId) {
+          node.data = { ...node.data, handles };
+        }
+
+        return node;
+      })
+    );
+    updateNodeInternals(nodeId);
+  };
+
+  const onFileNameChange = (nodeId, fileName) => {
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === nodeId) {
+          node.data = { ...node.data, fileName };
+        }
+        return node;
+      })
+    );
+  };
 
   const nodeTypes = useMemo(
     () => ({
-      editor: (props) => <EditorNode onTextChange={onTextChange} {...props} />,
+      editor: (props) => (
+        <EditorNode
+          onTextChange={onTextChange}
+          onChangeHandles={onChangeHandles}
+          onFileNameChange={onFileNameChange}
+          {...props}
+        />
+      ),
       preview: PreviewNode,
     }),
     []
@@ -80,59 +110,14 @@ export const Flow = () => {
   }
   const nodeClassName = (node) => node.type;
 
-  useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === '1') {
-          node.data = {
-            ...node.data,
-            label: nodeName,
-          };
-        }
-
-        return node;
-      })
-    );
-  }, [nodeName, setNodes]);
-
-  useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === '1') {
-          node.style = { ...node.style, backgroundColor: nodeBg };
-        }
-
-        return node;
-      })
-    );
-  }, [nodeBg, setNodes]);
-
-  useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === '1') {
-          // when you update a simple type you can just update the value
-          node.hidden = nodeHidden;
-        }
-
-        return node;
-      })
-    );
-    setEdges((eds) =>
-      eds.map((edge) => {
-        if (edge.id === 'e1-2') {
-          edge.hidden = nodeHidden;
-        }
-
-        return edge;
-      })
-    );
-  }, [nodeHidden, setNodes, setEdges]);
-
   const createNode = () => {
     const newNode = {
       id: (nodes.length + 1).toString(),
-      data: { label: 'Node ' + (nodes.length + 1), value: 'test string' },
+      data: {
+        label: 'Node ' + (nodes.length + 1),
+        value: 'test string',
+        handles: [],
+      },
       type: 'editor',
       position: {
         x: Math.random() * window.innerWidth - 200,
@@ -146,34 +131,73 @@ export const Flow = () => {
   const onConnectStart = useCallback((_, { nodeId, handleId }) => {
     console.log('===== handleId', handleId);
     connectingNodeId.current = nodeId;
+    connectingHandleId.current = handleId;
   }, []);
   const onConnectEnd = useCallback(
     (event) => {
       const targetIsPane = event.target.classList.contains('react-flow__pane');
 
-      if (targetIsPane) {
-        // we need to remove the wrapper bounds, in order to get the correct position
-
-        const id = (nodes.length + 1).toString();
-        const newNode = {
-          id,
-          position: screenToFlowPosition({
-            x: event.clientX,
-            y: event.clientY,
-          }),
-
-          data: { id, label: '-', value: 'meep' },
-          type: 'editor',
-          origin: [0.5, 0.0],
-        };
-
-        setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) =>
-          eds.concat({ id, source: connectingNodeId.current, target: id })
-        );
+      if (!targetIsPane) {
+        return;
       }
+      const fromNode = nodes.find(
+        (node) => node.id === connectingNodeId.current
+      );
+      const fileName = fromNode.data.fileName;
+      const fromHandle = fromNode.data.handles.find(
+        (handle) => handle.id === connectingHandleId.current
+      );
+
+      const content = `import ${fromHandle.name} from '${fileName}';`;
+
+      const newNodeId = (nodes.length + 1).toString();
+
+      const handles = [
+        {
+          id: 'import-' + fromHandle.name,
+          type: 'source',
+          position: Position.Right,
+          name: fromHandle.name,
+          style: {
+            left: 330,
+            top: -5 + 16 * 1,
+          },
+        },
+      ];
+
+      console.log('==== new handle', handles);
+      // const newNode = {
+      //   newNodeId,
+      //   position: screenToFlowPosition({
+      //     x: event.clientX,
+      //     y: event.clientY,
+      //   }),
+
+      //   data: { newNodeId, label: '-', value: content, handles },
+      //   type: 'editor',
+      //   origin: [0.5, 0.0],
+      // };
+
+      const newNode = {
+        newNodeId,
+        position: screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        }),
+        data: { label: `Node ${newNodeId}` },
+        origin: [0.5, 0.0],
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+      setEdges((eds) =>
+        eds.concat({
+          id: newNodeId,
+          source: connectingNodeId.current,
+          target: newNodeId,
+        })
+      );
     },
-    [screenToFlowPosition]
+    [screenToFlowPosition, nodes]
   );
 
   return (
@@ -190,6 +214,7 @@ export const Flow = () => {
         attributionPosition="bottom-left"
         onConnectEnd={onConnectEnd}
         onConnectStart={onConnectStart}
+        connectionMode="loose"
       >
         <div className="updatenode__controls">
           <button onClick={createNode}> ➕ Add Node</button>
