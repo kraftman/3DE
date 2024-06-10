@@ -20,7 +20,7 @@ import { EditorNode } from './EditorNode';
 import { PreviewNode } from './PreviewNode';
 import './updatenode.css';
 
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 const tempInput = `
@@ -104,6 +104,7 @@ export const Flow = () => {
 
   function onTextChange(id, value) {
     //console.log('=== onTextChange', id, value);
+
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === id) {
@@ -149,24 +150,23 @@ export const Flow = () => {
           (node) => node.id === connectingNodeId.current
         );
         const fileName = fromNode.data.fileName;
-        console.log('=== all nodes', nodes);
-        console.log('===== fromNode.data.handles', fromNode.data.handles);
         const fromHandle = fromNode.data.handles.find(
-          (handle) => handle.key === connectingHandleId.current
+          (handle) => handle.id === connectingHandleId.current
         );
-        console.log('==== fromHandle', fromHandle);
         const content = `import ${fromHandle.name} from '${fileName}';`;
 
         const id = (nodes.length + 1).toString();
 
+        const newHandleId = 'import-' + fromHandle.name;
+
         const handles = [
           {
-            key: id,
-            type: 'target',
+            id: newHandleId,
+            name: fromHandle.name,
+            type: 'source',
             position: Position.Right,
-            id,
             style: {
-              left: 330,
+              left: 430,
               top: -5 + 16 * 1,
             },
           },
@@ -178,24 +178,23 @@ export const Flow = () => {
             y: event.clientY,
           }),
 
-          data: { id, label: '-', value: content, handles },
+          data: { fileName: `newFile-${id}.js`, value: content, handles },
           type: 'editor',
           origin: [0.5, 0.0],
         };
 
         setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) =>
-          eds.concat({
-            id: 'edge' + id,
-            source: connectingNodeId.current,
-            target: id,
-            sourceHandle: connectingHandleId.current,
-            targetHandle: id,
-          })
-        );
+        const newEdge = {
+          id: 'edge' + id,
+          source: connectingNodeId.current,
+          target: id,
+          sourceHandle: connectingHandleId.current,
+          targetHandle: newHandleId,
+        };
+        setEdges((eds) => eds.concat(newEdge));
       }
     },
-    [screenToFlowPosition, nodes]
+    [screenToFlowPosition, nodes, edges]
   );
 
   return (
@@ -212,6 +211,7 @@ export const Flow = () => {
         attributionPosition="bottom-left"
         onConnectEnd={onConnectEnd}
         onConnectStart={onConnectStart}
+        connectionMode="loose"
       >
         <div className="updatenode__controls">
           <button onClick={createNode}> ➕ Add Node</button>
