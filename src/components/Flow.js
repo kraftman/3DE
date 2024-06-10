@@ -20,6 +20,8 @@ import { EditorNode } from './EditorNode';
 import { PreviewNode } from './PreviewNode';
 import './updatenode.css';
 
+import { getExports, getImports } from './editorUtils';
+
 const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
@@ -62,19 +64,6 @@ export const Flow = () => {
   const connectingHandleId = useRef(null);
   const { screenToFlowPosition } = useReactFlow();
 
-  const onChangeHandles = (nodeId, handles) => {
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.id === nodeId) {
-          node.data = { ...node.data, handles };
-        }
-
-        return node;
-      })
-    );
-    updateNodeInternals(nodeId);
-  };
-
   const onFileNameChange = (nodeId, fileName) => {
     setNodes((nodes) =>
       nodes.map((node) => {
@@ -92,7 +81,6 @@ export const Flow = () => {
       editor: (props) => (
         <EditorNode
           onTextChange={onTextChange}
-          onChangeHandles={onChangeHandles}
           onFileNameChange={onFileNameChange}
           {...props}
         />
@@ -102,18 +90,48 @@ export const Flow = () => {
     []
   );
 
-  function onTextChange(id, value) {
-    //console.log('=== onTextChange', id, value);
+  function onTextChange(nodeId, value) {
+    const exports = getExports(value);
+    const imports = getImports(value);
+    //console.log('exports', exports);
+    const handles = exports.map((exp) => ({
+      id: 'export-' + exp.name,
+      name: exp.name,
+      type: 'source',
+      position: Position.Left,
+      style: {
+        left: -5,
+        top: -5 + 16 * exp.line,
+      },
+    }));
+
+    const importHandles = imports.map((imp) => ({
+      id: 'import-' + imp.name,
+      name: imp.name,
+      type: 'source',
+      position: Position.Right,
+      style: {
+        left: 410,
+        top: -5 + 16 * imp.line,
+      },
+    }));
+
+    //onChangeHandles(id, handles.concat(importHandles));
 
     setNodes((nodes) =>
       nodes.map((node) => {
-        if (node.id === id) {
-          node.data = { ...node.data, value };
+        if (node.id === nodeId) {
+          node.data = {
+            ...node.data,
+            value,
+            handles: handles.concat(importHandles),
+          };
         }
 
         return node;
       })
     );
+    updateNodeInternals(nodeId);
   }
   const nodeClassName = (node) => node.type;
 
@@ -145,6 +163,7 @@ export const Flow = () => {
       const targetIsPane = event.target.classList.contains('react-flow__pane');
 
       if (targetIsPane) {
+        console.log('=== target is pane');
         // we need to remove the wrapper bounds, in order to get the correct position
         const fromNode = nodes.find(
           (node) => node.id === connectingNodeId.current

@@ -6,10 +6,10 @@ import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import TextField from '@mui/material/TextField';
 
+import { getDecorators } from './editorUtils';
+
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });
-
-import { getExports, getImports } from './editorUtils';
 
 const darkTheme = createTheme({
   palette: {
@@ -17,84 +17,23 @@ const darkTheme = createTheme({
   },
 });
 
-export const EditorNode = ({
-  id,
-  data,
-  onTextChange,
-  onChangeHandles,
-  onFileNameChange,
-}) => {
+export const EditorNode = ({ id, data, onTextChange, onFileNameChange }) => {
   const editorRef = useRef(null);
   const [decorations, setDecorations] = useState([]);
 
   const onChange = (value) => {
     onTextChange(id, value);
     addDecorators();
-    const exports = getExports(value);
-    const imports = getImports(value);
-    //console.log('exports', exports);
-    const handles = exports.map((exp) => ({
-      id: 'export-' + exp.name,
-      name: exp.name,
-      type: 'source',
-      position: Position.Left,
-      style: {
-        left: -5,
-        top: -5 + 16 * exp.line,
-      },
-    }));
 
-    const importHandles = imports.map((imp) => ({
-      id: 'import-' + imp.name,
-      name: imp.name,
-      type: 'source',
-      position: Position.Right,
-      style: {
-        left: 410,
-        top: -5 + 16 * imp.line,
-      },
-    }));
-
-    onChangeHandles(id, handles.concat(importHandles));
     //updateNodeInternals(id);
   };
 
   const addDecorators = () => {
     const editor = editorRef.current;
     const model = editor.getModel();
-
-    const matches = [];
-    const regex = /\:string\b/g;
     const text = model.getValue();
-    let match;
 
-    while ((match = regex.exec(text)) !== null) {
-      const startLineNumber = text.substring(0, match.index).split('\n').length;
-      const startColumn = match.index - text.lastIndexOf('\n', match.index - 1);
-      const endLineNumber = text
-        .substring(0, regex.lastIndex)
-        .split('\n').length;
-      const endColumn =
-        regex.lastIndex - text.lastIndexOf('\n', regex.lastIndex - 1);
-      matches.push({
-        range: new monaco.Range(
-          startLineNumber,
-          startColumn,
-          endLineNumber,
-          endColumn
-        ),
-        options: {
-          beforeContentClassName: 'before-class',
-          afterContentClassName: 'after-class',
-          inlineClassName: 'match-class',
-        },
-      });
-    }
-
-    const newDecorations = matches.map((match) => ({
-      range: match.range,
-      options: match.options,
-    }));
+    const newDecorations = getDecorators(text);
 
     const newDecorationIds = editor.deltaDecorations(
       decorations,
