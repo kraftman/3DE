@@ -1,10 +1,17 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
   MiniMap,
   Controls,
   Background,
+  useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { EditorNode } from './EditorNode';
@@ -47,6 +54,9 @@ export const Flow = () => {
   const [nodeName, setNodeName] = useState('Node 1');
   const [nodeBg, setNodeBg] = useState('#eee');
   const [nodeHidden, setNodeHidden] = useState(false);
+  const connectingNodeId = useRef(null);
+  const reactFlowWrapper = useRef(null);
+  const { screenToFlowPosition } = useReactFlow();
 
   const nodeTypes = useMemo(
     () => ({
@@ -133,6 +143,39 @@ export const Flow = () => {
     setNodes((nodes) => nodes.concat(newNode));
   };
 
+  const onConnectStart = useCallback((_, { nodeId, handleId }) => {
+    console.log('===== handleId', handleId);
+    connectingNodeId.current = nodeId;
+  }, []);
+  const onConnectEnd = useCallback(
+    (event) => {
+      const targetIsPane = event.target.classList.contains('react-flow__pane');
+
+      if (targetIsPane) {
+        // we need to remove the wrapper bounds, in order to get the correct position
+
+        const id = (nodes.length + 1).toString();
+        const newNode = {
+          id,
+          position: screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          }),
+
+          data: { id, label: '-', value: 'meep' },
+          type: 'editor',
+          origin: [0.5, 0.0],
+        };
+
+        setNodes((nds) => nds.concat(newNode));
+        setEdges((eds) =>
+          eds.concat({ id, source: connectingNodeId.current, target: id })
+        );
+      }
+    },
+    [screenToFlowPosition]
+  );
+
   return (
     <>
       <ReactFlow
@@ -145,6 +188,8 @@ export const Flow = () => {
         minZoom={0.2}
         maxZoom={4}
         attributionPosition="bottom-left"
+        onConnectEnd={onConnectEnd}
+        onConnectStart={onConnectStart}
       >
         <div className="updatenode__controls">
           <button onClick={createNode}> ➕ Add Node</button>
