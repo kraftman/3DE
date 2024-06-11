@@ -2,13 +2,16 @@ import React from 'react';
 import { memo } from 'react';
 import { Handle, Position, NodeResizer } from 'reactflow';
 
-const GroupNodeInternal = ({ data }) => {
+const GroupNodeInternal = ({ data, selected }) => {
   return (
     <>
-      <NodeResizer minWidth={100} minHeight={30} />
-      <Handle type="target" position={Position.Left} />
+      <NodeResizer
+        color="#ff0071"
+        isVisible={selected}
+        minWidth={100}
+        minHeight={30}
+      />
       <div style={{ padding: 10 }}>{data.label}</div>
-      <Handle type="source" position={Position.Right} />
     </>
   );
 };

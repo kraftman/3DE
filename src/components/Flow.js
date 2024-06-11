@@ -19,6 +19,7 @@ import 'reactflow/dist/style.css';
 import { EditorNode } from './EditorNode';
 import { PreviewNode } from './PreviewNode';
 import { GroupNode } from './GroupNode';
+import { SettingsNode } from './SettingsNode/SettingsNode';
 import './updatenode.css';
 
 import { getExports, getImports } from './editorUtils';
@@ -38,6 +39,49 @@ export const myfunction2 = () => {
 
 `;
 
+const initialSettingsState = {
+  packageJson: {
+    name: 'my-new-app',
+    productName: 'my-new-app',
+    version: '1.0.0',
+    description: 'My Electron application description',
+    main: '.webpack/main',
+    scripts: {
+      start: 'electron-forge start',
+      package: 'electron-forge package',
+      make: 'electron-forge make',
+      publish: 'electron-forge publish',
+      lint: 'echo "No linting configured"',
+      test: 'echo "No test configured"',
+    },
+    dependencies: {
+      '@babel/parser': '^7.24.7',
+      '@babel/standalone': '^7.24.7',
+      '@babel/traverse': '^7.24.7',
+      '@emotion/react': '^11.11.4',
+      '@emotion/styled': '^11.11.5',
+      '@fontsource/roboto': '^5.0.13',
+      '@monaco-editor/react': '^4.6.0',
+      '@mui/icons-material': '^5.15.19',
+      '@mui/material': '^5.15.19',
+      acorn: '^8.11.3',
+      'electron-squirrel-startup': '^1.0.1',
+      estraverse: '^5.3.0',
+      'monaco-editor': '^0.49.0',
+      'monaco-editor-webpack-plugin': '^7.1.0',
+      react: '^18.3.1',
+      'react-dnd': '^16.0.1',
+      'react-dnd-html5-backend': '^16.0.1',
+      'react-dom': '^18.3.1',
+      'react-jsx-parser': '^1.29.0',
+      'react-resizable': '^3.0.5',
+      reactflow: '^11.11.3',
+    },
+  },
+  prettier: '',
+  eslint: '',
+};
+
 let edgeIdCount = 0;
 const getEdgeId = () => `${edgeIdCount++}`;
 
@@ -46,26 +90,28 @@ export const Flow = () => {
     {
       id: '1',
       data: {
-        fileName: 'MyComponent.js',
+        fileName: './MyComponent.js',
         value: tempInput,
         handles: [],
       },
       type: 'editor',
       position: { x: 500, y: 100 },
     },
-    {
-      id: '2',
-      data: {
-        fileName: 'MyGroup',
-        value: '',
-        handles: [],
-      },
-      type: 'group',
-      position: { x: 200, y: 100 },
-    },
+    // {
+    //   id: '2',
+    //   data: {
+    //     fileName: 'Settings.js',
+    //     value: '',
+    //     handles: [],
+    //     settings: initialSettingsState,
+    //   },
+    //   type: 'settings',
+    //   position: { x: 200, y: 100 },
+    // },
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [settings, setSettings] = useState(initialSettingsState);
 
   const updateNodeInternals = useUpdateNodeInternals();
   const connectingNodeId = useRef(null);
@@ -84,6 +130,20 @@ export const Flow = () => {
     );
   };
 
+  const onSettingsChanged = (newSettings) => {
+    setSettings(newSettings);
+    // also update settings node
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.type === 'settings') {
+          node.data = { ...node.data, settings: newSettings };
+        }
+
+        return node;
+      })
+    );
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -95,6 +155,9 @@ export const Flow = () => {
       ),
       preview: PreviewNode,
       group: GroupNode,
+      settings: (props) => (
+        <SettingsNode {...props} onSettingsChanged={onSettingsChanged} />
+      ),
     }),
     []
   );
@@ -109,6 +172,7 @@ export const Flow = () => {
       const targetNode = nodes.find(
         (node) => node.data.fileName === handle.fileName
       );
+      console.log('target node', targetNode);
       if (targetNode) {
         const newEdge = {
           id: getEdgeId(),
@@ -120,7 +184,27 @@ export const Flow = () => {
         newEdges.push(newEdge);
       }
     });
-    setEdges((eds) => eds.concat(newEdges));
+    console.log('new edges', newEdges);
+    setEdges(newEdges);
+  };
+
+  const getImportColor = (fileName) => {
+    const isLocal =
+      fileName.startsWith('./') ||
+      fileName.startsWith('../') ||
+      fileName.startsWith('/');
+    if (isLocal) {
+      for (const node of nodes) {
+        if (fileName.includes(node.data.fileName)) {
+          return '#03ad1a';
+        }
+      }
+      return '#b30f00';
+    }
+    if (settings.packageJson.dependencies[fileName]) {
+      return '#4287f5';
+    }
+    return '#b30f00';
   };
 
   const getHandles = (value) => {
@@ -148,6 +232,7 @@ export const Flow = () => {
       style: {
         left: 410,
         top: -5 + 16 * imp.line,
+        background: getImportColor(imp.fileName),
       },
     }));
     return handles.concat(importHandles);
@@ -228,6 +313,7 @@ export const Flow = () => {
           data: { fileName: `newFile-${id}.js`, value: content, handles },
           type: 'editor',
           origin: [0.5, 0.0],
+          parentId: fromNode.parentId,
         };
 
         setNodes((nds) => nds.concat(newNode));

@@ -86,3 +86,10 @@ body,
 .match-class {
   display: none; /* Customize as needed */
 }
+
+.hidden-handles {
+  display: none;
+}
+.dark-grey-edges {
+  stroke: darkgrey;
+}
