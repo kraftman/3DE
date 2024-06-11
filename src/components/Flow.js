@@ -18,6 +18,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { EditorNode } from './EditorNode';
 import { PreviewNode } from './PreviewNode';
+import { GroupNode } from './GroupNode';
 import './updatenode.css';
 
 import { getExports, getImports } from './editorUtils';
@@ -37,6 +38,9 @@ export const myfunction2 = () => {
 
 `;
 
+let edgeIdCount = 0;
+const getEdgeId = () => `${edgeIdCount++}`;
+
 export const Flow = () => {
   const initialNodes = [
     {
@@ -49,12 +53,16 @@ export const Flow = () => {
       type: 'editor',
       position: { x: 500, y: 100 },
     },
-    // {
-    //   id: '1',
-    //   data: { id: '1', label: '-', value: 'test string' },
-    //   type: 'preview',
-    //   position: { x: 100, y: 100 },
-    // },
+    {
+      id: '2',
+      data: {
+        fileName: 'MyGroup',
+        value: '',
+        handles: [],
+      },
+      type: 'group',
+      position: { x: 200, y: 100 },
+    },
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -62,7 +70,7 @@ export const Flow = () => {
   const updateNodeInternals = useUpdateNodeInternals();
   const connectingNodeId = useRef(null);
   const connectingHandleId = useRef(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
   const onFileNameChange = (nodeId, fileName) => {
     setNodes((nodes) =>
@@ -86,12 +94,13 @@ export const Flow = () => {
         />
       ),
       preview: PreviewNode,
+      group: GroupNode,
     }),
     []
   );
 
   const updateEdges = (nodeId, handles) => {
-    console.log('==== handles', handles);
+    //TODO: if imported from a package, create a virtual node, or dont create the edge?
     const newEdges = [];
     handles.forEach((handle) => {
       if (!handle.jsType === 'import') {
@@ -102,7 +111,7 @@ export const Flow = () => {
       );
       if (targetNode) {
         const newEdge = {
-          id: 'edge' + edges.length + 1,
+          id: getEdgeId(),
           source: nodeId,
           target: targetNode.id,
           sourceHandle: 'import-' + handle.name,
@@ -208,18 +217,7 @@ export const Flow = () => {
 
         const newHandleId = 'import-' + fromHandle.name;
 
-        const handles = [
-          // {
-          //   id: newHandleId,
-          //   name: fromHandle.name,
-          //   type: 'source',
-          //   position: Position.Right,
-          //   style: {
-          //     left: 430,
-          //     top: -5 + 16 * 1,
-          //   },
-          // },
-        ];
+        const handles = [];
         const newNode = {
           id,
           position: screenToFlowPosition({
@@ -233,34 +231,46 @@ export const Flow = () => {
         };
 
         setNodes((nds) => nds.concat(newNode));
-        // const newEdge = {
-        //   id: 'edge' + edges.length + 1,
-        //   source: connectingNodeId.current,
-        //   target: id,
-        //   sourceHandle: connectingHandleId.current,
-        //   targetHandle: newHandleId,
-        // };
-        // setEdges((eds) => eds.concat(newEdge));
       }
     },
     [screenToFlowPosition, nodes, edges]
   );
 
-  const onConnect = (connection) => {
-    //   {
-    //     "source": "2",
-    //     "sourceHandle": "import-myfunction2",
-    //     "target": "1",
-    //     "targetHandle": "export-myfunction2"
-    // }
-    // const newEdge = {
-    //   id: 'edge' + edges.length + 1,
-    //   source: connection.source,
-    //   target: connection.target,
-    //   sourceHandle: connection.sourceHandle,
-    //   targetHandle: connection.targetHandle,
-    // };
-    // setEdges((eds) => eds.concat(newEdge));
+  const onConnect = (connection) => {};
+
+  const onNodeDragStop = (event, node, nodes) => {
+    console.log('drag stop event', node);
+    const intersections = getIntersectingNodes(node, false);
+    console.log('intersections', intersections);
+    const groupNode = intersections.find((n) => n.type === 'group');
+    console.log('group node', groupNode);
+    if (groupNode && node.parentId !== groupNode.id) {
+      console.log('setting nodes');
+      setNodes((nodes) => {
+        const newNodes = nodes
+          .map((search) => {
+            if (search.id === node.id) {
+              search.parentId = groupNode.id;
+              search.position.x = node.position.x - groupNode.position.x;
+              search.position.y = node.position.y - groupNode.position.y;
+            }
+            return search;
+          })
+          // sort nodes by if they have a parentId or not
+          .sort((a, b) => {
+            if (a.parentId && !b.parentId) {
+              return 1;
+            }
+            if (!a.parentId && b.parentId) {
+              return -1;
+            }
+            return 0;
+          });
+        console.log('new nodes', newNodes);
+
+        return newNodes;
+      });
+    }
   };
 
   return (
@@ -279,6 +289,7 @@ export const Flow = () => {
         onConnectStart={onConnectStart}
         onConnect={onConnect}
         connectionMode="loose"
+        onNodeDragStop={onNodeDragStop}
       >
         <div className="updatenode__controls">
           <button onClick={createNode}> ➕ Add Node</button>
