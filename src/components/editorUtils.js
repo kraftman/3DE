@@ -9,7 +9,12 @@ export const getImports = (code) => {
     estraverse.traverse(ast, {
       enter: (node) => {
         if (node.type === 'ImportDeclaration') {
-          const values = { line: node.loc.start.line, name: node.source.value };
+          const name = node.specifiers[0].local.name;
+          const values = {
+            line: node.loc.start.line,
+            name,
+            fileName: node.source.value,
+          };
           imports.push(values);
         }
       },
@@ -47,7 +52,6 @@ export const getExports = (code) => {
     });
     return exports;
   } catch (e) {
-    console.log('bad syntax', e);
     return [];
   }
 };
