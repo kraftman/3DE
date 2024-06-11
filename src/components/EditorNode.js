@@ -28,6 +28,13 @@ export const EditorNode = ({ id, data, onTextChange, onFileNameChange }) => {
     //updateNodeInternals(id);
   };
 
+  const addListeners = () => {
+    const editor = editorRef.current;
+    editor.onDidChangeCursorSelection((e) => {
+      console.log(e);
+    });
+  };
+
   const addDecorators = () => {
     const editor = editorRef.current;
     const model = editor.getModel();
@@ -90,6 +97,7 @@ export const EditorNode = ({ id, data, onTextChange, onFileNameChange }) => {
           onMount={(editor) => {
             editorRef.current = editor;
             addDecorators();
+            addListeners();
           }}
         />
       </div>

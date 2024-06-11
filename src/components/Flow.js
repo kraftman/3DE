@@ -166,7 +166,7 @@ export const Flow = () => {
     //TODO: if imported from a package, create a virtual node, or dont create the edge?
     const newEdges = [];
     handles.forEach((handle) => {
-      if (!handle.jsType === 'import') {
+      if (!handle.handleType === 'import') {
         return;
       }
       const targetNode = nodes.find(
@@ -215,7 +215,7 @@ export const Flow = () => {
       id: 'export-' + exp.name,
       name: exp.name,
       type: 'source',
-      jsType: 'export',
+      handleType: 'export',
       position: Position.Left,
       style: {
         left: -5,
@@ -226,7 +226,7 @@ export const Flow = () => {
       id: 'import-' + imp.name,
       name: imp.name,
       type: 'source',
-      jsType: 'import',
+      handleType: 'import',
       fileName: imp.fileName,
       position: Position.Right,
       style: {
