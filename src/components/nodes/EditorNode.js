@@ -6,7 +6,7 @@ import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import TextField from '@mui/material/TextField';
 
-import { getDecorators } from './editorUtils';
+import { getDecorators } from '../editorUtils';
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });

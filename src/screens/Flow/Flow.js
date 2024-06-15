@@ -16,71 +16,17 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { EditorNode } from './EditorNode';
-import { PreviewNode } from './PreviewNode';
-import { GroupNode } from './GroupNode';
-import { SettingsNode } from './SettingsNode/SettingsNode';
+import { EditorNode } from '../../components/nodes/EditorNode';
+import { PreviewNode } from '../../components/nodes/PreviewNode';
+import { GroupNode } from '../../components/nodes/GroupNode';
+import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import './updatenode.css';
+import { initialSettingsState, tempInput } from './mocks';
 
-import { getExports, getImports } from './editorUtils';
+import { getExports, getImports } from '../../components/editorUtils';
 
 const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
-
-const tempInput = `
-import React from 'react';
-export const myfunction = () => {
-  return 'hello world';
-}
-
-export const myfunction2 = () => {
-  return 'hello world';
-}
-
-`;
-
-const initialSettingsState = {
-  packageJson: {
-    name: 'my-new-app',
-    productName: 'my-new-app',
-    version: '1.0.0',
-    description: 'My Electron application description',
-    main: '.webpack/main',
-    scripts: {
-      start: 'electron-forge start',
-      package: 'electron-forge package',
-      make: 'electron-forge make',
-      publish: 'electron-forge publish',
-      lint: 'echo "No linting configured"',
-      test: 'echo "No test configured"',
-    },
-    dependencies: {
-      '@babel/parser': '^7.24.7',
-      '@babel/standalone': '^7.24.7',
-      '@babel/traverse': '^7.24.7',
-      '@emotion/react': '^11.11.4',
-      '@emotion/styled': '^11.11.5',
-      '@fontsource/roboto': '^5.0.13',
-      '@monaco-editor/react': '^4.6.0',
-      '@mui/icons-material': '^5.15.19',
-      '@mui/material': '^5.15.19',
-      acorn: '^8.11.3',
-      'electron-squirrel-startup': '^1.0.1',
-      estraverse: '^5.3.0',
-      'monaco-editor': '^0.49.0',
-      'monaco-editor-webpack-plugin': '^7.1.0',
-      react: '^18.3.1',
-      'react-dnd': '^16.0.1',
-      'react-dnd-html5-backend': '^16.0.1',
-      'react-dom': '^18.3.1',
-      'react-jsx-parser': '^1.29.0',
-      'react-resizable': '^3.0.5',
-      reactflow: '^11.11.3',
-    },
-  },
-  prettier: '',
-  eslint: '',
-};
 
 let edgeIdCount = 0;
 const getEdgeId = () => `${edgeIdCount++}`;
@@ -96,6 +42,17 @@ export const Flow = () => {
       },
       type: 'editor',
       position: { x: 500, y: 100 },
+    },
+    {
+      id: '2',
+      data: {
+        fileName: 'Settings.js',
+        value: '',
+        handles: [],
+        settings: initialSettingsState,
+      },
+      type: 'group',
+      position: { x: 200, y: 100 },
     },
     // {
     //   id: '2',
@@ -286,38 +243,42 @@ export const Flow = () => {
   const onConnectEnd = useCallback(
     (event) => {
       const targetIsPane = event.target.classList.contains('react-flow__pane');
+      const groupNodeElement = event.target.closest('.react-flow__node-group');
 
-      if (targetIsPane) {
-        // we need to remove the wrapper bounds, in order to get the correct position
-        const fromNode = nodes.find(
-          (node) => node.id === connectingNodeId.current
-        );
-        const fileName = fromNode.data.fileName;
-        const fromHandle = fromNode.data.handles.find(
-          (handle) => handle.id === connectingHandleId.current
-        );
-        const content = `import { ${fromHandle.name} } from '${fileName}';`;
-
-        const id = (nodes.length + 1).toString();
-
-        const newHandleId = 'import-' + fromHandle.name;
-
-        const handles = [];
-        const newNode = {
-          id,
-          position: screenToFlowPosition({
-            x: event.clientX,
-            y: event.clientY,
-          }),
-
-          data: { fileName: `newFile-${id}.js`, value: content, handles },
-          type: 'editor',
-          origin: [0.5, 0.0],
-          parentId: fromNode.parentId,
-        };
-
-        setNodes((nds) => nds.concat(newNode));
+      let parentId = null;
+      if (groupNodeElement) {
+        parentId = groupNodeElement.getAttribute('data-id'); // Adjust this selector based on your actual implementation
       }
+      if (!targetIsPane && !groupNodeElement) {
+        return;
+      }
+
+      const fromNode = nodes.find(
+        (node) => node.id === connectingNodeId.current
+      );
+      const fileName = fromNode.data.fileName;
+      const fromHandle = fromNode.data.handles.find(
+        (handle) => handle.id === connectingHandleId.current
+      );
+      const content = `import { ${fromHandle.name} } from '${fileName}';`;
+
+      const id = (nodes.length + 1).toString();
+
+      const handles = [];
+      const newNode = {
+        id,
+        position: screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        }),
+
+        data: { fileName: `newFile-${id}.js`, value: content, handles },
+        type: 'editor',
+        origin: [0.5, 0.0],
+        parentId: parentId || fromNode.parentId,
+      };
+
+      setNodes((nds) => nds.concat(newNode));
     },
     [screenToFlowPosition, nodes, edges]
   );
@@ -325,11 +286,8 @@ export const Flow = () => {
   const onConnect = (connection) => {};
 
   const onNodeDragStop = (event, node, nodes) => {
-    console.log('drag stop event', node);
     const intersections = getIntersectingNodes(node, false);
-    console.log('intersections', intersections);
     const groupNode = intersections.find((n) => n.type === 'group');
-    console.log('group node', groupNode);
     if (groupNode && node.parentId !== groupNode.id) {
       console.log('setting nodes');
       setNodes((nodes) => {
@@ -354,6 +312,18 @@ export const Flow = () => {
           });
         console.log('new nodes', newNodes);
 
+        return newNodes;
+      });
+    } else if (!groupNode && node.parentId) {
+      setNodes((nodes) => {
+        const newNodes = nodes.map((search) => {
+          if (search.id === node.id) {
+            search.parentId = null;
+            search.position.x = node.position.x + groupNode.position.x;
+            search.position.y = node.position.y + groupNode.position.y;
+          }
+          return search;
+        });
         return newNodes;
       });
     }
