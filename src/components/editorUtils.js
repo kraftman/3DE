@@ -108,11 +108,18 @@ export const removeTextChunk = (text, fromLine, toLine) => {
 export const insertTextChunk = (text, chunk, line) => {
   const lines = text.split('\n');
   if (line > lines.length + 1) {
-    line = lines.length + 1;
+    const numOfNewLines = line - lines.length;
+    //pad out with new lines
+    for (let i = 0; i < numOfNewLines; i++) {
+      lines.push('');
+    }
+    lines.push(chunk);
+    return lines.join('\n');
   }
   if (line < 1) {
-    line = 1;
+    return chunk + '\n' + text;
   }
+
   const newLines = lines
     .slice(0, line - 1)
     .concat(chunk)

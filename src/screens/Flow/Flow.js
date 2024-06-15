@@ -319,14 +319,17 @@ export const Flow = () => {
         x: event.clientX,
         y: event.clientY,
       });
-      const line = Math.floor((position.y - targetNode.position.y) * 10);
+      console.log('mouse position', position);
+      console.log('node position', targetNode.position);
+      const line = Math.floor((position.y - targetNode.position.y) / 16);
       console.log('inserting text at line', line);
 
       const newText = insertTextChunk(
-        extractedChunk,
         targetNode.data.value,
+        extractedChunk,
         line
       );
+      console.log('new text', newText);
       onTextChange(targetNode.id, newText);
     }
 
