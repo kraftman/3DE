@@ -285,11 +285,10 @@ export const Flow = () => {
 
   const onConnect = (connection) => {};
 
-  const onNodeDragStop = (event, node, nodes) => {
+  const onNodeDragStop = (event, node) => {
     const intersections = getIntersectingNodes(node, false);
     const groupNode = intersections.find((n) => n.type === 'group');
     if (groupNode && node.parentId !== groupNode.id) {
-      console.log('setting nodes');
       setNodes((nodes) => {
         const newNodes = nodes
           .map((search) => {
@@ -310,17 +309,21 @@ export const Flow = () => {
             }
             return 0;
           });
-        console.log('new nodes', newNodes);
 
         return newNodes;
       });
     } else if (!groupNode && node.parentId) {
+      const oldGroupNode = nodes.find(
+        (searchNode) => searchNode.id === node.parentId
+      );
+      console.log(nodes);
+      console.log(node.parentId, oldGroupNode);
       setNodes((nodes) => {
         const newNodes = nodes.map((search) => {
           if (search.id === node.id) {
             search.parentId = null;
-            search.position.x = node.position.x + groupNode.position.x;
-            search.position.y = node.position.y + groupNode.position.y;
+            search.position.x = node.position.x + oldGroupNode.position.x;
+            search.position.y = node.position.y + oldGroupNode.position.y;
           }
           return search;
         });
