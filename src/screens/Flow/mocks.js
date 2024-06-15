@@ -51,4 +51,8 @@ export const myfunction2 = () => {
   return 'hello world';
 }
 
+const privateFunction = () => {
+  return 'meep';
+}
+
 `;

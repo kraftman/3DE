@@ -23,7 +23,12 @@ import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import './updatenode.css';
 import { initialSettingsState, tempInput } from './mocks';
 
-import { getExports, getImports } from '../../components/editorUtils';
+import {
+  getExports,
+  getImports,
+  removeTextChunk,
+  insertTextChunk,
+} from '../../components/editorUtils';
 
 const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
@@ -164,19 +169,44 @@ export const Flow = () => {
     return '#b30f00';
   };
 
+  const getExportColor = (type) => {
+    switch (type) {
+      case 'export':
+        return '#03ad1a';
+      case 'function':
+        return '#b30f00';
+      default:
+        return '#000';
+    }
+  };
+
+  const getExportPosition = (exp) => {
+    switch (exp.type) {
+      case 'export':
+        return -5;
+      case 'function':
+        return exp.end * 7 + 50;
+      default:
+        return 0;
+    }
+  };
+
   const getHandles = (value) => {
     //TODO: skip if imports and exports havent changed
     const exports = getExports(value);
     const imports = getImports(value);
     const handles = exports.map((exp) => ({
-      id: 'export-' + exp.name,
+      id: 'export-' + exp.name + '-' + exp.type,
       name: exp.name,
+      loc: exp.loc,
       type: 'source',
-      handleType: 'export',
+      handleType: exp.type,
       position: Position.Left,
       style: {
-        left: -5,
+        left: getExportPosition(exp),
         top: -5 + 16 * exp.line,
+        background: getExportColor(exp.type),
+        zIndex: 1000,
       },
     }));
     const importHandles = imports.map((imp) => ({
@@ -240,6 +270,77 @@ export const Flow = () => {
     connectingNodeId.current = nodeId;
     connectingHandleId.current = handleId;
   }, []);
+
+  const handleFunctionDrag = (fromNode, fromHandle, event) => {
+    //TODO:
+    // create the new node with the removed text
+    // update it to be exported
+    // add an import to the existing node
+    // if the function was exported, update the reference to the new node
+
+    const targetIsPane = event.target.classList.contains('react-flow__pane');
+    const groupNodeElement = event.target.closest('.react-flow__node-group');
+    console.log('targetIsPane', targetIsPane);
+    console.log('groupNodeElement', groupNodeElement);
+
+    const currentText = fromNode.data.value;
+    const startLine = fromHandle.loc.start.line;
+    const endLine = fromHandle.loc.end.line;
+    const { updatedText, extractedChunk } = removeTextChunk(
+      currentText,
+      startLine,
+      endLine
+    );
+
+    if (targetIsPane) {
+      const newNode = {
+        id: (nodes.length + 1).toString(),
+        data: {
+          fileName: `./${fromHandle.name}.js`,
+          value: 'export ' + extractedChunk,
+          handles: [],
+        },
+        type: 'editor',
+        position: screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        }),
+      };
+      setNodes((nodes) => nodes.concat(newNode));
+    } else if (!groupNodeElement && !targetIsPane) {
+      console.log('landed on real node');
+      //it landed on a real node
+      const editorNodeElement = event.target.closest(
+        '.react-flow__node-editor'
+      );
+      const targetNodeId = editorNodeElement.getAttribute('data-id');
+      const targetNode = nodes.find((node) => node.id === targetNodeId);
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      const line = Math.floor((position.y - targetNode.position.y) * 10);
+      console.log('inserting text at line', line);
+
+      const newText = insertTextChunk(
+        extractedChunk,
+        targetNode.data.value,
+        line
+      );
+      onTextChange(targetNode.id, newText);
+    }
+
+    onTextChange(fromNode.id, updatedText);
+    // setNodes((nodes) => {
+    //   return nodes.map((node) => {
+    //     if (node.id === fromNode.id) {
+    //       node.data.value = newCode;
+    //     }
+    //     return node;
+    //   });
+    // });
+    // updateNodeInternals(fromNode.id)
+  };
   const onConnectEnd = useCallback(
     (event) => {
       const targetIsPane = event.target.classList.contains('react-flow__pane');
@@ -249,17 +350,21 @@ export const Flow = () => {
       if (groupNodeElement) {
         parentId = groupNodeElement.getAttribute('data-id'); // Adjust this selector based on your actual implementation
       }
+      const fromNode = nodes.find(
+        (node) => node.id === connectingNodeId.current
+      );
+      const fromHandle = fromNode?.data?.handles.find(
+        (handle) => handle.id === connectingHandleId.current
+      );
+      if (fromHandle?.handleType === 'function') {
+        return handleFunctionDrag(fromNode, fromHandle, event);
+      }
       if (!targetIsPane && !groupNodeElement) {
         return;
       }
 
-      const fromNode = nodes.find(
-        (node) => node.id === connectingNodeId.current
-      );
       const fileName = fromNode.data.fileName;
-      const fromHandle = fromNode.data.handles.find(
-        (handle) => handle.id === connectingHandleId.current
-      );
+
       const content = `import { ${fromHandle.name} } from '${fileName}';`;
 
       const id = (nodes.length + 1).toString();
@@ -316,8 +421,7 @@ export const Flow = () => {
       const oldGroupNode = nodes.find(
         (searchNode) => searchNode.id === node.parentId
       );
-      console.log(nodes);
-      console.log(node.parentId, oldGroupNode);
+
       setNodes((nodes) => {
         const newNodes = nodes.map((search) => {
           if (search.id === node.id) {
