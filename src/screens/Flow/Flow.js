@@ -20,13 +20,15 @@ import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { GroupNode } from '../../components/nodes/GroupNode';
 import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import './updatenode.css';
-import { initialSettingsState, tempInput } from './mocks';
 
 import {
   getHandles,
   removeTextChunk,
   insertTextChunk,
 } from '../../components/editorUtils';
+
+import { getInitialNodes } from './utils';
+import { initialSettingsState } from './mocks';
 
 const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
@@ -35,43 +37,11 @@ let edgeIdCount = 0;
 const getEdgeId = () => `${edgeIdCount++}`;
 
 export const Flow = () => {
-  const initialNodes = [
-    {
-      id: '1',
-      data: {
-        fileName: './MyComponent.js',
-        value: tempInput,
-        handles: [],
-      },
-      type: 'editor',
-      position: { x: 500, y: 100 },
-    },
-    {
-      id: '2',
-      data: {
-        fileName: 'Settings.js',
-        value: '',
-        handles: [],
-        settings: initialSettingsState,
-      },
-      type: 'group',
-      position: { x: 200, y: 100 },
-    },
-    // {
-    //   id: '2',
-    //   data: {
-    //     fileName: 'Settings.js',
-    //     value: '',
-    //     handles: [],
-    //     settings: initialSettingsState,
-    //   },
-    //   type: 'settings',
-    //   position: { x: 200, y: 100 },
-    // },
-  ];
+  const initialNodes = getInitialNodes(initialSettingsState);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [settings, setSettings] = useState(initialSettingsState);
+  const [handles, setHandles] = useState([]);
 
   const updateNodeInternals = useUpdateNodeInternals();
   const connectingNodeId = useRef(null);
@@ -84,7 +54,6 @@ export const Flow = () => {
         if (node.id === nodeId) {
           node.data = { ...node.data, fileName };
         }
-
         return node;
       })
     );
@@ -98,7 +67,6 @@ export const Flow = () => {
         if (node.type === 'settings') {
           node.data = { ...node.data, settings: newSettings };
         }
-
         return node;
       })
     );
@@ -140,7 +108,6 @@ export const Flow = () => {
       const targetNode = nodes.find(
         (node) => node.data.fileName === handle.fileName
       );
-      console.log('target node', targetNode);
       if (targetNode) {
         const newEdge = {
           id: getEdgeId(),
@@ -156,7 +123,14 @@ export const Flow = () => {
   };
 
   function onTextChange(nodeId, value) {
-    const newHandles = getHandles(value);
+    const newHandles = getHandles(nodeId, value);
+
+    // add the handles to the global handles array if they dont already exist
+
+    const uniqueHandles = newHandles.filter((handle) => {
+      return !handles.some((h) => h.id === handle.id);
+    });
+    setHandles((handles) => handles.concat(uniqueHandles));
     updateEdges(nodeId, newHandles);
 
     setNodes((nodes) =>
@@ -238,7 +212,6 @@ export const Flow = () => {
       };
       setNodes((nodes) => nodes.concat(newNode));
     } else if (!groupNodeElement && !targetIsPane) {
-      console.log('landed on real node');
       //it landed on a real node
       const editorNodeElement = event.target.closest(
         '.react-flow__node-editor'
@@ -249,10 +222,7 @@ export const Flow = () => {
         x: event.clientX,
         y: event.clientY,
       });
-      console.log('mouse position', position);
-      console.log('node position', targetNode.position);
       const line = Math.floor((position.y - targetNode.position.y) / 16);
-      console.log('inserting text at line', line);
 
       const newText = insertTextChunk(
         targetNode.data.value,
@@ -264,15 +234,6 @@ export const Flow = () => {
     }
 
     onTextChange(fromNode.id, updatedText);
-    // setNodes((nodes) => {
-    //   return nodes.map((node) => {
-    //     if (node.id === fromNode.id) {
-    //       node.data.value = newCode;
-    //     }
-    //     return node;
-    //   });
-    // });
-    // updateNodeInternals(fromNode.id)
   };
   const onConnectEnd = useCallback(
     (event) => {
@@ -326,6 +287,8 @@ export const Flow = () => {
   const onNodeDragStop = (event, node) => {
     const intersections = getIntersectingNodes(node, false);
     const groupNode = intersections.find((n) => n.type === 'group');
+
+    //if it landed on a group it isnt a child of
     if (groupNode && node.parentId !== groupNode.id) {
       setNodes((nodes) => {
         const newNodes = nodes
@@ -350,6 +313,7 @@ export const Flow = () => {
 
         return newNodes;
       });
+      // if it moved out of a group onto the canvas
     } else if (!groupNode && node.parentId) {
       const oldGroupNode = nodes.find(
         (searchNode) => searchNode.id === node.parentId

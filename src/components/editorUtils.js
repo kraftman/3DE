@@ -128,13 +128,14 @@ const getLeftPosition = (feature) => {
 //   }
 // };
 
-export const getHandles = (code) => {
+export const getHandles = (nodeId, code) => {
   const features = getFeatures(code);
   const handles = features.map((feature) => {
     const { name, line, type } = feature;
     return {
       id: `${type}-${name}-${line}`,
       name,
+      nodeId,
       loc: feature.loc,
       type: 'source',
       handleType: feature.type,

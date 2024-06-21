@@ -1,19 +1,36 @@
-import { EditorNode } from '../../components/nodes/EditorNode';
-import { PreviewNode } from '../../components/nodes/PreviewNode';
-import { GroupNode } from '../../components/nodes/GroupNode';
-import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
-export const getNodeTypes = (flow) => ({
-  editor: (props) => (
-    <EditorNode
-      onTextChange={onTextChange}
-      onFileNameChange={onFileNameChange}
-      onSelectionChange={onSelectionChange}
-      {...props}
-    />
-  ),
-  preview: PreviewNode,
-  group: GroupNode,
-  settings: (props) => (
-    <SettingsNode {...props} onSettingsChanged={onSettingsChanged} />
-  ),
-});
+import { initialSettingsState, tempInput } from './mocks';
+
+export const getInitialNodes = (initialSettingsState) => [
+  {
+    id: '1',
+    data: {
+      fileName: './MyComponent.js',
+      value: tempInput,
+      handles: [],
+    },
+    type: 'editor',
+    position: { x: 500, y: 100 },
+  },
+  {
+    id: '2',
+    data: {
+      fileName: 'Settings.js',
+      value: '',
+      handles: [],
+      settings: initialSettingsState,
+    },
+    type: 'group',
+    position: { x: 200, y: 100 },
+  },
+  // {
+  //   id: '2',
+  //   data: {
+  //     fileName: 'Settings.js',
+  //     value: '',
+  //     handles: [],
+  //     settings: initialSettingsState,
+  //   },
+  //   type: 'settings',
+  //   position: { x: 200, y: 100 },
+  // },
+];
