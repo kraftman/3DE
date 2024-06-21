@@ -10,7 +10,6 @@ import ReactFlow, {
   useEdgesState,
   MiniMap,
   Controls,
-  Position,
   Background,
   useReactFlow,
   useUpdateNodeInternals,
@@ -24,8 +23,7 @@ import './updatenode.css';
 import { initialSettingsState, tempInput } from './mocks';
 
 import {
-  getExports,
-  getImports,
+  getHandles,
   removeTextChunk,
   insertTextChunk,
 } from '../../components/editorUtils';
@@ -106,12 +104,20 @@ export const Flow = () => {
     );
   };
 
+  const onSelectionChange = (nodeId, selection) => {
+    console.log('selection changed', selection);
+    // create selection handle
+    const startLine = selection.startLineNumber;
+    const endLine = selection.endLineNumber;
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
         <EditorNode
           onTextChange={onTextChange}
           onFileNameChange={onFileNameChange}
+          onSelectionChange={onSelectionChange}
           {...props}
         />
       ),
@@ -146,83 +152,7 @@ export const Flow = () => {
         newEdges.push(newEdge);
       }
     });
-    console.log('new edges', newEdges);
     setEdges(newEdges);
-  };
-
-  const getImportColor = (fileName) => {
-    const isLocal =
-      fileName.startsWith('./') ||
-      fileName.startsWith('../') ||
-      fileName.startsWith('/');
-    if (isLocal) {
-      for (const node of nodes) {
-        if (fileName.includes(node.data.fileName)) {
-          return '#03ad1a';
-        }
-      }
-      return '#b30f00';
-    }
-    if (settings.packageJson.dependencies[fileName]) {
-      return '#4287f5';
-    }
-    return '#b30f00';
-  };
-
-  const getExportColor = (type) => {
-    switch (type) {
-      case 'export':
-        return '#03ad1a';
-      case 'function':
-        return '#b30f00';
-      default:
-        return '#000';
-    }
-  };
-
-  const getExportPosition = (exp) => {
-    switch (exp.type) {
-      case 'export':
-        return -5;
-      case 'function':
-        return exp.end * 7 + 50;
-      default:
-        return 0;
-    }
-  };
-
-  const getHandles = (value) => {
-    //TODO: skip if imports and exports havent changed
-    const exports = getExports(value);
-    const imports = getImports(value);
-    const handles = exports.map((exp) => ({
-      id: 'export-' + exp.name + '-' + exp.type,
-      name: exp.name,
-      loc: exp.loc,
-      type: 'source',
-      handleType: exp.type,
-      position: Position.Left,
-      style: {
-        left: getExportPosition(exp),
-        top: -5 + 16 * exp.line,
-        background: getExportColor(exp.type),
-        zIndex: 1000,
-      },
-    }));
-    const importHandles = imports.map((imp) => ({
-      id: 'import-' + imp.name,
-      name: imp.name,
-      type: 'source',
-      handleType: 'import',
-      fileName: imp.fileName,
-      position: Position.Right,
-      style: {
-        left: 410,
-        top: -5 + 16 * imp.line,
-        background: getImportColor(imp.fileName),
-      },
-    }));
-    return handles.concat(importHandles);
   };
 
   function onTextChange(nodeId, value) {

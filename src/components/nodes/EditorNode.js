@@ -17,21 +17,36 @@ const darkTheme = createTheme({
   },
 });
 
-export const EditorNode = ({ id, data, onTextChange, onFileNameChange }) => {
+export const EditorNode = ({
+  id,
+  data,
+  onTextChange,
+  onFileNameChange,
+  onSelectionChange,
+}) => {
   const editorRef = useRef(null);
   const [decorations, setDecorations] = useState([]);
 
   const onChange = (value) => {
     onTextChange(id, value);
     addDecorators();
+  };
 
-    //updateNodeInternals(id);
+  const checkIfTextIsSelected = () => {
+    const editor = editorRef.current;
+    const selection = editor.getSelection();
+    if (selection.isEmpty()) {
+      console.log('nothing selected');
+    } else {
+      console.log('text selected', selection);
+      onSelectionChange(id, selection);
+    }
   };
 
   const addListeners = () => {
     const editor = editorRef.current;
     editor.onDidChangeCursorSelection((e) => {
-      console.log(e);
+      checkIfTextIsSelected();
     });
   };
 
