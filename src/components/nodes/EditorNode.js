@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { Handle, Position, NodeToolbar } from 'reactflow';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
@@ -32,13 +32,16 @@ export const EditorNode = ({
     addDecorators();
   };
 
+  useEffect(() => {
+    onTextChange(id, data.value);
+  }, []);
+
   const checkIfTextIsSelected = () => {
     const editor = editorRef.current;
     const selection = editor.getSelection();
     if (selection.isEmpty()) {
-      console.log('nothing selected');
+      onSelectionChange(id, null);
     } else {
-      console.log('text selected', selection);
       onSelectionChange(id, selection);
     }
   };

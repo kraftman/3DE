@@ -54,7 +54,6 @@ export const getFeatures = (code) => {
             node.init.type === 'FunctionExpression') &&
           parent.type === 'VariableDeclaration'
         ) {
-          console.log(node.type, node);
           const isDefaultExport = null; //handles.find(
           //(exp) => exp.name === node.id.name
           //);
@@ -128,14 +127,16 @@ const getLeftPosition = (feature) => {
 //   }
 // };
 
-export const getHandles = (nodeId, code) => {
+export const getHandles = (nodeId, nodeFileName, code) => {
   const features = getFeatures(code);
   const handles = features.map((feature) => {
-    const { name, line, type } = feature;
+    const { name, line, type, fileName } = feature;
     return {
       id: `${type}-${name}-${line}`,
       name,
       nodeId,
+      fileName: fileName || '',
+      exportFileNae: nodeFileName || '',
       loc: feature.loc,
       type: 'source',
       handleType: feature.type,

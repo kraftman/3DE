@@ -9,6 +9,7 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   MiniMap,
+  Position,
   Controls,
   Background,
   useReactFlow,
@@ -27,7 +28,11 @@ import {
   insertTextChunk,
 } from '../../components/editorUtils';
 
-import { getInitialNodes } from './utils';
+import {
+  getInitialNodes,
+  createEditorNode,
+  createSelectionHandle,
+} from './utils';
 import { initialSettingsState } from './mocks';
 
 const initialEdges = [];
@@ -73,10 +78,33 @@ export const Flow = () => {
   };
 
   const onSelectionChange = (nodeId, selection) => {
-    console.log('selection changed', selection);
-    // create selection handle
-    const startLine = selection.startLineNumber;
-    const endLine = selection.endLineNumber;
+    if (!selection) {
+      setNodes((nodes) =>
+        nodes.map((node) => {
+          if (node.id === nodeId) {
+            const newHandles = node.data.handles.filter(
+              (handle) => handle.handleType !== 'selection'
+            );
+            node.data = { ...node.data, handles: newHandles };
+          }
+          return node;
+        })
+      );
+      return;
+    }
+
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === nodeId) {
+          const newHandles = node.data.handles.filter(
+            (handle) => handle.handleType !== 'selection'
+          );
+          newHandles.push(createSelectionHandle(nodeId, selection));
+          node.data = { ...node.data, handles: newHandles };
+        }
+        return node;
+      })
+    );
   };
 
   const nodeTypes = useMemo(
@@ -98,40 +126,80 @@ export const Flow = () => {
     []
   );
 
-  const updateEdges = (nodeId, handles) => {
-    //TODO: if imported from a package, create a virtual node, or dont create the edge?
+  const updateEdges = (nodeId, existingHandles, newHandles) => {
+    //split into exports and imports and then pair up the matching ones
+    console.log('update edges', nodeId, existingHandles, newHandles);
+    const exports = newHandles.filter(
+      (handle) => handle.handleType === 'export'
+    );
+    const imports = newHandles.filter(
+      (handle) => handle.handleType === 'import'
+    );
+
     const newEdges = [];
-    handles.forEach((handle) => {
-      if (!handle.handleType === 'import') {
-        return;
-      }
-      const targetNode = nodes.find(
-        (node) => node.data.fileName === handle.fileName
-      );
-      if (targetNode) {
-        const newEdge = {
-          id: getEdgeId(),
-          source: nodeId,
-          target: targetNode.id,
-          sourceHandle: 'import-' + handle.name,
-          targetHandle: 'export-' + handle.name,
-        };
-        newEdges.push(newEdge);
-      }
+    exports.forEach((exportHandle) => {
+      existingHandles.forEach((existingHandle) => {
+        console.log('existingHandle', existingHandle);
+        console.log('exportHandle', exportHandle);
+        const isMatching =
+          existingHandle.handleType === 'import' &&
+          existingHandle.name === exportHandle.name &&
+          existingHandle.fileName === exportHandle.exportFileName;
+        if (isMatching) {
+          newEdges.push({
+            id: getEdgeId(),
+            source: existingHandle.nodeId,
+            target: nodeId,
+            targetHandle: exportHandle.id,
+            sourceHandle: existingHandle.id,
+          });
+        }
+      });
     });
-    setEdges(newEdges);
+
+    setEdges((edges) => {
+      // dont touch edges that arent connected to this node
+      const existingEdges = edges.filter(
+        (edge) => edge.source !== nodeId && edge.target !== nodeId
+      );
+
+      return existingEdges.concat(newEdges);
+    });
+    //TODO: if imported from a package, create a virtual node, or dont create the edge?
+    // const newEdges = [];
+    // handles.forEach((handle) => {
+    //   if (!handle.handleType === 'import') {
+    //     return;
+    //   }
+    //   const targetNode = nodes.find(
+    //     (node) => node.data.fileName === handle.fileName
+    //   );
+    //   if (targetNode) {
+    //     const newEdge = {
+    //       id: getEdgeId(),
+    //       source: nodeId,
+    //       target: targetNode.id,
+    //       sourceHandle: 'import-' + handle.name,
+    //       targetHandle: 'export-' + handle.name,
+    //     };
+    //     newEdges.push(newEdge);
+    //   }
+    // });
+    // setEdges(newEdges);
   };
 
   function onTextChange(nodeId, value) {
-    const newHandles = getHandles(nodeId, value);
+    const node = nodes.find((node) => node.id === nodeId);
+    const newHandles = getHandles(nodeId, node.fileName, value);
 
-    // add the handles to the global handles array if they dont already exist
-
-    const uniqueHandles = newHandles.filter((handle) => {
-      return !handles.some((h) => h.id === handle.id);
+    setHandles((handles) => {
+      const existingHandles = handles.filter(
+        (handle) => handle.nodeId !== nodeId
+      );
+      const mergedHandles = existingHandles.concat(newHandles);
+      updateEdges(nodeId, existingHandles, newHandles);
+      return mergedHandles;
     });
-    setHandles((handles) => handles.concat(uniqueHandles));
-    updateEdges(nodeId, newHandles);
 
     setNodes((nodes) =>
       nodes.map((node) => {
@@ -139,10 +207,8 @@ export const Flow = () => {
           node.data = {
             ...node.data,
             value,
+            handles: newHandles,
           };
-          if (newHandles.length > 0) {
-            node.data.handles = newHandles;
-          }
         }
 
         return node;
@@ -153,20 +219,8 @@ export const Flow = () => {
   const nodeClassName = (node) => node.type;
 
   const createNode = () => {
-    const newNode = {
-      id: (nodes.length + 1).toString(),
-      data: {
-        label: 'Node ' + (nodes.length + 1),
-        value: 'test string',
-        handles: [],
-      },
-      type: 'editor',
-      position: {
-        x: Math.random() * window.innerWidth - 200,
-        y: Math.random() * window.innerHeight - 400,
-      },
-    };
-
+    const nextNodeId = (nodes.length + 1).toString();
+    const newNode = createEditorNode(nextNodeId);
     setNodes((nodes) => nodes.concat(newNode));
   };
 
@@ -184,8 +238,6 @@ export const Flow = () => {
 
     const targetIsPane = event.target.classList.contains('react-flow__pane');
     const groupNodeElement = event.target.closest('.react-flow__node-group');
-    console.log('targetIsPane', targetIsPane);
-    console.log('groupNodeElement', groupNodeElement);
 
     const currentText = fromNode.data.value;
     const startLine = fromHandle.loc.start.line;
@@ -231,6 +283,7 @@ export const Flow = () => {
       );
       console.log('new text', newText);
       onTextChange(targetNode.id, newText);
+      return;
     }
 
     onTextChange(fromNode.id, updatedText);
@@ -242,7 +295,7 @@ export const Flow = () => {
 
       let parentId = null;
       if (groupNodeElement) {
-        parentId = groupNodeElement.getAttribute('data-id'); // Adjust this selector based on your actual implementation
+        parentId = groupNodeElement.getAttribute('data-id');
       }
       const fromNode = nodes.find(
         (node) => node.id === connectingNodeId.current
