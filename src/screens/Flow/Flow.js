@@ -9,8 +9,8 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   MiniMap,
-  Controls,
   Position,
+  Controls,
   Background,
   useReactFlow,
   useUpdateNodeInternals,
@@ -21,14 +21,19 @@ import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { GroupNode } from '../../components/nodes/GroupNode';
 import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import './updatenode.css';
-import { initialSettingsState, tempInput } from './mocks';
 
 import {
-  getExports,
-  getImports,
+  getHandles,
   removeTextChunk,
   insertTextChunk,
 } from '../../components/editorUtils';
+
+import {
+  getInitialNodes,
+  createEditorNode,
+  createSelectionHandle,
+} from './utils';
+import { initialSettingsState } from './mocks';
 
 const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
@@ -37,43 +42,11 @@ let edgeIdCount = 0;
 const getEdgeId = () => `${edgeIdCount++}`;
 
 export const Flow = () => {
-  const initialNodes = [
-    {
-      id: '1',
-      data: {
-        fileName: './MyComponent.js',
-        value: tempInput,
-        handles: [],
-      },
-      type: 'editor',
-      position: { x: 500, y: 100 },
-    },
-    {
-      id: '2',
-      data: {
-        fileName: 'Settings.js',
-        value: '',
-        handles: [],
-        settings: initialSettingsState,
-      },
-      type: 'group',
-      position: { x: 200, y: 100 },
-    },
-    // {
-    //   id: '2',
-    //   data: {
-    //     fileName: 'Settings.js',
-    //     value: '',
-    //     handles: [],
-    //     settings: initialSettingsState,
-    //   },
-    //   type: 'settings',
-    //   position: { x: 200, y: 100 },
-    // },
-  ];
+  const initialNodes = getInitialNodes(initialSettingsState);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [settings, setSettings] = useState(initialSettingsState);
+  const [handles, setHandles] = useState([]);
 
   const updateNodeInternals = useUpdateNodeInternals();
   const connectingNodeId = useRef(null);
@@ -86,7 +59,6 @@ export const Flow = () => {
         if (node.id === nodeId) {
           node.data = { ...node.data, fileName };
         }
-
         return node;
       })
     );
@@ -100,7 +72,36 @@ export const Flow = () => {
         if (node.type === 'settings') {
           node.data = { ...node.data, settings: newSettings };
         }
+        return node;
+      })
+    );
+  };
 
+  const onSelectionChange = (nodeId, selection) => {
+    if (!selection) {
+      setNodes((nodes) =>
+        nodes.map((node) => {
+          if (node.id === nodeId) {
+            const newHandles = node.data.handles.filter(
+              (handle) => handle.handleType !== 'selection'
+            );
+            node.data = { ...node.data, handles: newHandles };
+          }
+          return node;
+        })
+      );
+      return;
+    }
+
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === nodeId) {
+          const newHandles = node.data.handles.filter(
+            (handle) => handle.handleType !== 'selection'
+          );
+          newHandles.push(createSelectionHandle(nodeId, selection));
+          node.data = { ...node.data, handles: newHandles };
+        }
         return node;
       })
     );
@@ -112,6 +113,7 @@ export const Flow = () => {
         <EditorNode
           onTextChange={onTextChange}
           onFileNameChange={onFileNameChange}
+          onSelectionChange={onSelectionChange}
           {...props}
         />
       ),
@@ -124,110 +126,75 @@ export const Flow = () => {
     []
   );
 
-  const updateEdges = (nodeId, handles) => {
-    //TODO: if imported from a package, create a virtual node, or dont create the edge?
+  const updateEdges = (nodeId, existingHandles, newHandles) => {
+    //split into exports and imports and then pair up the matching ones
+    console.log('update edges', nodeId);
+    console.log('existing handles', existingHandles);
+    const exports = newHandles.filter(
+      (handle) => handle.handleType === 'export'
+    );
+    const imports = newHandles.filter(
+      (handle) => handle.handleType === 'import'
+    );
+
     const newEdges = [];
-    handles.forEach((handle) => {
-      if (!handle.handleType === 'import') {
-        return;
-      }
-      const targetNode = nodes.find(
-        (node) => node.data.fileName === handle.fileName
-      );
-      console.log('target node', targetNode);
-      if (targetNode) {
-        const newEdge = {
-          id: getEdgeId(),
-          source: nodeId,
-          target: targetNode.id,
-          sourceHandle: 'import-' + handle.name,
-          targetHandle: 'export-' + handle.name,
-        };
-        newEdges.push(newEdge);
-      }
-    });
-    console.log('new edges', newEdges);
-    setEdges(newEdges);
-  };
+    exports.forEach((exportHandle) => {
+      existingHandles.forEach((existingHandle) => {
+        console.log('existingHandle', existingHandle);
+        console.log('exportHandle', exportHandle);
+        const isMatching =
+          existingHandle.handleType === 'import' &&
+          existingHandle.name === exportHandle.name &&
+          existingHandle.fileName === exportHandle.exportFileName;
 
-  const getImportColor = (fileName) => {
-    const isLocal =
-      fileName.startsWith('./') ||
-      fileName.startsWith('../') ||
-      fileName.startsWith('/');
-    if (isLocal) {
-      for (const node of nodes) {
-        if (fileName.includes(node.data.fileName)) {
-          return '#03ad1a';
+        if (isMatching) {
+          newEdges.push({
+            id: getEdgeId(),
+            source: existingHandle.nodeId,
+            target: nodeId,
+            targetHandle: exportHandle.id,
+            sourceHandle: existingHandle.id,
+          });
         }
-      }
-      return '#b30f00';
-    }
-    if (settings.packageJson.dependencies[fileName]) {
-      return '#4287f5';
-    }
-    return '#b30f00';
-  };
+      });
+    });
 
-  const getExportColor = (type) => {
-    switch (type) {
-      case 'export':
-        return '#03ad1a';
-      case 'function':
-        return '#b30f00';
-      default:
-        return '#000';
-    }
-  };
+    console.log('ne edges', newEdges);
 
-  const getExportPosition = (exp) => {
-    switch (exp.type) {
-      case 'export':
-        return -5;
-      case 'function':
-        return exp.end * 7 + 50;
-      default:
-        return 0;
-    }
-  };
+    setEdges((edges) => {
+      // dont touch edges that arent connected to this node
+      const existingEdges = edges.filter(
+        (edge) => edge.source !== nodeId && edge.target !== nodeId
+      );
 
-  const getHandles = (value) => {
-    //TODO: skip if imports and exports havent changed
-    const exports = getExports(value);
-    const imports = getImports(value);
-    const handles = exports.map((exp) => ({
-      id: 'export-' + exp.name + '-' + exp.type,
-      name: exp.name,
-      loc: exp.loc,
-      type: 'source',
-      handleType: exp.type,
-      position: Position.Left,
-      style: {
-        left: getExportPosition(exp),
-        top: -5 + 16 * exp.line,
-        background: getExportColor(exp.type),
-        zIndex: 1000,
-      },
-    }));
-    const importHandles = imports.map((imp) => ({
-      id: 'import-' + imp.name,
-      name: imp.name,
-      type: 'source',
-      handleType: 'import',
-      fileName: imp.fileName,
-      position: Position.Right,
-      style: {
-        left: 410,
-        top: -5 + 16 * imp.line,
-        background: getImportColor(imp.fileName),
-      },
-    }));
-    return handles.concat(importHandles);
+      return existingEdges.concat(newEdges);
+    });
+    //TODO: if imported from a package, create a virtual node, or dont create the edge?
+    // const newEdges = [];
+    // handles.forEach((handle) => {
+    //   if (!handle.handleType === 'import') {
+    //     return;
+    //   }
+    //   const targetNode = nodes.find(
+    //     (node) => node.data.fileName === handle.fileName
+    //   );
+    //   if (targetNode) {
+    //     const newEdge = {
+    //       id: getEdgeId(),
+    //       source: nodeId,
+    //       target: targetNode.id,
+    //       sourceHandle: 'import-' + handle.name,
+    //       targetHandle: 'export-' + handle.name,
+    //     };
+    //     newEdges.push(newEdge);
+    //   }
+    // });
+    // setEdges(newEdges);
   };
 
   function onTextChange(nodeId, value) {
-    const newHandles = getHandles(value);
-    updateEdges(nodeId, newHandles);
+    const node = nodes.find((node) => node.id === nodeId);
+    const newHandles = getHandles(nodeId, node.data.fileName, value);
 
     setNodes((nodes) =>
       nodes.map((node) => {
@@ -235,34 +202,29 @@ export const Flow = () => {
           node.data = {
             ...node.data,
             value,
+            handles: newHandles,
           };
-          if (newHandles.length > 0) {
-            node.data.handles = newHandles;
-          }
         }
 
         return node;
       })
     );
     updateNodeInternals(nodeId);
+
+    setHandles((handles) => {
+      const existingHandles = handles.filter(
+        (handle) => handle.nodeId !== nodeId
+      );
+      const mergedHandles = existingHandles.concat(newHandles);
+      updateEdges(nodeId, existingHandles, newHandles);
+      return mergedHandles;
+    });
   }
   const nodeClassName = (node) => node.type;
 
   const createNode = () => {
-    const newNode = {
-      id: (nodes.length + 1).toString(),
-      data: {
-        label: 'Node ' + (nodes.length + 1),
-        value: 'test string',
-        handles: [],
-      },
-      type: 'editor',
-      position: {
-        x: Math.random() * window.innerWidth - 200,
-        y: Math.random() * window.innerHeight - 400,
-      },
-    };
-
+    const nextNodeId = (nodes.length + 1).toString();
+    const newNode = createEditorNode(nextNodeId);
     setNodes((nodes) => nodes.concat(newNode));
   };
 
@@ -280,8 +242,6 @@ export const Flow = () => {
 
     const targetIsPane = event.target.classList.contains('react-flow__pane');
     const groupNodeElement = event.target.closest('.react-flow__node-group');
-    console.log('targetIsPane', targetIsPane);
-    console.log('groupNodeElement', groupNodeElement);
 
     const currentText = fromNode.data.value;
     const startLine = fromHandle.loc.start.line;
@@ -308,7 +268,6 @@ export const Flow = () => {
       };
       setNodes((nodes) => nodes.concat(newNode));
     } else if (!groupNodeElement && !targetIsPane) {
-      console.log('landed on real node');
       //it landed on a real node
       const editorNodeElement = event.target.closest(
         '.react-flow__node-editor'
@@ -319,10 +278,7 @@ export const Flow = () => {
         x: event.clientX,
         y: event.clientY,
       });
-      console.log('mouse position', position);
-      console.log('node position', targetNode.position);
       const line = Math.floor((position.y - targetNode.position.y) / 16);
-      console.log('inserting text at line', line);
 
       const newText = insertTextChunk(
         targetNode.data.value,
@@ -331,18 +287,10 @@ export const Flow = () => {
       );
       console.log('new text', newText);
       onTextChange(targetNode.id, newText);
+      return;
     }
 
     onTextChange(fromNode.id, updatedText);
-    // setNodes((nodes) => {
-    //   return nodes.map((node) => {
-    //     if (node.id === fromNode.id) {
-    //       node.data.value = newCode;
-    //     }
-    //     return node;
-    //   });
-    // });
-    // updateNodeInternals(fromNode.id)
   };
   const onConnectEnd = useCallback(
     (event) => {
@@ -351,7 +299,7 @@ export const Flow = () => {
 
       let parentId = null;
       if (groupNodeElement) {
-        parentId = groupNodeElement.getAttribute('data-id'); // Adjust this selector based on your actual implementation
+        parentId = groupNodeElement.getAttribute('data-id');
       }
       const fromNode = nodes.find(
         (node) => node.id === connectingNodeId.current
@@ -396,6 +344,8 @@ export const Flow = () => {
   const onNodeDragStop = (event, node) => {
     const intersections = getIntersectingNodes(node, false);
     const groupNode = intersections.find((n) => n.type === 'group');
+
+    //if it landed on a group it isnt a child of
     if (groupNode && node.parentId !== groupNode.id) {
       setNodes((nodes) => {
         const newNodes = nodes
@@ -420,6 +370,7 @@ export const Flow = () => {
 
         return newNodes;
       });
+      // if it moved out of a group onto the canvas
     } else if (!groupNode && node.parentId) {
       const oldGroupNode = nodes.find(
         (searchNode) => searchNode.id === node.parentId

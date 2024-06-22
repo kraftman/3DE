@@ -1,52 +1,48 @@
 import { parse } from 'acorn';
 import estraverse from 'estraverse';
 import * as monaco from 'monaco-editor';
+import ReactFlow, {
+  useNodesState,
+  useEdgesState,
+  MiniMap,
+  Controls,
+  Position,
+  Background,
+  useReactFlow,
+  useUpdateNodeInternals,
+} from 'reactflow';
 
-export const getImports = (code) => {
+export const getFeatures = (code) => {
   try {
     const ast = parse(code, { sourceType: 'module', locations: true });
-    const imports = [];
+    const handles = [];
     estraverse.traverse(ast, {
-      enter: (node) => {
+      enter: (node, parent) => {
         if (node.type === 'ImportDeclaration') {
           const name = node.specifiers[0].local.name;
           const values = {
             line: node.loc.start.line,
             name,
             fileName: node.source.value,
+            type: 'import',
           };
-          imports.push(values);
-        }
-      },
-    });
-    return imports;
-  } catch (e) {
-    return [];
-  }
-};
-
-export const getExports = (code) => {
-  try {
-    const ast = parse(code, { sourceType: 'module', locations: true });
-    const exports = [];
-    estraverse.traverse(ast, {
-      enter: (node, parent) => {
-        if (node.type === 'ExportNamedDeclaration') {
+          handles.push(values);
+        } else if (node.type === 'ExportNamedDeclaration') {
           const identifier = node.declaration.declarations.find(
             (d) => d.id.type === 'Identifier'
           );
           const name = identifier.id.name;
           const line = node.loc.start.line;
-          exports.push({ name, line, type: 'export' });
+          handles.push({ name, line, type: 'export' });
         } else if (node.type === 'ExportDefaultDeclaration') {
           if (node.declaration.type === 'Identifier') {
-            exports.push({
+            handles.push({
               name: node.declaration.name,
               line: node.loc.start.line,
               type: 'export',
             });
           } else {
-            exports.push({
+            handles.push({
               name: 'default',
               line: node.loc.start.line,
               type: 'export',
@@ -58,12 +54,11 @@ export const getExports = (code) => {
             node.init.type === 'FunctionExpression') &&
           parent.type === 'VariableDeclaration'
         ) {
-          console.log(node.type, node);
-          const isDefaultExport = null; //exports.find(
+          const isDefaultExport = null; //handles.find(
           //(exp) => exp.name === node.id.name
           //);
           if (!isDefaultExport) {
-            exports.push({
+            handles.push({
               name: node.id.name,
               line: node.loc.start.line,
               end: node.id.loc.end.column,
@@ -75,12 +70,86 @@ export const getExports = (code) => {
         }
       },
     });
-    console.log(exports);
-    return exports;
+
+    return handles;
   } catch (e) {
     console.log(e);
     return [];
   }
+};
+
+const getHandlePosition = (feature) => {
+  if (feature.type === 'import') {
+    return Position.Right;
+  }
+  if (feature.type === 'export') {
+    return Position.Left;
+  }
+};
+
+const getLeftPosition = (feature) => {
+  switch (feature.type) {
+    case 'export':
+      return -5;
+    case 'function':
+      return feature.end * 7 + 50;
+    default:
+      return 410;
+  }
+};
+
+// const getColor = (feature) => {
+//   if (feature.type === 'import') {
+//     const isLocal =
+//       feature.fileName.startsWith('./') ||
+//       feature.fileName.startsWith('../') ||
+//       feature.fileName.startsWith('/');
+//     if (isLocal) {
+//       for (const node of nodes) {
+//         if (feature.fileName.includes(node.data.fileName)) {
+//           return '#03ad1a';
+//         }
+//       }
+//       return '#b30f00';
+//     }
+//     if (settings.packageJson.dependencies[feature.fileName]) {
+//       return '#4287f5';
+//     }
+//     return '#b30f00';
+//   }
+//   switch (feature.type) {
+//     case 'export':
+//       return '#03ad1a';
+//     case 'function':
+//       return '#b30f00';
+//     default:
+//       return '#000';
+//   }
+// };
+
+export const getHandles = (nodeId, nodeFileName, code) => {
+  const features = getFeatures(code);
+  const handles = features.map((feature) => {
+    const { name, line, type, fileName } = feature;
+    return {
+      id: `${nodeId}-${type}-${name}`,
+      name,
+      nodeId,
+      fileName: fileName || '',
+      exportFileName: nodeFileName || '',
+      loc: feature.loc,
+      type: 'source',
+      handleType: feature.type,
+      position: getHandlePosition(feature),
+      style: {
+        left: getLeftPosition(feature),
+        top: -5 + 16 * feature.line,
+        //background: getColor(feature),
+        zIndex: 1000,
+      },
+    };
+  });
+  return handles;
 };
 
 export const removeTextChunk = (text, fromLine, toLine) => {

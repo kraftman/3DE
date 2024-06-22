@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { Handle, Position, NodeToolbar } from 'reactflow';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
@@ -17,21 +17,39 @@ const darkTheme = createTheme({
   },
 });
 
-export const EditorNode = ({ id, data, onTextChange, onFileNameChange }) => {
+export const EditorNode = ({
+  id,
+  data,
+  onTextChange,
+  onFileNameChange,
+  onSelectionChange,
+}) => {
   const editorRef = useRef(null);
   const [decorations, setDecorations] = useState([]);
 
   const onChange = (value) => {
     onTextChange(id, value);
     addDecorators();
+  };
 
-    //updateNodeInternals(id);
+  useEffect(() => {
+    onTextChange(id, data.value);
+  }, []);
+
+  const checkIfTextIsSelected = () => {
+    const editor = editorRef.current;
+    const selection = editor.getSelection();
+    if (selection.isEmpty()) {
+      onSelectionChange(id, null);
+    } else {
+      onSelectionChange(id, selection);
+    }
   };
 
   const addListeners = () => {
     const editor = editorRef.current;
     editor.onDidChangeCursorSelection((e) => {
-      console.log(e);
+      checkIfTextIsSelected();
     });
   };
 
