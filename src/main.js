@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('node:path');
 const { exec } = require('child_process');
 const util = require('util');
@@ -25,6 +25,7 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+  return mainWindow;
 };
 
 // This method will be called when Electron has finished
@@ -49,7 +50,17 @@ app.whenReady().then(() => {
       });
     }
   });
-  createWindow();
+
+  const mainWindow = createWindow();
+
+  ipcMain.on('select-folder', async (event, arg) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+    });
+    console.log('folder chosen', result);
+    event.reply('select-folder', result);
+    return result;
+  });
 
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.

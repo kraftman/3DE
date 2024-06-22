@@ -28,6 +28,52 @@ export const createEditorNode = (nodeId) => {
   return newNode;
 };
 
+let edgeIdCount = 0;
+const getEdgeId = () => `${edgeIdCount++}`;
+
+export const getNewEdges = (nodeId, existingHandles, newHandles) => {
+  const exports = newHandles.filter((handle) => handle.handleType === 'export');
+  const imports = newHandles.filter((handle) => handle.handleType === 'import');
+
+  const newEdges = [];
+  exports.forEach((exportHandle) => {
+    existingHandles.forEach((existingHandle) => {
+      const isMatching =
+        existingHandle.handleType === 'import' &&
+        existingHandle.name === exportHandle.name &&
+        existingHandle.fileName === exportHandle.exportFileName;
+
+      if (isMatching) {
+        newEdges.push({
+          id: getEdgeId(),
+          source: existingHandle.nodeId,
+          target: nodeId,
+          targetHandle: exportHandle.id,
+          sourceHandle: existingHandle.id,
+        });
+      }
+    });
+  });
+  imports.forEach((importHandle) => {
+    existingHandles.forEach((existingHandle) => {
+      const isMatching =
+        existingHandle.handleType === 'export' &&
+        existingHandle.name === importHandle.name;
+      existingHandle.exportFileName === importHandle.fileName;
+      if (isMatching) {
+        newEdges.push({
+          id: getEdgeId(),
+          source: nodeId,
+          sourceHandle: importHandle.id,
+          target: existingHandle.nodeId,
+          targetHandle: existingHandle.id,
+        });
+      }
+    });
+  });
+  return newEdges;
+};
+
 export const getInitialNodes = (initialSettingsState) => [
   {
     id: '1',

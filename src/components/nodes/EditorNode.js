@@ -81,21 +81,14 @@ export const EditorNode = ({
     <>
       {renderedHandles}
       <div className="text-updater-node">
-        <NodeToolbar
-          className="node-toolbar"
-          isVisible={true}
-          position={{ x: 0, y: 0 }}
-        >
-          <ThemeProvider theme={darkTheme}>
-            <TextField
-              variant="outlined"
-              value={data.fileName}
-              onChange={(event) => onFileNameChange(id, event.target.value)}
-            />
-          </ThemeProvider>
-          <button>📝</button>
-          <button>✅</button>
-        </NodeToolbar>
+        <ThemeProvider theme={darkTheme}>
+          <TextField
+            size="small"
+            variant="outlined"
+            value={data.fileName}
+            onChange={(event) => onFileNameChange(id, event.target.value)}
+          />
+        </ThemeProvider>
         <Editor
           className="nodrag"
           onChange={onChange}

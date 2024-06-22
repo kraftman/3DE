@@ -143,7 +143,7 @@ export const getHandles = (nodeId, nodeFileName, code) => {
       position: getHandlePosition(feature),
       style: {
         left: getLeftPosition(feature),
-        top: -5 + 16 * feature.line,
+        top: 40 + 16 * feature.line,
         //background: getColor(feature),
         zIndex: 1000,
       },

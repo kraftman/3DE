@@ -32,16 +32,14 @@ import {
   getInitialNodes,
   createEditorNode,
   createSelectionHandle,
+  getNewEdges,
 } from './utils';
 import { initialSettingsState } from './mocks';
 
 const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
-let edgeIdCount = 0;
-const getEdgeId = () => `${edgeIdCount++}`;
-
-export const Flow = () => {
+export const Flow = (project) => {
   const initialNodes = getInitialNodes(initialSettingsState);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -127,84 +125,14 @@ export const Flow = () => {
   );
 
   const updateEdges = (nodeId, existingHandles, newHandles) => {
-    //split into exports and imports and then pair up the matching ones
-    console.log('update edges', nodeId);
-    console.log('existing handles', existingHandles);
-    const exports = newHandles.filter(
-      (handle) => handle.handleType === 'export'
-    );
-    const imports = newHandles.filter(
-      (handle) => handle.handleType === 'import'
-    );
-
-    const newEdges = [];
-    exports.forEach((exportHandle) => {
-      existingHandles.forEach((existingHandle) => {
-        const isMatching =
-          existingHandle.handleType === 'import' &&
-          existingHandle.name === exportHandle.name &&
-          existingHandle.fileName === exportHandle.exportFileName;
-
-        if (isMatching) {
-          newEdges.push({
-            id: getEdgeId(),
-            source: existingHandle.nodeId,
-            target: nodeId,
-            targetHandle: exportHandle.id,
-            sourceHandle: existingHandle.id,
-          });
-        }
-      });
-    });
-    imports.forEach((importHandle) => {
-      existingHandles.forEach((existingHandle) => {
-        const isMatching =
-          existingHandle.handleType === 'export' &&
-          existingHandle.name === importHandle.name;
-        existingHandle.exportFileName === importHandle.fileName;
-        if (isMatching) {
-          newEdges.push({
-            id: getEdgeId(),
-            source: nodeId,
-            sourceHandle: importHandle.id,
-            target: existingHandle.nodeId,
-            targetHandle: existingHandle.id,
-          });
-        }
-      });
-    });
-
-    console.log('ne edges', newEdges);
+    const newEdges = getNewEdges(nodeId, existingHandles, newHandles);
 
     setEdges((edges) => {
-      // dont touch edges that arent connected to this node
       const existingEdges = edges.filter(
         (edge) => edge.source !== nodeId && edge.target !== nodeId
       );
-
       return existingEdges.concat(newEdges);
     });
-    //TODO: if imported from a package, create a virtual node, or dont create the edge?
-    // const newEdges = [];
-    // handles.forEach((handle) => {
-    //   if (!handle.handleType === 'import') {
-    //     return;
-    //   }
-    //   const targetNode = nodes.find(
-    //     (node) => node.data.fileName === handle.fileName
-    //   );
-    //   if (targetNode) {
-    //     const newEdge = {
-    //       id: getEdgeId(),
-    //       source: nodeId,
-    //       target: targetNode.id,
-    //       sourceHandle: 'import-' + handle.name,
-    //       targetHandle: 'export-' + handle.name,
-    //     };
-    //     newEdges.push(newEdge);
-    //   }
-    // });
-    // setEdges(newEdges);
   };
 
   function onTextChange(nodeId, value) {
@@ -220,7 +148,6 @@ export const Flow = () => {
             handles: newHandles,
           };
         }
-
         return node;
       })
     );
@@ -247,6 +174,8 @@ export const Flow = () => {
     connectingNodeId.current = nodeId;
     connectingHandleId.current = handleId;
   }, []);
+
+  const handleSelectionDrag = (fromNode, fromHandle, event) => {};
 
   const handleFunctionDrag = (fromNode, fromHandle, event) => {
     //TODO:
@@ -300,9 +229,7 @@ export const Flow = () => {
         extractedChunk,
         line
       );
-      console.log('new text', newText);
       onTextChange(targetNode.id, newText);
-      return;
     }
 
     onTextChange(fromNode.id, updatedText);
@@ -324,6 +251,9 @@ export const Flow = () => {
       );
       if (fromHandle?.handleType === 'function') {
         return handleFunctionDrag(fromNode, fromHandle, event);
+      }
+      if (fromHandle?.handleType === 'selection') {
+        return handleSelectionDrag(fromNode, fromHandle, event);
       }
       if (!targetIsPane && !groupNodeElement) {
         return;
