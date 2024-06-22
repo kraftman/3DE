@@ -54,7 +54,7 @@ export const getInitialNodes = (initialSettingsState) => [
     id: '3',
     data: {
       fileName: './MyComponent2.js',
-      value: `import { myfunction } from './MyComponent';`,
+      value: `import { myfunction } from './MyComponent.js';`,
       handles: [],
     },
     type: 'editor',

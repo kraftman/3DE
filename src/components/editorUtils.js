@@ -80,10 +80,10 @@ export const getFeatures = (code) => {
 
 const getHandlePosition = (feature) => {
   if (feature.type === 'import') {
-    return Position.Left;
+    return Position.Right;
   }
   if (feature.type === 'export') {
-    return Position.Right;
+    return Position.Left;
   }
 };
 
@@ -132,11 +132,11 @@ export const getHandles = (nodeId, nodeFileName, code) => {
   const handles = features.map((feature) => {
     const { name, line, type, fileName } = feature;
     return {
-      id: `${type}-${name}-${line}`,
+      id: `${nodeId}-${type}-${name}`,
       name,
       nodeId,
       fileName: fileName || '',
-      exportFileNae: nodeFileName || '',
+      exportFileName: nodeFileName || '',
       loc: feature.loc,
       type: 'source',
       handleType: feature.type,

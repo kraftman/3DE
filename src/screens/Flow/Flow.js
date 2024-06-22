@@ -128,7 +128,8 @@ export const Flow = () => {
 
   const updateEdges = (nodeId, existingHandles, newHandles) => {
     //split into exports and imports and then pair up the matching ones
-    console.log('update edges', nodeId, existingHandles, newHandles);
+    console.log('update edges', nodeId);
+    console.log('existing handles', existingHandles);
     const exports = newHandles.filter(
       (handle) => handle.handleType === 'export'
     );
@@ -145,6 +146,7 @@ export const Flow = () => {
           existingHandle.handleType === 'import' &&
           existingHandle.name === exportHandle.name &&
           existingHandle.fileName === exportHandle.exportFileName;
+
         if (isMatching) {
           newEdges.push({
             id: getEdgeId(),
@@ -156,6 +158,8 @@ export const Flow = () => {
         }
       });
     });
+
+    console.log('ne edges', newEdges);
 
     setEdges((edges) => {
       // dont touch edges that arent connected to this node
@@ -190,16 +194,7 @@ export const Flow = () => {
 
   function onTextChange(nodeId, value) {
     const node = nodes.find((node) => node.id === nodeId);
-    const newHandles = getHandles(nodeId, node.fileName, value);
-
-    setHandles((handles) => {
-      const existingHandles = handles.filter(
-        (handle) => handle.nodeId !== nodeId
-      );
-      const mergedHandles = existingHandles.concat(newHandles);
-      updateEdges(nodeId, existingHandles, newHandles);
-      return mergedHandles;
-    });
+    const newHandles = getHandles(nodeId, node.data.fileName, value);
 
     setNodes((nodes) =>
       nodes.map((node) => {
@@ -215,6 +210,15 @@ export const Flow = () => {
       })
     );
     updateNodeInternals(nodeId);
+
+    setHandles((handles) => {
+      const existingHandles = handles.filter(
+        (handle) => handle.nodeId !== nodeId
+      );
+      const mergedHandles = existingHandles.concat(newHandles);
+      updateEdges(nodeId, existingHandles, newHandles);
+      return mergedHandles;
+    });
   }
   const nodeClassName = (node) => node.type;
 
