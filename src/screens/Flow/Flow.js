@@ -140,8 +140,6 @@ export const Flow = () => {
     const newEdges = [];
     exports.forEach((exportHandle) => {
       existingHandles.forEach((existingHandle) => {
-        console.log('existingHandle', existingHandle);
-        console.log('exportHandle', exportHandle);
         const isMatching =
           existingHandle.handleType === 'import' &&
           existingHandle.name === exportHandle.name &&
@@ -154,6 +152,23 @@ export const Flow = () => {
             target: nodeId,
             targetHandle: exportHandle.id,
             sourceHandle: existingHandle.id,
+          });
+        }
+      });
+    });
+    imports.forEach((importHandle) => {
+      existingHandles.forEach((existingHandle) => {
+        const isMatching =
+          existingHandle.handleType === 'export' &&
+          existingHandle.name === importHandle.name;
+        existingHandle.exportFileName === importHandle.fileName;
+        if (isMatching) {
+          newEdges.push({
+            id: getEdgeId(),
+            source: nodeId,
+            sourceHandle: importHandle.id,
+            target: existingHandle.nodeId,
+            targetHandle: existingHandle.id,
           });
         }
       });

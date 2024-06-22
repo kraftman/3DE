@@ -37,7 +37,7 @@ export const getInitialNodes = (initialSettingsState) => [
       handles: [],
     },
     type: 'editor',
-    position: { x: 100, y: 100 },
+    position: { x: 800, y: 100 },
   },
   {
     id: '2',
@@ -58,7 +58,7 @@ export const getInitialNodes = (initialSettingsState) => [
       handles: [],
     },
     type: 'editor',
-    position: { x: 800, y: 300 },
+    position: { x: 100, y: 300 },
   },
   // {
   //   id: '2',
