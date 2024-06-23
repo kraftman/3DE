@@ -54,6 +54,11 @@ app.whenReady().then(() => {
 
   const mainWindow = createWindow();
 
+  ipcMain.handle('load-file', async (event, filePath) => {
+    const fileContents = fs.readFileSync(filePath, 'utf8');
+    return fileContents;
+  });
+
   ipcMain.on('select-folder', async (event, arg) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],

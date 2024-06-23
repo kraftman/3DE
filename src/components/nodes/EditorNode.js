@@ -32,9 +32,10 @@ export const EditorNode = ({
     addDecorators();
   };
 
-  useEffect(() => {
-    onTextChange(id, data.value);
-  }, []);
+  // useEffect(() => {
+  //   //console.log('id, data:', id, data);
+  //   onTextChange(id, data.value);
+  // }, []);
 
   const checkIfTextIsSelected = () => {
     const editor = editorRef.current;

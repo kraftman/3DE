@@ -9,7 +9,7 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   MiniMap,
-  Position,
+  Panel,
   Controls,
   Background,
   useReactFlow,
@@ -20,6 +20,9 @@ import { EditorNode } from '../../components/nodes/EditorNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { GroupNode } from '../../components/nodes/GroupNode';
 import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
+
+import FolderSelectButton from '../../components/FolderSelectButton';
+import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
 
 import {
@@ -137,6 +140,7 @@ export const Flow = (project) => {
 
   function onTextChange(nodeId, value) {
     const node = nodes.find((node) => node.id === nodeId);
+    console.log('found node', node);
     const newHandles = getHandles(nodeId, node.data.fileName, value);
 
     setNodes((nodes) =>
@@ -335,6 +339,39 @@ export const Flow = (project) => {
     }
   };
 
+  const [folderData, setFolderData] = useState([]);
+  const onFolderSelected = (folderData) => {
+    setFolderData(folderData);
+  };
+
+  const onoFileSelected = (fileId) => {
+    window.electronAPI.invokeMain('load-file', fileId).then((response) => {
+      console.log('Response from main:', response);
+      // create a new node with the file contents
+      const nextNodeId = (nodes.length + 1).toString();
+      setNodes((nodes) => {
+        const newNode = {
+          id: nextNodeId,
+          data: {
+            fileName: fileId,
+            value: response,
+            handles: [],
+          },
+          type: 'editor',
+          position: {
+            x: 500,
+            y: 500,
+          },
+        };
+        console.log('New node:', newNode);
+
+        //
+        return nodes.concat(newNode);
+      });
+      updateNodeInternals(nextNodeId);
+    });
+  };
+
   return (
     <>
       <ReactFlow
@@ -353,12 +390,18 @@ export const Flow = (project) => {
         connectionMode="loose"
         onNodeDragStop={onNodeDragStop}
       >
-        <div className="updatenode__controls">
+        {/* <div className="updatenode__controls">
           <button onClick={createNode}> ➕ Add Node</button>
-        </div>
+        </div> */}
+
+        <Background />
+        <Panel position="top-left">
+          <FolderSelectButton onFolderSelected={onFolderSelected} />
+          <BasicTree folderData={folderData} onFileSelected={onoFileSelected} />
+        </Panel>
+
         <MiniMap zoomable pannable nodeClassName={nodeClassName} />
         <Controls />
-        <Background />
       </ReactFlow>
     </>
   );
