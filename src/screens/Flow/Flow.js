@@ -138,13 +138,11 @@ export const Flow = (project) => {
     });
   };
 
-  function onTextChange(nodeId, value) {
-    const node = nodes.find((node) => node.id === nodeId);
-    console.log('found node', node);
-    const newHandles = getHandles(nodeId, node.data.fileName, value);
-
-    setNodes((nodes) =>
-      nodes.map((node) => {
+  const onTextChange = (nodeId, value) => {
+    setNodes((nodes) => {
+      const node = nodes.find((node) => node.id === nodeId);
+      const newHandles = getHandles(nodeId, node.data.fileName, value);
+      const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
           node.data = {
             ...node.data,
@@ -153,26 +151,20 @@ export const Flow = (project) => {
           };
         }
         return node;
-      })
-    );
-    updateNodeInternals(nodeId);
-
-    setHandles((handles) => {
-      const existingHandles = handles.filter(
-        (handle) => handle.nodeId !== nodeId
-      );
-      const mergedHandles = existingHandles.concat(newHandles);
-      updateEdges(nodeId, existingHandles, newHandles);
-      return mergedHandles;
+      });
+      updateNodeInternals(nodeId);
+      setHandles((handles) => {
+        const existingHandles = handles.filter(
+          (handle) => handle.nodeId !== nodeId
+        );
+        const mergedHandles = existingHandles.concat(newHandles);
+        updateEdges(nodeId, existingHandles, newHandles);
+        return mergedHandles;
+      });
+      return newNodes;
     });
-  }
-  const nodeClassName = (node) => node.type;
-
-  const createNode = () => {
-    const nextNodeId = (nodes.length + 1).toString();
-    const newNode = createEditorNode(nextNodeId);
-    setNodes((nodes) => nodes.concat(newNode));
   };
+  const nodeClassName = (node) => node.type;
 
   const onConnectStart = useCallback((_, { nodeId, handleId }) => {
     connectingNodeId.current = nodeId;
@@ -344,12 +336,13 @@ export const Flow = (project) => {
     setFolderData(folderData);
   };
 
-  const onoFileSelected = (fileId) => {
+  const onFileSelected = (fileId) => {
     window.electronAPI.invokeMain('load-file', fileId).then((response) => {
       console.log('Response from main:', response);
       // create a new node with the file contents
-      const nextNodeId = (nodes.length + 1).toString();
+
       setNodes((nodes) => {
+        const nextNodeId = (nodes.length + 1).toString();
         const newNode = {
           id: nextNodeId,
           data: {
@@ -364,11 +357,10 @@ export const Flow = (project) => {
           },
         };
         console.log('New node:', newNode);
-
-        //
-        return nodes.concat(newNode);
+        const newNodes = nodes.concat(newNode);
+        console.log('New nodes:', newNodes);
+        return newNodes;
       });
-      updateNodeInternals(nextNodeId);
     });
   };
 
@@ -397,7 +389,7 @@ export const Flow = (project) => {
         <Background />
         <Panel position="top-left">
           <FolderSelectButton onFolderSelected={onFolderSelected} />
-          <BasicTree folderData={folderData} onFileSelected={onoFileSelected} />
+          <BasicTree folderData={folderData} onFileSelected={onFileSelected} />
         </Panel>
 
         <MiniMap zoomable pannable nodeClassName={nodeClassName} />

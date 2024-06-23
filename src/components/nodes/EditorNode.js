@@ -33,7 +33,7 @@ export const EditorNode = ({
   };
 
   // useEffect(() => {
-  //   //console.log('id, data:', id, data);
+  //   console.log('id, data:', id, data);
   //   onTextChange(id, data.value);
   // }, []);
 
