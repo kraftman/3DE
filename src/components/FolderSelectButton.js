@@ -1,13 +1,13 @@
 import React from 'react';
 import Button from '@mui/material/Button';
 
-const FolderSelectorButton = () => {
+const FolderSelectorButton = ({ onFolderSelected }) => {
   const handleButtonClick = () => {
     window.electronAPI.sendToMain('select-folder', 'nothign');
   };
 
   window.electronAPI.receiveFromMain('select-folder', (response) => {
-    console.log('==== response', response);
+    onFolderSelected(response);
   });
 
   return (

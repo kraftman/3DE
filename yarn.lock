@@ -9198,9 +9198,11 @@ __metadata:
     monaco-editor-webpack-plugin: "npm:^7.1.0"
     node-loader: "npm:^2.0.0"
     react: "npm:^18.3.1"
+    react-complex-tree: "npm:^2.4.4"
     react-dnd: "npm:^16.0.1"
     react-dnd-html5-backend: "npm:^16.0.1"
     react-dom: "npm:^18.3.1"
+    react-folder-tree: "npm:^5.1.1"
     react-jsx-parser: "npm:^1.29.0"
     react-resizable: "npm:^3.0.5"
     reactflow: "npm:^11.11.3"
@@ -10198,7 +10200,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:15.x, prop-types@npm:^15.6.2, prop-types@npm:^15.8.1":
+"prop-types@npm:15.x, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -10287,6 +10289,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-complex-tree@npm:^2.4.4":
+  version: 2.4.4
+  resolution: "react-complex-tree@npm:2.4.4"
+  peerDependencies:
+    react: ">=16.0.0"
+  checksum: 10c0/0417629e56eb67220e7020abcfaa9b06406eb060fc382bd8d7afb8cb150d8d986311e6821544790135a07c731d94bb0f230662b5e9632dd8a86c3300e57bd1b9
+  languageName: node
+  linkType: hard
+
 "react-dnd-html5-backend@npm:^16.0.1":
   version: 16.0.1
   resolution: "react-dnd-html5-backend@npm:16.0.1"
@@ -10343,6 +10354,29 @@ __metadata:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
   checksum: 10c0/1e8cf47414a8554caa68447e5f27749bc40e1eabb4806e2dadcb39ab081d263f517d6aaec5231677e6b425603037c7e3386d1549898f9ffcc98a86cabafb2b9a
+  languageName: node
+  linkType: hard
+
+"react-folder-tree@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "react-folder-tree@npm:5.1.1"
+  dependencies:
+    prop-types: "npm:^15.7.2"
+    react-icons: "npm:^4.1.0"
+    use-tree-state: "npm:1.0.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17
+    react-dom: ^16.8.0 || ^17
+  checksum: 10c0/b7bb72a238e62c5aa5fa422d8bf8ddb41fe2e70ed2725de9eef97ba39021c3e50d69426593a29fcd95349f4e513e5bfb7e7348101d875c85e39cd9915efc704b
+  languageName: node
+  linkType: hard
+
+"react-icons@npm:^4.1.0":
+  version: 4.12.0
+  resolution: "react-icons@npm:4.12.0"
+  peerDependencies:
+    react: "*"
+  checksum: 10c0/2170f43031ee7365539f72d4075cbe6c7fbf9a66d6cf4494aa9393b194272da0564f5b19d1b24dbfc567c0ac89f5fe5b8974d92dd83f61e252388dde6a226fb8
   languageName: node
   linkType: hard
 
@@ -12149,6 +12183,16 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10c0/ac4814e5592524f242921157e791b022efe36e451fe0d4fd4d204322d5433a4fc300d63b0ade5185f8e0735ded044c70bcf6d2352db0f74d097a238cebd2da02
+  languageName: node
+  linkType: hard
+
+"use-tree-state@npm:1.0.0":
+  version: 1.0.0
+  resolution: "use-tree-state@npm:1.0.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17
+    react-dom: ^16.8.0 || ^17
+  checksum: 10c0/a3761c6984f4a35872db7a67a8ebb88cefbb9bd3f14fce724169e9429770b2589dc38ae89f092ed224d6d7a6119977a9385ef75daf61b2803b773c05daf42c42
   languageName: node
   linkType: hard
 

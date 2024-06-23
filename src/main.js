@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('node:path');
+const fs = require('fs');
 const { exec } = require('child_process');
 const util = require('util');
 const runTest = require('./run-tests');
@@ -57,8 +58,26 @@ app.whenReady().then(() => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],
     });
-    console.log('folder chosen', result);
-    event.reply('select-folder', result);
+    function readDirectory(directory) {
+      const items = fs.readdirSync(directory);
+      return items
+        .filter((item) => item !== '.git' && item !== 'node_modules')
+        .map((item) => {
+          const fullPath = path.join(directory, item);
+          const isDirectory = fs.statSync(fullPath).isDirectory();
+          const newData = {
+            name: item,
+            path: fullPath,
+            isDirectory,
+            contents: isDirectory ? readDirectory(fullPath) : null,
+          };
+          return newData;
+        });
+    }
+
+    const full = readDirectory(result.filePaths[0]);
+    console.log('==== full', full);
+    event.reply('select-folder', full);
     return result;
   });
 
