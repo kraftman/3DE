@@ -6,12 +6,18 @@ const GroupNodeInternal = ({ data, selected }) => {
   return (
     <>
       <NodeResizer
-        color="#ff0071"
         isVisible={selected}
-        minWidth={100}
-        minHeight={30}
+        minWidth={400}
+        minHeight={400}
+        style={{ background: 'none' }}
       />
-      <div style={{ padding: 10 }}>{data.label}</div>
+      <div
+        style={{
+          padding: 10,
+        }}
+      >
+        {data.label}
+      </div>
     </>
   );
 };

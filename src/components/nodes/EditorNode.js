@@ -94,12 +94,12 @@ export const EditorNode = ({
           className="nodrag"
           onChange={onChange}
           height="100%"
-          width="100%"
+          width="80%"
           defaultLanguage="javascript"
           automaticLayout="true"
           value={data.value}
           options={{
-            fontSize: 12,
+            fontSize: 8,
             lineNumbersMinChars: 2,
             minimap: {
               enabled: false,

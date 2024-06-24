@@ -45,7 +45,6 @@ export const BasicTree = ({ folderData, onFileSelected }) => {
     const handleDragEnd = (event) => {
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const isInTree = event.target.closest('.react-complex-tree');
-      console.log(flat);
       if (!isInTree && !flat[fullPath].isFolder) {
         onFileSelected(event);
         event.preventDefault();

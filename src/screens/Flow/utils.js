@@ -11,6 +11,10 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
+let nodeIdCount = 0;
+
+export const getNewNodeId = () => `${nodeIdCount++}`;
+
 export const createEditorNode = (nodeId) => {
   const newNode = {
     id: nodeId,
@@ -72,6 +76,31 @@ export const getNewEdges = (nodeId, existingHandles, newHandles) => {
     });
   });
   return newEdges;
+};
+
+export const stringToDarkTransparentColor = (str) => {
+  // Hash the input string
+  let hash = 0;
+  console.log('str:', str);
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  // Convert hash to a color
+  let color = '#';
+  for (let i = 0; i < 3; i++) {
+    let value = (hash >> (i * 8)) & 0xff;
+    // Ensure the value is dark (less than 128 to be dark)
+    value = Math.min(value, 127);
+    // Convert to hex and pad if necessary
+    color += ('00' + value.toString(16)).substr(-2);
+  }
+
+  // Add transparency
+  let alpha = Math.floor(0.5 * 255).toString(16); // 50% transparency
+  color += alpha;
+
+  return color;
 };
 
 export const getInitialNodes = (initialSettingsState) => [

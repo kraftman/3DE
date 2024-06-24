@@ -27,6 +27,7 @@ import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import FolderSelectButton from '../../components/FolderSelectButton';
 import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
+import path from 'path-browserify';
 
 import Button from '@mui/material/Button';
 import { useLayer } from './useLayer';
@@ -39,7 +40,12 @@ import {
   insertTextChunk,
 } from '../../components/editorUtils';
 
-import { createSelectionHandle, getNewEdges } from './utils';
+import {
+  createSelectionHandle,
+  getNewEdges,
+  getNewNodeId,
+  stringToDarkTransparentColor,
+} from './utils';
 import { initialSettingsState } from './mocks';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
@@ -48,13 +54,14 @@ export const Flow = () => {
   const { setLayer, setNodes, setEdges, nodes, edges, currentLayer } =
     useLayer();
   const [folderData, setFolderData] = useState([]);
+  const [rootPath, setRootPath] = useState('/home/chris/marvel-app');
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
   const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
     const loadFileSystem = async () => {
-      const folderTree = await loadFolderTree('/home/chris/marvel-app');
+      const folderTree = await loadFolderTree(rootPath);
       setFolderData(folderTree);
     };
     loadFileSystem();
@@ -362,16 +369,52 @@ export const Flow = () => {
       console.log('event', event);
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
+      console.log('fullpath', fullPath);
+      const relativePath = path.relative(rootPath, fullPath);
+      const parsedPaths = relativePath.split(path.sep);
+
       const fileContents = await loadFile(fullPath);
       const newPos = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
+
       console.log('clientxy', event.clientX, event.clientY);
       console.log('newpos', newPos);
 
       setNodes((nodes) => {
-        const nextNodeId = (nodes.length + 1).toString();
+        console.log('parsedPaths', parsedPaths);
+        const existingGroup = nodes.find(
+          (node) =>
+            node.type === 'group' &&
+            node.data.folder === parsedPaths[0] &&
+            !node.parentId
+        );
+        let parentId = null;
+        if (!existingGroup) {
+          // create a new group node
+          // recursively create group nodes for each folder in the path
+          // create a new editor node for the file
+          const newColor = stringToDarkTransparentColor(relativePath);
+          const newGroupNode = {
+            id: getNewNodeId(),
+            data: {
+              folder: parsedPaths[0],
+              label: parsedPaths[0],
+            },
+            type: 'group',
+            position: newPos,
+            style: {
+              background: newColor,
+              width: '800px',
+              height: '800px',
+            },
+          };
+          nodes = nodes.concat(newGroupNode);
+          parentId = newGroupNode.id;
+        }
+
+        const nextNodeId = getNewNodeId();
         const newNode = {
           id: nextNodeId,
           data: {
@@ -381,7 +424,11 @@ export const Flow = () => {
             handles: [],
           },
           type: 'editor',
-          position: newPos,
+          position: {
+            x: parentId ? 10 : newPos.x,
+            y: parentId ? 10 : newPos.y,
+          },
+          parentId,
         };
         const newNodes = nodes.concat(newNode);
         return newNodes;
