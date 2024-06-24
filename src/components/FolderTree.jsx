@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   UncontrolledTreeEnvironment,
   Tree,
@@ -40,18 +40,25 @@ export const BasicTree = ({ folderData, onFileSelected }) => {
   };
 
   flattenStructure(flat, wrapped.contents, 'root');
+  console.log('flat', flat);
 
-  window.addEventListener('dragend', (event) => {
-    if (!event.target.closest('.react-complex-tree')) {
-      console.log('Item was dragged out of the tree', event);
-      const itemId = event.target.getAttribute('data-rct-item-id');
-      console.log('Drag end - Item ID:', itemId);
-      onFileSelected(itemId);
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-    }
-  });
+  useEffect(() => {
+    const handleDragEnd = (event) => {
+      const fullPath = event.target.getAttribute('data-rct-item-id');
+      const isInTree = event.target.closest('.react-complex-tree');
+      console.log(flat);
+      if (!isInTree && !flat[fullPath].isFolder) {
+        onFileSelected(event);
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }
+    };
+    window.addEventListener('dragend', handleDragEnd);
+    return () => {
+      window.removeEventListener('dragend', handleDragEnd);
+    };
+  }, [folderData]);
 
   return (
     <ControlledTreeEnvironment

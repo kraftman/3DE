@@ -31,6 +31,8 @@ import './updatenode.css';
 import Button from '@mui/material/Button';
 import { useLayer } from './useLayer';
 
+import { loadFolderTree, loadFile } from '../../electronHelpers';
+
 import {
   getHandles,
   removeTextChunk,
@@ -49,6 +51,14 @@ export const Flow = () => {
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
   const updateNodeInternals = useUpdateNodeInternals();
+
+  useEffect(() => {
+    const loadFileSystem = async () => {
+      const folderTree = await loadFolderTree('/home/chris/marvel-app');
+      setFolderData(folderTree);
+    };
+    loadFileSystem();
+  }, []);
 
   const onNodesChange = (changes) => {
     setNodes((prevNodes) => {
@@ -347,31 +357,30 @@ export const Flow = () => {
     setFolderData(folderData);
   };
 
-  const onFileSelected = (fileId) => {
-    window.electronAPI.invokeMain('load-file', fileId).then((response) => {
-      console.log('Response from main:', response);
-      // create a new node with the file contents
+  const onFileSelected = async (event) => {
+    console.log('event', event);
+    const fullPath = event.target.getAttribute('data-rct-item-id');
+    const fileName = event.target.textContent;
+    const fileContents = await loadFile(fullPath);
 
-      setNodes((nodes) => {
-        const nextNodeId = (nodes.length + 1).toString();
-        const newNode = {
-          id: nextNodeId,
-          data: {
-            fileName: fileId,
-            value: response,
-            handles: [],
-          },
-          type: 'editor',
-          position: {
-            x: 500,
-            y: 500,
-          },
-        };
-        console.log('New node:', newNode);
-        const newNodes = nodes.concat(newNode);
-        console.log('New nodes:', newNodes);
-        return newNodes;
-      });
+    setNodes((nodes) => {
+      const nextNodeId = (nodes.length + 1).toString();
+      const newNode = {
+        id: nextNodeId,
+        data: {
+          fullPath,
+          fileName,
+          value: fileContents,
+          handles: [],
+        },
+        type: 'editor',
+        position: screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        }),
+      };
+      const newNodes = nodes.concat(newNode);
+      return newNodes;
     });
   };
 
