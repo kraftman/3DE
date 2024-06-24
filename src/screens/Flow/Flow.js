@@ -356,12 +356,13 @@ export const Flow = () => {
           const newNodes = nodes.map((search) => {
             if (search.id === groupNode.id) {
               search.style.width = nodeRight + 100;
+              search.selected = true;
             }
             return search;
           });
           return newNodes;
         });
-        updateNodeInternals(groupNode.id);
+        setTimeout(() => updateNodeInternals(groupNode.id), 0);
       }
     } else if (!groupNode && node.parentId) {
       console.log('moved out of group');
