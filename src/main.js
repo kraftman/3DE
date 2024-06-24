@@ -59,11 +59,15 @@ app.whenReady().then(() => {
     return fileContents;
   });
 
-  ipcMain.on('select-folder', async (event, arg) => {
+  ipcMain.handle('select-folder', async (event, arg) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],
     });
-    function readDirectory(directory) {
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle('load-folder-tree', async (event, folderPath) => {
+    const readDirectory = (directory) => {
       const items = fs.readdirSync(directory);
       return items
         .filter((item) => item !== '.git' && item !== 'node_modules')
@@ -78,12 +82,10 @@ app.whenReady().then(() => {
           };
           return newData;
         });
-    }
+    };
 
-    const full = readDirectory(result.filePaths[0]);
-    console.log('==== full', full);
-    event.reply('select-folder', full);
-    return result;
+    const full = readDirectory(folderPath);
+    return full;
   });
 
   // On OS X it's common to re-create a window in the app when the

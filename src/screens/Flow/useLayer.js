@@ -14,7 +14,7 @@ export const useLayer = () => {
   const setEdges = (edgesUpdater) => {
     dispatch({ type: 'SET_EDGES', payload: edgesUpdater });
   };
-  console.log('state:', state);
+
   const nodes = state.layers[state.currentLayer].nodes;
   const edges = state.layers[state.currentLayer].edges;
   const currentLayer = state.currentLayer;

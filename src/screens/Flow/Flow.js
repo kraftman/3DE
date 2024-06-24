@@ -37,45 +37,31 @@ import {
   insertTextChunk,
 } from '../../components/editorUtils';
 
-import {
-  getInitialNodes,
-  createEditorNode,
-  createSelectionHandle,
-  getNewEdges,
-} from './utils';
+import { createSelectionHandle, getNewEdges } from './utils';
 import { initialSettingsState } from './mocks';
 
-const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
-export const Flow = (project) => {
+export const Flow = () => {
   const { setLayer, setNodes, setEdges, nodes, edges, currentLayer } =
     useLayer();
-  //const initialNodes = getInitialNodes(initialSettingsState);
-
-  // const [nodes, setNodes, onNodesChange] = useNodesState(currentLayer.nodes);
-  // const [edges, setEdges, onEdgesChange] = useEdgesState(currentLayer.edges);
-
-  // const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  // const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [folderData, setFolderData] = useState([]);
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
+  const updateNodeInternals = useUpdateNodeInternals();
 
   const onNodesChange = (changes) => {
     setNodes((prevNodes) => {
-      // Apply changes to the previous nodes array
       return applyNodeChanges(changes, prevNodes);
     });
   };
 
   const onEdgesChange = (changes) => {
     setEdges((prevEdges) => {
-      // Apply changes to the previous edges array
       applyEdgeChanges(changes, prevEdges);
     });
   };
 
-  const updateNodeInternals = useUpdateNodeInternals();
   const connectingNodeId = useRef(null);
   const connectingHandleId = useRef(null);
   const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
@@ -357,7 +343,6 @@ export const Flow = (project) => {
     }
   };
 
-  const [folderData, setFolderData] = useState([]);
   const onFolderSelected = (folderData) => {
     setFolderData(folderData);
   };

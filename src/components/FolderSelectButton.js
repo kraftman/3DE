@@ -1,14 +1,13 @@
 import React from 'react';
 import Button from '@mui/material/Button';
+import { selectFolder, loadFolderTree } from '../electronHelpers';
 
 const FolderSelectorButton = ({ onFolderSelected }) => {
-  const handleButtonClick = () => {
-    window.electronAPI.sendToMain('select-folder', 'nothign');
+  const handleButtonClick = async () => {
+    const folder = await selectFolder();
+    const tree = await loadFolderTree(folder);
+    onFolderSelected(tree);
   };
-
-  window.electronAPI.receiveFromMain('select-folder', (response) => {
-    onFolderSelected(response);
-  });
 
   return (
     <Button variant="contained" color="primary" onClick={handleButtonClick}>
