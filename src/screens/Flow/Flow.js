@@ -312,11 +312,12 @@ export const Flow = () => {
   const onConnect = (connection) => {};
 
   const onNodeDragStop = (event, node) => {
-    const intersections = getIntersectingNodes(node, false);
+    const intersections = getIntersectingNodes(node, true);
     const groupNode = intersections.find((n) => n.type === 'group');
 
     //if it landed on a group it isnt a child of
     if (groupNode && node.parentId !== groupNode.id) {
+      console.log('new node landed on group');
       setNodes((nodes) => {
         const newNodes = nodes
           .map((search) => {
@@ -340,8 +341,30 @@ export const Flow = () => {
 
         return newNodes;
       });
-      // if it moved out of a group onto the canvas
+
+      // its still inside its parent group
+    } else if (groupNode && node.parentId === groupNode.id) {
+      console.log('parent group', groupNode);
+      console.log('child node', node);
+      const groupRight = parseInt(groupNode.style.width, 10);
+      const nodeRight = node.position.x + parseInt(node.style.width, 10);
+      console.log('nodeRight', nodeRight);
+      console.log('groupWith', groupNode.style.width);
+      if (nodeRight > groupRight) {
+        console.log('new width', nodeRight + 100);
+        setNodes((nodes) => {
+          const newNodes = nodes.map((search) => {
+            if (search.id === groupNode.id) {
+              search.style.width = nodeRight + 100;
+            }
+            return search;
+          });
+          return newNodes;
+        });
+        updateNodeInternals(groupNode.id);
+      }
     } else if (!groupNode && node.parentId) {
+      console.log('moved out of group');
       const oldGroupNode = nodes.find(
         (searchNode) => searchNode.id === node.parentId
       );
@@ -357,6 +380,8 @@ export const Flow = () => {
         });
         return newNodes;
       });
+    } else {
+      console.log('shouldnt get here');
     }
   };
 
@@ -427,6 +452,10 @@ export const Flow = () => {
           position: {
             x: parentId ? 10 : newPos.x,
             y: parentId ? 10 : newPos.y,
+          },
+          style: {
+            width: '500px',
+            height: '600px',
           },
           parentId,
         };
