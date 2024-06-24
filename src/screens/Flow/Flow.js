@@ -14,7 +14,10 @@ import ReactFlow, {
   Background,
   useReactFlow,
   useUpdateNodeInternals,
+  applyEdgeChanges,
+  applyNodeChanges,
 } from 'reactflow';
+
 import 'reactflow/dist/style.css';
 import { EditorNode } from '../../components/nodes/EditorNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
@@ -24,6 +27,9 @@ import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import FolderSelectButton from '../../components/FolderSelectButton';
 import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
+
+import Button from '@mui/material/Button';
+import { useLayer } from './useLayer';
 
 import {
   getHandles,
@@ -43,11 +49,31 @@ const initialEdges = [];
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = (project) => {
-  const initialNodes = getInitialNodes(initialSettingsState);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { setLayer, setNodes, setEdges, nodes, edges, currentLayer } =
+    useLayer();
+  //const initialNodes = getInitialNodes(initialSettingsState);
+
+  // const [nodes, setNodes, onNodesChange] = useNodesState(currentLayer.nodes);
+  // const [edges, setEdges, onEdgesChange] = useEdgesState(currentLayer.edges);
+
+  // const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  // const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
+
+  const onNodesChange = (changes) => {
+    setNodes((prevNodes) => {
+      // Apply changes to the previous nodes array
+      return applyNodeChanges(changes, prevNodes);
+    });
+  };
+
+  const onEdgesChange = (changes) => {
+    setEdges((prevEdges) => {
+      // Apply changes to the previous edges array
+      applyEdgeChanges(changes, prevEdges);
+    });
+  };
 
   const updateNodeInternals = useUpdateNodeInternals();
   const connectingNodeId = useRef(null);
@@ -364,6 +390,13 @@ export const Flow = (project) => {
     });
   };
 
+  const upLayer = () => {
+    setLayer(currentLayer + 1);
+  };
+  const downLayer = () => {
+    setLayer(currentLayer - 1);
+  };
+
   return (
     <>
       <ReactFlow
@@ -388,6 +421,13 @@ export const Flow = (project) => {
 
         <Background />
         <Panel position="top-left">
+          <Button variant="contained" color="primary" onClick={upLayer}>
+            Up Layer
+          </Button>
+          <Button variant="contained" color="primary" onClick={downLayer}>
+            Down Layer
+          </Button>
+          <div>Current Layer: {currentLayer}</div>
           <FolderSelectButton onFolderSelected={onFolderSelected} />
           <BasicTree folderData={folderData} onFileSelected={onFileSelected} />
         </Panel>
