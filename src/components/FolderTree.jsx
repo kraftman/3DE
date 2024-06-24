@@ -40,7 +40,6 @@ export const BasicTree = ({ folderData, onFileSelected }) => {
   };
 
   flattenStructure(flat, wrapped.contents, 'root');
-  console.log('flat', flat);
 
   useEffect(() => {
     const handleDragEnd = (event) => {

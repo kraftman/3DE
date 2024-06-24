@@ -357,32 +357,38 @@ export const Flow = () => {
     setFolderData(folderData);
   };
 
-  const onFileSelected = async (event) => {
-    console.log('event', event);
-    const fullPath = event.target.getAttribute('data-rct-item-id');
-    const fileName = event.target.textContent;
-    const fileContents = await loadFile(fullPath);
+  const onFileSelected = useCallback(
+    async (event) => {
+      console.log('event', event);
+      const fullPath = event.target.getAttribute('data-rct-item-id');
+      const fileName = event.target.textContent;
+      const fileContents = await loadFile(fullPath);
+      const newPos = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      console.log('clientxy', event.clientX, event.clientY);
+      console.log('newpos', newPos);
 
-    setNodes((nodes) => {
-      const nextNodeId = (nodes.length + 1).toString();
-      const newNode = {
-        id: nextNodeId,
-        data: {
-          fullPath,
-          fileName,
-          value: fileContents,
-          handles: [],
-        },
-        type: 'editor',
-        position: screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        }),
-      };
-      const newNodes = nodes.concat(newNode);
-      return newNodes;
-    });
-  };
+      setNodes((nodes) => {
+        const nextNodeId = (nodes.length + 1).toString();
+        const newNode = {
+          id: nextNodeId,
+          data: {
+            fullPath,
+            fileName,
+            value: fileContents,
+            handles: [],
+          },
+          type: 'editor',
+          position: newPos,
+        };
+        const newNodes = nodes.concat(newNode);
+        return newNodes;
+      });
+    },
+    [screenToFlowPosition]
+  );
 
   const upLayer = () => {
     setLayer(currentLayer + 1);
