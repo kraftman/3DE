@@ -57,6 +57,7 @@ export const Flow = () => {
   const [rootPath, setRootPath] = useState('/home/chris/marvel-app');
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
+  const [update, setUpdate] = useState(false);
   const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
@@ -355,14 +356,20 @@ export const Flow = () => {
         setNodes((nodes) => {
           const newNodes = nodes.map((search) => {
             if (search.id === groupNode.id) {
-              search.style.width = nodeRight + 100;
-              search.selected = true;
+              return {
+                ...search,
+                style: {
+                  ...search.style,
+                  width: nodeRight + 100,
+                },
+              };
+            } else {
+              return search;
             }
-            return search;
           });
           return newNodes;
         });
-        setTimeout(() => updateNodeInternals(groupNode.id), 0);
+        updateNodeInternals(groupNode.id);
       }
     } else if (!groupNode && node.parentId) {
       console.log('moved out of group');
