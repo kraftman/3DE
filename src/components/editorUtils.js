@@ -130,7 +130,7 @@ const getLeftPosition = (feature) => {
 export const getHandles = (nodeId, nodeFileName, code) => {
   const features = getFeatures(code);
   const handles = features.map((feature) => {
-    const { name, line, type, fileName } = feature;
+    const { name, type, fileName } = feature;
     return {
       id: `${nodeId}-${type}-${name}`,
       name,

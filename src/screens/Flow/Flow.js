@@ -53,7 +53,7 @@ import { initialSettingsState } from './mocks';
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
-  const { setLayer, setNodes, setEdges, nodes, edges, currentLayer } =
+  const { setLayer, layers, setNodes, setEdges, nodes, edges, currentLayer } =
     useLayer();
   const [folderData, setFolderData] = useState([]);
   const [rootPath, setRootPath] = useState('/home/chris/marvel-app');
@@ -426,6 +426,8 @@ export const Flow = () => {
             !node.parentId
         );
         let parentId = null;
+        const lines = fileContents.split('\n');
+        const editorHeight = Math.min(lines.length * 16, 600);
         if (!existingGroup) {
           // create a new group node
           // recursively create group nodes for each folder in the path
@@ -441,8 +443,8 @@ export const Flow = () => {
             position: newPos,
             style: {
               background: newColor,
-              width: '800px',
-              height: '800px',
+              width: '600px',
+              height: `${editorHeight + 50}px`,
             },
           };
           nodes = nodes.concat(newGroupNode);
@@ -450,6 +452,9 @@ export const Flow = () => {
         }
 
         const nextNodeId = getNewNodeId();
+
+        console.log('editorheight', editorHeight);
+
         const newNode = {
           id: nextNodeId,
           data: {
@@ -465,7 +470,7 @@ export const Flow = () => {
           },
           style: {
             width: '500px',
-            height: '600px',
+            height: `${editorHeight}px`,
           },
           parentId,
         };
@@ -475,13 +480,6 @@ export const Flow = () => {
     },
     [screenToFlowPosition]
   );
-
-  const upLayer = () => {
-    setLayer(currentLayer + 1);
-  };
-  const downLayer = () => {
-    setLayer(currentLayer - 1);
-  };
 
   return (
     <>
@@ -505,14 +503,12 @@ export const Flow = () => {
           <button onClick={createNode}> ➕ Add Node</button>
         </div> */}
 
-        <Background />
+        <Background
+          style={{
+            background: layers[currentLayer].color,
+          }}
+        />
         <Panel position="top-left">
-          <Button variant="contained" color="primary" onClick={upLayer}>
-            Up Layer
-          </Button>
-          <Button variant="contained" color="primary" onClick={downLayer}>
-            Down Layer
-          </Button>
           <div>Current Layer: {currentLayer}</div>
           <FolderSelectButton onFolderSelected={onFolderSelected} />
           <BasicTree folderData={folderData} onFileSelected={onFileSelected} />

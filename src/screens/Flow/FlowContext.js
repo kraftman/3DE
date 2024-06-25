@@ -1,7 +1,9 @@
 import React, { useReducer, createContext, useContext } from 'react';
 
 const initialState = {
-  layers: [{ nodes: [], edges: [] }],
+  layers: {
+    0: { nodes: [], edges: [], color: '#11441166' },
+  },
   currentLayer: 0,
 };
 

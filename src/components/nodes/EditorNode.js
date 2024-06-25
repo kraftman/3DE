@@ -90,28 +90,30 @@ export const EditorNode = ({
             onChange={(event) => onFileNameChange(id, event.target.value)}
           />
         </ThemeProvider>
-        <Editor
-          className="nodrag"
-          onChange={onChange}
-          height="100%"
-          width="70%"
-          defaultLanguage="javascript"
-          automaticLayout="true"
-          value={data.value}
-          options={{
-            fontSize: 8,
-            lineNumbersMinChars: 2,
-            minimap: {
-              enabled: false,
-            },
-          }}
-          theme="vs-dark"
-          onMount={(editor) => {
-            editorRef.current = editor;
-            addDecorators();
-            addListeners();
-          }}
-        />
+        <div className="editor-container">
+          <Editor
+            className="editor nodrag"
+            onChange={onChange}
+            height="100%"
+            width="100%"
+            defaultLanguage="javascript"
+            automaticLayout="true"
+            value={data.value}
+            options={{
+              fontSize: 8,
+              lineNumbersMinChars: 2,
+              minimap: {
+                enabled: false,
+              },
+            }}
+            theme="vs-dark"
+            onMount={(editor) => {
+              editorRef.current = editor;
+              addDecorators();
+              addListeners();
+            }}
+          />
+        </div>
       </div>
     </>
   );

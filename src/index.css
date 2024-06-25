@@ -25,10 +25,19 @@ body,
   background: rgb(8, 8, 8);
 }
 
-.text-updater-node label {
-  display: block;
-  color: #777;
-  font-size: 12px;
+.text-updater-node {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-container {
+  flex: 1;
+  display: flex;
+}
+
+.editor {
+  flex: 1;
 }
 
 .node-toolbar {
