@@ -1,17 +1,21 @@
 import React, { useReducer, createContext, useContext } from 'react';
 
 const initialState = {
-  layers: {
-    1: { nodes: [], edges: [] },
-    2: { nodes: [], edges: [] },
-    // Add more layers as needed
-  },
-  currentLayer: 1,
+  layers: [{ nodes: [], edges: [] }],
+  currentLayer: 0,
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case 'SET_LAYER':
+    case 'SET_LAYERS':
+      return {
+        ...state,
+        layers:
+          typeof action.payload === 'function'
+            ? action.payload(state.layers)
+            : action.payload,
+      };
+    case 'SET_CURRENT_LAYER':
       if (!state.layers[action.payload]) {
         // add a new layer
         return {

@@ -34,6 +34,8 @@ import { useLayer } from './useLayer';
 
 import { loadFolderTree, loadFile } from '../../electronHelpers';
 
+import { LayerManager } from '../../components/LayerManager';
+
 import {
   getHandles,
   removeTextChunk,
@@ -515,7 +517,9 @@ export const Flow = () => {
           <FolderSelectButton onFolderSelected={onFolderSelected} />
           <BasicTree folderData={folderData} onFileSelected={onFileSelected} />
         </Panel>
-
+        <Panel position="top-right">
+          <LayerManager />
+        </Panel>
         <MiniMap zoomable pannable nodeClassName={nodeClassName} />
         <Controls />
       </ReactFlow>
