@@ -5,7 +5,8 @@ import {
   StaticTreeDataProvider,
   ControlledTreeEnvironment,
 } from 'react-complex-tree';
-import 'react-complex-tree/lib/style-modern.css';
+import '@blueprintjs/core/lib/css/blueprint.css'
+import { renderers as bpRenderers } from 'react-complex-tree-blueprintjs-renderers';
 
 function flattenStructure(flat, nestedStructure, parentKey) {
   nestedStructure.forEach((child) => {
@@ -20,8 +21,21 @@ function flattenStructure(flat, nestedStructure, parentKey) {
       flattenStructure(flat, child.contents, child.path);
     }
   });
+  sortDirectory(flat, parentKey)
 
   return flat;
+}
+
+function sortDirectory(flat, parentKey){
+  const children = flat[parentKey].children;
+  const folders = children.filter(child => flat[child].isFolder);
+  const others = children.filter(child => !flat[child].isFolder);
+  folders.sort();
+  others.sort();
+
+  const sortedChildren = folders.concat(others);
+
+  flat[parentKey].children = sortedChildren;
 }
 
 export const BasicTree = ({ folderData, onFileSelected }) => {
@@ -86,6 +100,7 @@ export const BasicTree = ({ folderData, onFileSelected }) => {
         )
       }
       onSelectItems={(items) => setSelectedItems(items)}
+      {...bpRenderers}
     >
       <div
         className="rct-dark"
