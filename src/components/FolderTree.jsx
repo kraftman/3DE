@@ -5,61 +5,19 @@ import {
   StaticTreeDataProvider,
   ControlledTreeEnvironment,
 } from 'react-complex-tree';
-import '@blueprintjs/core/lib/css/blueprint.css'
+import '@blueprintjs/core/lib/css/blueprint.css';
 import { renderers as bpRenderers } from 'react-complex-tree-blueprintjs-renderers';
 
-function flattenStructure(flat, nestedStructure, parentKey) {
-  nestedStructure.forEach((child) => {
-    flat[parentKey].children.push(child.path);
-    flat[child.path] = {
-      index: child.path,
-      children: [],
-      data: child.name,
-      isFolder: child.isDirectory,
-    };
-    if (child.isDirectory) {
-      flattenStructure(flat, child.contents, child.path);
-    }
-  });
-  sortDirectory(flat, parentKey)
-
-  return flat;
-}
-
-function sortDirectory(flat, parentKey){
-  const children = flat[parentKey].children;
-  const folders = children.filter(child => flat[child].isFolder);
-  const others = children.filter(child => !flat[child].isFolder);
-  folders.sort();
-  others.sort();
-
-  const sortedChildren = folders.concat(others);
-
-  flat[parentKey].children = sortedChildren;
-}
-
-export const BasicTree = ({ folderData, onFileSelected }) => {
+export const BasicTree = ({ flatFiles, onFileSelected }) => {
   const [focusedItem, setFocusedItem] = useState();
   const [expandedItems, setExpandedItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
-
-  const wrapped = { name: 'root', contents: folderData };
-  const flat = {
-    root: {
-      index: 'root',
-      children: [],
-      data: 'Root item',
-      isFolder: true,
-    },
-  };
-
-  flattenStructure(flat, wrapped.contents, 'root');
 
   useEffect(() => {
     const handleDragEnd = (event) => {
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const isInTree = event.target.closest('.react-complex-tree');
-      if (!isInTree && !flat[fullPath].isFolder) {
+      if (!isInTree && !flatFiles[fullPath].isFolder) {
         onFileSelected(event);
         event.preventDefault();
         event.stopPropagation();
@@ -70,11 +28,11 @@ export const BasicTree = ({ folderData, onFileSelected }) => {
     return () => {
       window.removeEventListener('dragend', handleDragEnd);
     };
-  }, [folderData]);
+  }, [flatFiles]);
 
   return (
     <ControlledTreeEnvironment
-      items={flat}
+      items={flatFiles}
       getItemTitle={(item) => item.data}
       viewState={{
         ['tree-2']: {

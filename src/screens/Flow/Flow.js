@@ -47,6 +47,7 @@ import {
   getNewEdges,
   getNewNodeId,
   stringToDarkTransparentColor,
+  flattenFileTree,
 } from './utils';
 import { initialSettingsState } from './mocks';
 
@@ -56,18 +57,22 @@ export const Flow = () => {
   const { setLayer, layers, setNodes, setEdges, nodes, edges, currentLayer } =
     useLayer();
   const [folderData, setFolderData] = useState([]);
-  const [rootPath, setRootPath] = useState('/home/chris/marvel-app');
+  const [flatFiles, setFlatFiles] = useState([]);
+  const [rootPath, setRootPath] = useState('');
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
-  const [update, setUpdate] = useState(false);
   const updateNodeInternals = useUpdateNodeInternals();
 
+  const loadFileSystem = async (newRootPath) => {
+    const folderTree = await loadFolderTree(newRootPath);
+    setRootPath(newRootPath);
+    setFolderData(folderTree);
+    const flatFiles = flattenFileTree(folderTree);
+    setFlatFiles(flatFiles);
+  };
+
   useEffect(() => {
-    const loadFileSystem = async () => {
-      const folderTree = await loadFolderTree(rootPath);
-      setFolderData(folderTree);
-    };
-    loadFileSystem();
+    loadFileSystem('/home/chris/marvel-app');
   }, []);
 
   const onNodesChange = (changes) => {
@@ -395,8 +400,8 @@ export const Flow = () => {
     }
   };
 
-  const onFolderSelected = (folderData) => {
-    setFolderData(folderData);
+  const onFolderSelected = (folder) => {
+    loadFileSystem(folder);
   };
 
   const onFileSelected = useCallback(
@@ -511,7 +516,7 @@ export const Flow = () => {
         <Panel position="top-left">
           <div>Current Layer: {currentLayer}</div>
           <FolderSelectButton onFolderSelected={onFolderSelected} />
-          <BasicTree folderData={folderData} onFileSelected={onFileSelected} />
+          <BasicTree flatFiles={flatFiles} onFileSelected={onFileSelected} />
         </Panel>
         <Panel position="top-right">
           <LayerManager />

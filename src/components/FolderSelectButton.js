@@ -5,8 +5,7 @@ import { selectFolder, loadFolderTree } from '../electronHelpers';
 const FolderSelectorButton = ({ onFolderSelected }) => {
   const handleButtonClick = async () => {
     const folder = await selectFolder();
-    const tree = await loadFolderTree(folder);
-    onFolderSelected(tree);
+    onFolderSelected(folder);
   };
 
   return (

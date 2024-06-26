@@ -169,3 +169,49 @@ export const createSelectionHandle = (nodeId, selection) => {
 
   return handle;
 };
+
+const sortDirectory = (flat, parentKey) => {
+  const children = flat[parentKey].children;
+  const folders = children.filter((child) => flat[child].isFolder);
+  const others = children.filter((child) => !flat[child].isFolder);
+  folders.sort();
+  others.sort();
+
+  const sortedChildren = folders.concat(others);
+
+  flat[parentKey].children = sortedChildren;
+};
+
+const flattenStructure = (flat, nestedStructure, parentKey) => {
+  nestedStructure.forEach((child) => {
+    flat[parentKey].children.push(child.path);
+    flat[child.path] = {
+      index: child.path,
+      children: [],
+      data: child.name,
+      isFolder: child.isDirectory,
+    };
+    if (child.isDirectory) {
+      flattenStructure(flat, child.contents, child.path);
+    }
+  });
+  sortDirectory(flat, parentKey);
+
+  return flat;
+};
+
+export const flattenFileTree = (folderData) => {
+  const wrapped = { name: 'root', contents: folderData };
+  const flat = {
+    root: {
+      index: 'root',
+      children: [],
+      data: 'Root item',
+      isFolder: true,
+    },
+  };
+
+  flattenStructure(flat, wrapped.contents, 'root');
+
+  return flat;
+};

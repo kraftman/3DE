@@ -133,8 +133,24 @@ export const LayerManager = ({}) => {
   return (
     <div>
       <h1>LayerManager</h1>
-      <button onClick={onNewLayer}>New Layer</button>
       {layerComponents}
+      <div
+        onClick={onNewLayer}
+        style={{
+          width: '100px',
+          height: '100px',
+          background: '#aaaaaaaa',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: '10px', // Rounded edges
+          border: `2px solid #cccccccc`, // Slightly lighter outline
+          color: 'white', // Text color for better contrast
+          fontWeight: 'bold', // Bold text
+        }}
+      >
+        +
+      </div>
     </div>
   );
 };
