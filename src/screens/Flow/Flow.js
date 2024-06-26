@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useCallback,
   useRef,
+  useContext,
 } from 'react';
 import ReactFlow, {
   useNodesState,
@@ -29,7 +30,6 @@ import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
 import path from 'path-browserify';
 
-import Button from '@mui/material/Button';
 import { useLayer } from './useLayer';
 
 import { loadFolderTree, loadFile } from '../../electronHelpers';
@@ -50,38 +50,19 @@ import {
   flattenFileTree,
 } from './utils';
 import { initialSettingsState } from './mocks';
+import { useFileSystem } from '../../contexts/FileSystemContext';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
   const { setLayer, layers, setNodes, setEdges, nodes, edges, currentLayer } =
     useLayer();
-  const [folderData, setFolderData] = useState([]);
-  const [flatFiles, setFlatFiles] = useState([]);
-  const [rootPath, setRootPath] = useState('');
+
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
   const updateNodeInternals = useUpdateNodeInternals();
 
-  const loadFileSystem = async (newRootPath) => {
-    const folderTree = await loadFolderTree(newRootPath);
-    console.log('set root path', newRootPath);
-    setRootPath(newRootPath);
-    setFolderData(folderTree);
-    const flatFiles = flattenFileTree(folderTree);
-
-    for (const [fullPath, fileInfo] of Object.entries(flatFiles)) {
-      try {
-        if (fileInfo.isFolder) {
-          continue;
-        }
-        fileInfo.fileData = await loadFile(fullPath);
-      } catch (error) {
-        console.error('error loading file', fullPath, error);
-      }
-    }
-    setFlatFiles(flatFiles);
-  };
+  const { folderData, flatFiles, rootPath, loadFileSystem } = useFileSystem();
 
   useEffect(() => {
     loadFileSystem('/home/chris/marvel-app');
@@ -418,17 +399,12 @@ export const Flow = () => {
 
   const onFileSelected = useCallback(
     async (event) => {
-      console.log('on file selected');
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
-      console.log('paths', rootPath, fullPath);
       const relativePath = path.relative(rootPath, fullPath);
       const parsedPaths = relativePath.split(path.sep);
-      console.log('parsedPaths', parsedPaths, relativePath);
       const fileInfo = flatFiles[fullPath];
       const fileContents = fileInfo.fileData;
-      console.log('fileinfo', fileInfo);
-      //const fileContents = await loadFile(fullPath);
       const newPos = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,

@@ -4,6 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Flow } from './screens/Flow/Flow';
 import { ReactFlowProvider } from 'reactflow';
 import { FlowProvider } from './screens/Flow/FlowContext';
+import { FileSystemProvider } from './contexts/FileSystemContext';
 
 export const FlowManager = () => {
   const [folderData, setFolderData] = useState([]);
@@ -14,7 +15,9 @@ export const FlowManager = () => {
     <DndProvider backend={HTML5Backend}>
       <ReactFlowProvider>
         <FlowProvider>
-          <Flow />
+          <FileSystemProvider>
+            <Flow />
+          </FileSystemProvider>
         </FlowProvider>
       </ReactFlowProvider>
     </DndProvider>

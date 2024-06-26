@@ -116,10 +116,8 @@ export const LayerManager = ({}) => {
     setCurrentLayer(index);
   };
 
-  console.log('layers', layers);
   const layerComponents = [];
   for (const [index, layer] of Object.entries(layers)) {
-    console.log('layer', layer, index);
     layerComponents.push(
       <LayerPreview
         key={index}
