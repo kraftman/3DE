@@ -11,6 +11,7 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
+import { getHandles } from '../../components/editorUtils';
 let nodeIdCount = 0;
 
 export const getNewNodeId = () => `${nodeIdCount++}`;
@@ -229,4 +230,57 @@ export const flattenFileTree = (folderData) => {
   flattenStructure(flat, wrapped.contents, 'root');
 
   return flat;
+};
+
+const findFile = (flatFiles, fullPath) => {
+  for (const [key, value] of Object.entries(flatFiles)) {
+    if (key.includes(fullPath)) {
+      console.log('found file:', value);
+      return [key, value];
+    }
+  }
+};
+
+export const createChildren = (flatFiles, parentNode) => {
+  const importHandles = getHandles(
+    parentNode.id,
+    parentNode.data.fullPath,
+    parentNode.data.value
+  ).filter((handle) => handle.handleType === 'import');
+
+  const localImports = importHandles.filter((handle) => {
+    const fileInfo = findFile(flatFiles, handle.importPath);
+    return fileInfo;
+  });
+
+  const children = localImports.map((handle, index) => {
+    const nextNodeId = getNewNodeId();
+    const [fullPath, fileInfo] = findFile(flatFiles, handle.importPath);
+    console.log('fileinfo: ', fileInfo);
+    if (!fileInfo) {
+      return null;
+    }
+    const fileContents = fileInfo.fileData;
+
+    return {
+      id: nextNodeId,
+      data: {
+        fullPath: fullPath,
+        fileName: fileInfo.data,
+        value: fileContents,
+        handles: [],
+      },
+      type: 'editor',
+      position: {
+        x: 550,
+        y: -(((index + 1) * 650) / 2) + index * 650,
+      },
+      style: {
+        width: '500px',
+        height: `400px`,
+      },
+      parentId: parentNode.id,
+    };
+  });
+  return children.filter((child) => child !== null);
 };

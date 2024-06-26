@@ -47,6 +47,7 @@ import {
   getNewEdges,
   getNewNodeId,
   stringToDarkTransparentColor,
+  createChildren,
 } from './utils';
 import { initialSettingsState } from './mocks';
 import { useFileSystem } from '../../contexts/FileSystemContext';
@@ -469,7 +470,11 @@ export const Flow = () => {
           },
           parentId,
         };
-        const newNodes = nodes.concat(newNode);
+
+        const children = createChildren(flatFiles, newNode);
+
+        const newNodes = nodes.concat(newNode).concat(children);
+        console.log('newNodes', newNodes);
         return newNodes;
       });
     },
