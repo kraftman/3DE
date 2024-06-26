@@ -160,7 +160,7 @@ const getLeftPosition = (feature) => {
     case 'function':
       return -5;
     default:
-      return 410;
+      return 500;
   }
 };
 
