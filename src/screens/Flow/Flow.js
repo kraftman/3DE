@@ -184,7 +184,7 @@ export const Flow = () => {
         };
         return newFiles;
       });
-      const newHandles = getHandles(nodeId, node.data.fileName, value);
+      const newHandles = getHandles(nodeId, node.data.fullPath, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
           node.data = {

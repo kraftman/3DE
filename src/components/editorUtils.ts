@@ -13,6 +13,8 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
+import path from 'path-browserify';
+
 import * as ts from 'typescript';
 
 export const getFeatures = (code: string) => {
@@ -193,16 +195,19 @@ const getLeftPosition = (feature) => {
 //   }
 // };
 
-export const getHandles = (nodeId, nodeFileName, code) => {
+export const getHandles = (nodeId, fullPath, code) => {
   const features = getFeatures(code);
   const handles = features.map((feature) => {
     const { name, type, fileName } = feature;
-    return {
+    console.log(name, type, fileName);
+    const newHandle = {
       id: `${nodeId}-${type}-${name}`,
       name,
       nodeId,
       fileName: fileName || '',
-      exportFileName: nodeFileName || '',
+      importPath:
+        (fileName && path.resolve(path.dirname(fullPath), fileName)) || '',
+      nodePath: fullPath || '',
       loc: feature.loc,
       type: 'source',
       handleType: feature.type,
@@ -214,6 +219,8 @@ export const getHandles = (nodeId, nodeFileName, code) => {
         zIndex: 1000,
       },
     };
+    console.log('newhandle', newHandle);
+    return newHandle;
   });
   return handles;
 };

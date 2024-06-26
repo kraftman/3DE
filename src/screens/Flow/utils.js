@@ -42,10 +42,17 @@ export const getNewEdges = (nodeId, existingHandles, newHandles) => {
   const newEdges = [];
   exports.forEach((exportHandle) => {
     existingHandles.forEach((existingHandle) => {
+      const namesMatch = existingHandle.name === exportHandle.name;
+      const pathsMatch = exportHandle.nodePath.includes(
+        existingHandle.importPath
+      );
+      // console.log('existingHandle:', existingHandle);
+      // console.log('exportHandle:', exportHandle);
+      // console.log('pathsMatch:', pathsMatch);
+
+      // console.log('namesMatch:', namesMatch);
       const isMatching =
-        existingHandle.handleType === 'import' &&
-        existingHandle.name === exportHandle.name &&
-        existingHandle.fileName === exportHandle.exportFileName;
+        existingHandle.handleType === 'import' && namesMatch && pathsMatch;
 
       if (isMatching) {
         newEdges.push({
@@ -60,10 +67,18 @@ export const getNewEdges = (nodeId, existingHandles, newHandles) => {
   });
   imports.forEach((importHandle) => {
     existingHandles.forEach((existingHandle) => {
+      const namesMatch = existingHandle.name === importHandle.name;
+      const pathsMatch = existingHandle.nodePath.includes(
+        importHandle.importPath
+      );
+      console.log('existingHandle:', existingHandle);
+      console.log('importHandle:', importHandle);
+      console.log('pathsMatch:', pathsMatch);
+
+      console.log('namesMatch:', namesMatch);
       const isMatching =
-        existingHandle.handleType === 'export' &&
-        existingHandle.name === importHandle.name;
-      existingHandle.exportFileName === importHandle.fileName;
+        existingHandle.handleType === 'import' && namesMatch && pathsMatch;
+
       if (isMatching) {
         newEdges.push({
           id: getEdgeId(),
