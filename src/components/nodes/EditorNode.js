@@ -35,15 +35,10 @@ export const EditorNode = ({
   const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
   const text = flatFiles[data.fullPath]?.fileData;
 
-  const onChange = (value) => {
-    onTextChange(id, value);
+  const onChange = (newText) => {
+    onTextChange(id, newText);
     addDecorators();
   };
-
-  // useEffect(() => {
-  //   console.log('id, data:', id, data);
-  //   onTextChange(id, data.value);
-  // }, []);
 
   const checkIfTextIsSelected = () => {
     const editor = editorRef.current;

@@ -62,7 +62,7 @@ function getRandomDarkHexColorWithAlpha() {
   return hexColorWithAlpha;
 }
 
-const LayerPreview = ({ key, index, layer, onLayerSelected }) => {
+const LayerPreview = ({ index, layer, onLayerSelected }) => {
   const { color = '#ffffffff' } = layer;
   const outlineColor = lightenColor(color, 20); // Lighten by 20%
 

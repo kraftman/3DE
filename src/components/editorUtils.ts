@@ -1,4 +1,5 @@
-import { parse } from 'acorn';
+import * as acorn from 'acorn';
+import tsPlugin from 'acorn-typescript';
 import estraverse from 'estraverse';
 import * as monaco from 'monaco-editor';
 import ReactFlow, {
@@ -12,68 +13,119 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
-export const getFeatures = (code) => {
-  try {
-    const ast = parse(code, { sourceType: 'module', locations: true });
-    const handles = [];
-    estraverse.traverse(ast, {
-      enter: (node, parent) => {
-        if (node.type === 'ImportDeclaration') {
-          const name = node.specifiers[0].local.name;
-          const values = {
-            line: node.loc.start.line,
-            name,
-            fileName: node.source.value,
-            type: 'import',
-          };
-          handles.push(values);
-        } else if (node.type === 'ExportNamedDeclaration') {
-          const identifier = node.declaration.declarations.find(
-            (d) => d.id.type === 'Identifier'
-          );
-          const name = identifier.id.name;
-          const line = node.loc.start.line;
-          handles.push({ name, line, type: 'export' });
-        } else if (node.type === 'ExportDefaultDeclaration') {
-          if (node.declaration.type === 'Identifier') {
-            handles.push({
-              name: node.declaration.name,
-              line: node.loc.start.line,
-              type: 'export',
-            });
-          } else {
-            handles.push({
-              name: 'default',
-              line: node.loc.start.line,
-              type: 'export',
-            });
-          }
-        } else if (
-          node.type === 'VariableDeclarator' &&
-          (node.init.type === 'ArrowFunctionExpression' ||
-            node.init.type === 'FunctionExpression') &&
-          parent.type === 'VariableDeclaration'
-        ) {
-          const isDefaultExport = null; //handles.find(
-          //(exp) => exp.name === node.id.name
-          //);
-          if (!isDefaultExport) {
-            handles.push({
-              name: node.id.name,
-              line: node.loc.start.line,
-              end: node.id.loc.end.column,
-              loc: node.loc,
-              type: 'function',
-            });
-          }
-          //exports.push({ name: node.id.name, line: node.loc.start.line });
-        }
-      },
-    });
+import * as ts from 'typescript';
 
+export const getFeatures = (code: string) => {
+  try {
+    const sourceFile = ts.createSourceFile(
+      'tempFile.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true
+    );
+
+    const handles: Array<any> = [];
+
+    const visit = (node: ts.Node) => {
+      if (ts.isImportDeclaration(node)) {
+        const importClause = node.importClause;
+        if (importClause) {
+          if (importClause.name) {
+            // Default import
+            const name = importClause.name.getText();
+            const line =
+              sourceFile.getLineAndCharacterOfPosition(node.getStart()).line +
+              1;
+            const fileName = (node.moduleSpecifier as ts.StringLiteral).text;
+            handles.push({
+              line,
+              name,
+              fileName,
+              type: 'import',
+            });
+          }
+
+          if (importClause.namedBindings) {
+            if (ts.isNamedImports(importClause.namedBindings)) {
+              // Named imports
+              importClause.namedBindings.elements.forEach((element) => {
+                const name = element.name.getText();
+                const line =
+                  sourceFile.getLineAndCharacterOfPosition(node.getStart())
+                    .line + 1;
+                const fileName = (node.moduleSpecifier as ts.StringLiteral)
+                  .text;
+                handles.push({
+                  line,
+                  name,
+                  fileName,
+                  type: 'import',
+                });
+              });
+            } else if (ts.isNamespaceImport(importClause.namedBindings)) {
+              // Namespace import (import * as ns from ...)
+              const name = importClause.namedBindings.name.getText();
+              const line =
+                sourceFile.getLineAndCharacterOfPosition(node.getStart()).line +
+                1;
+              const fileName = (node.moduleSpecifier as ts.StringLiteral).text;
+              handles.push({
+                line,
+                name,
+                fileName,
+                type: 'import',
+              });
+            }
+          }
+        }
+      } else if (
+        ts.isExportDeclaration(node) &&
+        node.exportClause &&
+        ts.isNamedExports(node.exportClause)
+      ) {
+        node.exportClause.elements.forEach((element) => {
+          const name = element.name.getText();
+          const line =
+            sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+          handles.push({
+            line,
+            name,
+            type: 'export',
+          });
+        });
+      } else if (ts.isFunctionDeclaration(node) && node.name) {
+        const name = node.name.getText();
+        const line =
+          sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        handles.push({
+          line,
+          name,
+          type: 'function',
+        });
+      } else if (
+        ts.isVariableDeclaration(node) &&
+        node.initializer &&
+        (ts.isArrowFunction(node.initializer) ||
+          ts.isFunctionExpression(node.initializer))
+      ) {
+        const name = node.name.getText();
+        const line =
+          sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        handles.push({
+          line,
+          name,
+          type: 'function',
+        });
+      }
+
+      ts.forEachChild(node, visit);
+    };
+
+    ts.forEachChild(sourceFile, visit);
+    console.log('new handles', handles);
     return handles;
   } catch (e) {
-    console.log(e);
+    console.error(e);
     return [];
   }
 };

@@ -189,7 +189,6 @@ export const Flow = () => {
         if (node.id === nodeId) {
           node.data = {
             ...node.data,
-            value,
             handles: newHandles,
           };
         }
