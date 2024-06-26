@@ -118,6 +118,36 @@ export const getFeatures = (code: string) => {
           type: isExported ? 'export' : 'function',
         });
       } else if (
+        ts.isVariableStatement(node) &&
+        node.modifiers &&
+        node.modifiers.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword)
+      ) {
+        node.declarationList.declarations.forEach((declaration) => {
+          if (ts.isVariableDeclaration(declaration) && declaration.name) {
+            const name = declaration.name.getText();
+            const line =
+              sourceFile.getLineAndCharacterOfPosition(node.getStart()).line +
+              1;
+            if (
+              declaration.initializer &&
+              (ts.isArrowFunction(declaration.initializer) ||
+                ts.isFunctionExpression(declaration.initializer))
+            ) {
+              handles.push({
+                line,
+                name,
+                type: 'export',
+              });
+            } else {
+              handles.push({
+                line,
+                name,
+                type: 'export',
+              });
+            }
+          }
+        });
+      } else if (
         ts.isVariableDeclaration(node) &&
         node.initializer &&
         (ts.isArrowFunction(node.initializer) ||
@@ -155,7 +185,6 @@ const getHandlePosition = (feature) => {
 };
 
 const getLeftPosition = (feature) => {
-  console.log('feature', feature, feature.type, feature.end * 7 + 50);
   switch (feature.type) {
     case 'export':
       return -5;
@@ -199,14 +228,11 @@ export const getHandles = (nodeId, fullPath, code) => {
   const features = getFeatures(code);
   const handles = features.map((feature) => {
     const { name, type, fileName } = feature;
-    console.log(name, type, fileName);
     const newHandle = {
       id: `${nodeId}-${type}-${name}`,
       name,
       nodeId,
       fileName: fileName || '',
-      importPath:
-        (fileName && path.resolve(path.dirname(fullPath), fileName)) || '',
       nodePath: fullPath || '',
       loc: feature.loc,
       type: 'source',
@@ -219,7 +245,11 @@ export const getHandles = (nodeId, fullPath, code) => {
         zIndex: 1000,
       },
     };
-    console.log('newhandle', newHandle);
+    if (feature.type === 'import') {
+      // @ts-expect-error bleh
+      newHandle.importPath = path.resolve(path.dirname(fullPath), fileName);
+    }
+    console.log('newhandles', newHandle);
     return newHandle;
   });
   return handles;
