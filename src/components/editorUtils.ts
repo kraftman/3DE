@@ -93,14 +93,27 @@ export const getFeatures = (code: string) => {
             type: 'export',
           });
         });
-      } else if (ts.isFunctionDeclaration(node) && node.name) {
-        const name = node.name.getText();
+      } else if (ts.isExportAssignment(node)) {
+        const name = (node.expression as ts.Identifier).getText();
         const line =
           sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
         handles.push({
           line,
           name,
-          type: 'function',
+          type: 'export',
+        });
+      } else if (ts.isFunctionDeclaration(node) && node.name) {
+        const name = node.name.getText();
+        const line =
+          sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        const isExported = !!(
+          node.modifiers &&
+          node.modifiers.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword)
+        );
+        handles.push({
+          line,
+          name,
+          type: isExported ? 'export' : 'function',
         });
       } else if (
         ts.isVariableDeclaration(node) &&
@@ -122,7 +135,7 @@ export const getFeatures = (code: string) => {
     };
 
     ts.forEachChild(sourceFile, visit);
-    console.log('new handles', handles);
+
     return handles;
   } catch (e) {
     console.error(e);
@@ -140,11 +153,12 @@ const getHandlePosition = (feature) => {
 };
 
 const getLeftPosition = (feature) => {
+  console.log('feature', feature, feature.type, feature.end * 7 + 50);
   switch (feature.type) {
     case 'export':
       return -5;
     case 'function':
-      return feature.end * 7 + 50;
+      return -5;
     default:
       return 410;
   }
@@ -195,7 +209,7 @@ export const getHandles = (nodeId, nodeFileName, code) => {
       position: getHandlePosition(feature),
       style: {
         left: getLeftPosition(feature),
-        top: 40 + 16 * feature.line,
+        top: 40 + 10 * feature.line,
         //background: getColor(feature),
         zIndex: 1000,
       },
