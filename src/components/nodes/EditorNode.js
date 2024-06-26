@@ -5,6 +5,8 @@ import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { getDecorators } from '../editorUtils';
 
@@ -25,6 +27,7 @@ export const EditorNode = ({
   onTextChange,
   onFileNameChange,
   onSelectionChange,
+  onClose,
 }) => {
   const editorRef = useRef(null);
   const [decorations, setDecorations] = useState([]);
@@ -88,12 +91,17 @@ export const EditorNode = ({
       {renderedHandles}
       <div className="text-updater-node">
         <ThemeProvider theme={darkTheme}>
-          <TextField
-            size="small"
-            variant="outlined"
-            value={data.fileName}
-            onChange={(event) => onFileNameChange(id, event.target.value)}
-          />
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <TextField
+              size="small"
+              variant="outlined"
+              value={data.fileName}
+              onChange={(event) => onFileNameChange(id, event.target.value)}
+            />
+            <IconButton aria-label="delete" onClick={() => onClose(id)}>
+              <CloseIcon />
+            </IconButton>
+          </div>
         </ThemeProvider>
         <div className="editor-container">
           <Editor

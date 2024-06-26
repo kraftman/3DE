@@ -137,6 +137,11 @@ export const Flow = () => {
     );
   };
 
+  const onClose = (nodeId) => {
+    console.log('closing node', nodeId);
+    setNodes((nodes) => nodes.filter((node) => node.id !== nodeId));
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -144,6 +149,7 @@ export const Flow = () => {
           onTextChange={onTextChange}
           onFileNameChange={onFileNameChange}
           onSelectionChange={onSelectionChange}
+          onClose={onClose}
           {...props}
         />
       ),
@@ -420,28 +426,28 @@ export const Flow = () => {
         let parentId = null;
         const lines = fileContents.split('\n');
         const editorHeight = 300;
-        if (!existingGroup) {
-          // create a new group node
-          // recursively create group nodes for each folder in the path
-          // create a new editor node for the file
-          const newColor = stringToDarkTransparentColor(relativePath);
-          const newGroupNode = {
-            id: getNewNodeId(),
-            data: {
-              folder: parsedPaths[0],
-              label: parsedPaths[0],
-            },
-            type: 'group',
-            position: newPos,
-            style: {
-              background: newColor,
-              width: '600px',
-              height: `${editorHeight + 50}px`,
-            },
-          };
-          nodes = nodes.concat(newGroupNode);
-          parentId = newGroupNode.id;
-        }
+        // if (!existingGroup) {
+        //   // create a new group node
+        //   // recursively create group nodes for each folder in the path
+        //   // create a new editor node for the file
+        //   const newColor = stringToDarkTransparentColor(relativePath);
+        //   const newGroupNode = {
+        //     id: getNewNodeId(),
+        //     data: {
+        //       folder: parsedPaths[0],
+        //       label: parsedPaths[0],
+        //     },
+        //     type: 'group',
+        //     position: newPos,
+        //     style: {
+        //       background: newColor,
+        //       width: '600px',
+        //       height: `${editorHeight + 50}px`,
+        //     },
+        //   };
+        //   nodes = nodes.concat(newGroupNode);
+        //   parentId = newGroupNode.id;
+        // }
 
         const nextNodeId = getNewNodeId();
 
