@@ -33,7 +33,7 @@ export const FileSystemProvider = ({ children }) => {
 
   return (
     <FileSystemContext.Provider
-      value={{ folderData, flatFiles, rootPath, loadFileSystem }}
+      value={{ folderData, flatFiles, rootPath, loadFileSystem, setFlatFiles }}
     >
       {children}
     </FileSystemContext.Provider>

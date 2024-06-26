@@ -47,7 +47,6 @@ import {
   getNewEdges,
   getNewNodeId,
   stringToDarkTransparentColor,
-  flattenFileTree,
 } from './utils';
 import { initialSettingsState } from './mocks';
 import { useFileSystem } from '../../contexts/FileSystemContext';
@@ -62,7 +61,7 @@ export const Flow = () => {
   const [handles, setHandles] = useState([]);
   const updateNodeInternals = useUpdateNodeInternals();
 
-  const { folderData, flatFiles, rootPath, loadFileSystem } = useFileSystem();
+  const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
   useEffect(() => {
     loadFileSystem('/home/chris/marvel-app');
@@ -171,6 +170,14 @@ export const Flow = () => {
   const onTextChange = (nodeId, value) => {
     setNodes((nodes) => {
       const node = nodes.find((node) => node.id === nodeId);
+      const fullPath = node.data.fullPath;
+      setFlatFiles((files) => {
+        const newFiles = {
+          ...files,
+          [fullPath]: { ...files[fullPath], fileData: value },
+        };
+        return newFiles;
+      });
       const newHandles = getHandles(nodeId, node.data.fileName, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
@@ -204,12 +211,6 @@ export const Flow = () => {
   const handleSelectionDrag = (fromNode, fromHandle, event) => {};
 
   const handleFunctionDrag = (fromNode, fromHandle, event) => {
-    //TODO:
-    // create the new node with the removed text
-    // update it to be exported
-    // add an import to the existing node
-    // if the function was exported, update the reference to the new node
-
     const targetIsPane = event.target.classList.contains('react-flow__pane');
     const groupNodeElement = event.target.closest('.react-flow__node-group');
 
@@ -345,14 +346,9 @@ export const Flow = () => {
 
       // its still inside its parent group
     } else if (groupNode && node.parentId === groupNode.id) {
-      console.log('parent group', groupNode);
-      console.log('child node', node);
       const groupRight = parseInt(groupNode.style.width, 10);
       const nodeRight = node.position.x + parseInt(node.style.width, 10);
-      console.log('nodeRight', nodeRight);
-      console.log('groupWith', groupNode.style.width);
       if (nodeRight > groupRight) {
-        console.log('new width', nodeRight + 100);
         setNodes((nodes) => {
           const newNodes = nodes.map((search) => {
             if (search.id === groupNode.id) {
@@ -423,7 +419,7 @@ export const Flow = () => {
         );
         let parentId = null;
         const lines = fileContents.split('\n');
-        const editorHeight = Math.min(lines.length * 16, 600);
+        const editorHeight = 300;
         if (!existingGroup) {
           // create a new group node
           // recursively create group nodes for each folder in the path
@@ -448,8 +444,6 @@ export const Flow = () => {
         }
 
         const nextNodeId = getNewNodeId();
-
-        console.log('editorheight', editorHeight);
 
         const newNode = {
           id: nextNodeId,
@@ -495,10 +489,6 @@ export const Flow = () => {
         connectionMode="loose"
         onNodeDragStop={onNodeDragStop}
       >
-        {/* <div className="updatenode__controls">
-          <button onClick={createNode}> ➕ Add Node</button>
-        </div> */}
-
         <Background
           style={{
             background: layers[currentLayer].color,

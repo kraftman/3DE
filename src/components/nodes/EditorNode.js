@@ -8,6 +8,8 @@ import TextField from '@mui/material/TextField';
 
 import { getDecorators } from '../editorUtils';
 
+import { useFileSystem } from '../../contexts/FileSystemContext';
+
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });
 
@@ -26,6 +28,9 @@ export const EditorNode = ({
 }) => {
   const editorRef = useRef(null);
   const [decorations, setDecorations] = useState([]);
+
+  const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
+  const text = flatFiles[data.fullPath]?.fileData;
 
   const onChange = (value) => {
     onTextChange(id, value);
@@ -98,7 +103,7 @@ export const EditorNode = ({
             width="100%"
             defaultLanguage="javascript"
             automaticLayout="true"
-            value={data.value}
+            value={text}
             options={{
               fontSize: 8,
               lineNumbersMinChars: 2,
