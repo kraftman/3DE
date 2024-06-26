@@ -65,9 +65,21 @@ export const Flow = () => {
 
   const loadFileSystem = async (newRootPath) => {
     const folderTree = await loadFolderTree(newRootPath);
+    console.log('set root path', newRootPath);
     setRootPath(newRootPath);
     setFolderData(folderTree);
     const flatFiles = flattenFileTree(folderTree);
+
+    for (const [fullPath, fileInfo] of Object.entries(flatFiles)) {
+      try {
+        if (fileInfo.isFolder) {
+          continue;
+        }
+        fileInfo.fileData = await loadFile(fullPath);
+      } catch (error) {
+        console.error('error loading file', fullPath, error);
+      }
+    }
     setFlatFiles(flatFiles);
   };
 
@@ -406,14 +418,17 @@ export const Flow = () => {
 
   const onFileSelected = useCallback(
     async (event) => {
-      console.log('event', event);
+      console.log('on file selected');
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
-      console.log('fullpath', fullPath);
+      console.log('paths', rootPath, fullPath);
       const relativePath = path.relative(rootPath, fullPath);
       const parsedPaths = relativePath.split(path.sep);
-
-      const fileContents = await loadFile(fullPath);
+      console.log('parsedPaths', parsedPaths, relativePath);
+      const fileInfo = flatFiles[fullPath];
+      const fileContents = fileInfo.fileData;
+      console.log('fileinfo', fileInfo);
+      //const fileContents = await loadFile(fullPath);
       const newPos = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -483,7 +498,7 @@ export const Flow = () => {
         return newNodes;
       });
     },
-    [screenToFlowPosition]
+    [screenToFlowPosition, rootPath, flatFiles]
   );
 
   return (
