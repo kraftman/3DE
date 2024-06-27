@@ -67,7 +67,7 @@ export const Flow = () => {
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
   useEffect(() => {
-    loadFileSystem('/home/chris/marvel-app');
+    loadFileSystem('../marvel-app');
   }, []);
 
   const onNodesChange = (changes) => {
