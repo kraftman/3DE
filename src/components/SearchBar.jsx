@@ -1,7 +1,55 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TextField, Paper, List, ListItem, ListItemText } from '@mui/material';
+import {
+  TextField,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  createTheme,
+  ThemeProvider,
+} from '@mui/material';
+import { makeStyles } from '@mui/styles';
 
-const SearchBar = ({ flatFiles, onFileSelected }) => {
+const useStyles = makeStyles((theme) => ({
+  searchContainer: {
+    position: 'fixed',
+    top: '10%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 1300,
+    width: '50%',
+    maxWidth: '600px',
+    backgroundColor: '#1e1e1e',
+    color: '#ffffff',
+  },
+  searchInput: {
+    '& .MuiInputBase-input': {
+      padding: '8px 12px',
+      color: '#ffffff',
+    },
+  },
+  list: {
+    maxHeight: '300px',
+    overflowY: 'auto',
+  },
+  listItem: {
+    '&.Mui-selected': {
+      backgroundColor: '#333333',
+    },
+    '&:hover': {
+      backgroundColor: '#444444',
+    },
+  },
+}));
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
+
+export const SearchBar = ({ flatFiles, onFileSelected }) => {
+  const classes = useStyles();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredFiles, setFilteredFiles] = useState([]);
@@ -11,6 +59,7 @@ const SearchBar = ({ flatFiles, onFileSelected }) => {
   const handleKeyDown = (e) => {
     if (e.ctrlKey && e.key === 't') {
       e.preventDefault();
+      setSearchTerm('');
       setOpen(true);
     } else if (open) {
       if (e.key === 'ArrowDown') {
@@ -58,20 +107,21 @@ const SearchBar = ({ flatFiles, onFileSelected }) => {
   }, [searchTerm, flatFiles]);
 
   return (
-    <>
+    <ThemeProvider theme={darkTheme}>
       {open && (
-        <Paper
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1300 }}
-        >
+        <Paper className={classes.searchContainer}>
           <TextField
             fullWidth
             inputRef={searchRef}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search files..."
+            className={classes.searchInput}
+            variant="outlined"
+            size="small"
           />
           {filteredFiles.length > 0 && (
-            <List>
+            <List className={classes.list}>
               {filteredFiles.map((file, index) => (
                 <ListItem
                   key={file}
@@ -81,6 +131,7 @@ const SearchBar = ({ flatFiles, onFileSelected }) => {
                     onFileSelected(file);
                     setOpen(false);
                   }}
+                  className={classes.listItem}
                 >
                   <ListItemText primary={file} />
                 </ListItem>
@@ -89,8 +140,6 @@ const SearchBar = ({ flatFiles, onFileSelected }) => {
           )}
         </Paper>
       )}
-    </>
+    </ThemeProvider>
   );
 };
-
-export default SearchBar;

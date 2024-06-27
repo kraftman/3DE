@@ -66,6 +66,7 @@
     "@monaco-editor/react": "^4.6.0",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
+    "@mui/styles": "^5.15.20",
     "acorn": "^8.11.3",
     "acorn-typescript": "^1.4.13",
     "electron-squirrel-startup": "^1.0.1",

@@ -36,6 +36,8 @@ import { loadFolderTree, loadFile } from '../../electronHelpers';
 
 import { LayerManager } from '../../components/LayerManager';
 
+import { SearchBar } from '../../components/SearchBar';
+
 import {
   getHandles,
   removeTextChunk,
@@ -415,9 +417,6 @@ export const Flow = () => {
         y: event.clientY,
       });
 
-      console.log('clientxy', event.clientX, event.clientY);
-      console.log('newpos', newPos);
-
       setNodes((nodes) => {
         console.log('parsedPaths', parsedPaths);
         const existingGroup = nodes.find(
@@ -484,6 +483,49 @@ export const Flow = () => {
     [screenToFlowPosition, rootPath, flatFiles]
   );
 
+  const onFileSelectedSearchBar = (fullPath) => {
+    const fileName = flatFiles[fullPath].data;
+    const relativePath = path.relative(rootPath, fullPath);
+    const parsedPaths = relativePath.split(path.sep);
+    const fileInfo = flatFiles[fullPath];
+    const fileContents = fileInfo.fileData;
+
+    setNodes((nodes) => {
+      console.log('parsedPaths', parsedPaths);
+
+      let parentId = null;
+      const editorHeight = 300;
+
+      const nextNodeId = getNewNodeId();
+
+      const newNode = {
+        id: nextNodeId,
+        data: {
+          fullPath,
+          fileName,
+          value: fileContents,
+          handles: [],
+        },
+        type: 'editor',
+        position: {
+          x: 500,
+          y: 500,
+        },
+        style: {
+          width: '500px',
+          height: `${editorHeight}px`,
+        },
+        parentId,
+      };
+
+      const children = []; //createChildren(flatFiles, newNode);
+
+      const newNodes = nodes.concat(newNode).concat(children);
+      console.log('newNodes', newNodes);
+      return newNodes;
+    });
+  };
+
   return (
     <>
       <ReactFlow
@@ -514,6 +556,12 @@ export const Flow = () => {
         </Panel>
         <Panel position="top-right">
           <LayerManager />
+        </Panel>
+        <Panel position="top">
+          <SearchBar
+            flatFiles={flatFiles}
+            onFileSelected={onFileSelectedSearchBar}
+          />
         </Panel>
         <MiniMap zoomable pannable nodeClassName={nodeClassName} />
         <Controls />
