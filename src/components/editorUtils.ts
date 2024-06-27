@@ -195,34 +195,34 @@ const getLeftPosition = (feature) => {
   }
 };
 
-// const getColor = (feature) => {
-//   if (feature.type === 'import') {
-//     const isLocal =
-//       feature.fileName.startsWith('./') ||
-//       feature.fileName.startsWith('../') ||
-//       feature.fileName.startsWith('/');
-//     if (isLocal) {
-//       for (const node of nodes) {
-//         if (feature.fileName.includes(node.data.fileName)) {
-//           return '#03ad1a';
-//         }
-//       }
-//       return '#b30f00';
-//     }
-//     if (settings.packageJson.dependencies[feature.fileName]) {
-//       return '#4287f5';
-//     }
-//     return '#b30f00';
-//   }
-//   switch (feature.type) {
-//     case 'export':
-//       return '#03ad1a';
-//     case 'function':
-//       return '#b30f00';
-//     default:
-//       return '#000';
-//   }
-// };
+const getColor = (feature) => {
+  if (feature.type === 'import') {
+    const isLocal =
+      feature.fileName.startsWith('./') ||
+      feature.fileName.startsWith('../') ||
+      feature.fileName.startsWith('/');
+    // if (isLocal) {
+    //   for (const node of nodes) {
+    //     if (feature.fileName.includes(node.data.fileName)) {
+    //       return '#03ad1a';
+    //     }
+    //   }
+    //   return '#b30f00';
+    // }
+    // if (settings.packageJson.dependencies[feature.fileName]) {
+    //   return '#4287f5';
+    // }
+    return '#b30f00';
+  }
+  switch (feature.type) {
+    case 'export':
+      return '#03ad1a';
+    case 'function':
+      return '#b30f00';
+    default:
+      return '#000';
+  }
+};
 
 export const getHandles = (nodeId, fullPath, code) => {
   const features = getFeatures(code);
@@ -241,7 +241,7 @@ export const getHandles = (nodeId, fullPath, code) => {
       style: {
         left: getLeftPosition(feature),
         top: 40 + 10 * feature.line,
-        //background: getColor(feature),
+        background: getColor(feature),
         zIndex: 1000,
       },
     };

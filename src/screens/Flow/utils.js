@@ -43,6 +43,9 @@ const findMatch = (fullPath, partialPath) => {
       return true;
     }
   }
+  if (fullPath === partialPath) {
+    return true;
+  }
   return false;
 };
 
