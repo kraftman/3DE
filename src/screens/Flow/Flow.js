@@ -140,6 +140,9 @@ export const Flow = () => {
 
   const onClose = (nodeId) => {
     console.log('closing node', nodeId);
+    setEdges((edges) =>
+      edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+    );
     setNodes((nodes) => nodes.filter((node) => node.id !== nodeId));
   };
 
