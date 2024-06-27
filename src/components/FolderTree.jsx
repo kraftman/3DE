@@ -9,6 +9,7 @@ import '@blueprintjs/core/lib/css/blueprint.css';
 import { renderers as bpRenderers } from 'react-complex-tree-blueprintjs-renderers';
 
 export const BasicTree = ({ flatFiles, onFileSelected }) => {
+  console.log('flatfiles in basictree', flatFiles);
   const [focusedItem, setFocusedItem] = useState();
   const [expandedItems, setExpandedItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);

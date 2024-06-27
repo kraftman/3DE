@@ -234,12 +234,18 @@ export const Flow = () => {
       endLine
     );
 
+    const currentDir = path.dirname(fromHandle.nodePath);
+    const newFullPath = path.join(currentDir, `${fromHandle.name}.js`);
+    console.log('current dir', currentDir);
+    console.log('newFullPath', newFullPath);
+
     if (targetIsPane) {
       const newNode = {
         id: (nodes.length + 1).toString(),
         data: {
-          fileName: `./${fromHandle.name}.js`,
-          value: 'export ' + extractedChunk,
+          fileName: `${fromHandle.name}.js`,
+          fullPath: newFullPath,
+          value: extractedChunk,
           handles: [],
         },
         type: 'editor',
@@ -247,7 +253,28 @@ export const Flow = () => {
           x: event.clientX,
           y: event.clientY,
         }),
+        style: {
+          width: '500px',
+          height: '500px',
+        },
       };
+
+      const newFile = {
+        index: newFullPath,
+        children: [],
+        data: `${fromHandle.name}.js`,
+        fileData: extractedChunk,
+        isFolder: false,
+      };
+
+      setFlatFiles((files) => {
+        const newFiles = {
+          ...files,
+          [newFullPath]: newFile,
+        };
+        console.log('newFiles:', newFiles);
+        return newFiles;
+      });
       setNodes((nodes) => nodes.concat(newNode));
     } else if (!groupNodeElement && !targetIsPane) {
       //it landed on a real node

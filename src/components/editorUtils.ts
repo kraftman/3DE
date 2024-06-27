@@ -112,6 +112,7 @@ export const getFeatures = (code: string) => {
           node.modifiers &&
           node.modifiers.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword)
         );
+
         handles.push({
           line,
           name,
@@ -153,11 +154,26 @@ export const getFeatures = (code: string) => {
         (ts.isArrowFunction(node.initializer) ||
           ts.isFunctionExpression(node.initializer))
       ) {
+        console.log('function found', node);
         const name = node.name.getText();
-        const line =
-          sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        const { line, character } = sourceFile.getLineAndCharacterOfPosition(
+          node.getStart()
+        );
+        const { line: endLine, character: EndCharacter } =
+          sourceFile.getLineAndCharacterOfPosition(node.getEnd());
+
         handles.push({
-          line,
+          line: line + 1,
+          loc: {
+            start: {
+              line: line + 1,
+              column: character,
+            },
+            end: {
+              line: endLine + 1,
+              column: EndCharacter,
+            },
+          },
           name,
           type: 'function',
         });
@@ -218,7 +234,7 @@ const getColor = (feature) => {
     case 'export':
       return '#03ad1a';
     case 'function':
-      return '#b30f00';
+      return '#888888';
     default:
       return '#000';
   }
