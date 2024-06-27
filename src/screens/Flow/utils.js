@@ -36,6 +36,16 @@ export const createEditorNode = (nodeId) => {
 let edgeIdCount = 0;
 const getEdgeId = () => `${edgeIdCount++}`;
 
+const findMatch = (fullPath, partialPath) => {
+  const possibleExtensions = ['.js', '.jsx', '.ts', '.tsx', '.json'];
+  for (const extension of possibleExtensions) {
+    if (fullPath.includes(partialPath + extension)) {
+      return true;
+    }
+  }
+  return false;
+};
+
 export const getNewEdges = (nodeId, existingHandles, newHandles) => {
   const exports = newHandles.filter((handle) => handle.handleType === 'export');
   const imports = newHandles.filter((handle) => handle.handleType === 'import');
@@ -44,7 +54,9 @@ export const getNewEdges = (nodeId, existingHandles, newHandles) => {
   exports.forEach((exportHandle) => {
     existingHandles.forEach((existingHandle) => {
       const namesMatch = existingHandle.name === exportHandle.name;
-      const pathsMatch = exportHandle.nodePath.includes(
+
+      const pathsMatch = findMatch(
+        exportHandle.nodePath,
         existingHandle.importPath
       );
       // console.log('existingHandle:', existingHandle);
@@ -69,7 +81,8 @@ export const getNewEdges = (nodeId, existingHandles, newHandles) => {
   imports.forEach((importHandle) => {
     existingHandles.forEach((existingHandle) => {
       const namesMatch = existingHandle.name === importHandle.name;
-      const pathsMatch = existingHandle.nodePath.includes(
+      const pathsMatch = findMatch(
+        existingHandle.nodePath,
         importHandle.importPath
       );
       console.log('existingHandle:', existingHandle);

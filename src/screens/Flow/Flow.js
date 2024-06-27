@@ -474,7 +474,7 @@ export const Flow = () => {
           parentId,
         };
 
-        const children = createChildren(flatFiles, newNode);
+        const children = []; //createChildren(flatFiles, newNode);
 
         const newNodes = nodes.concat(newNode).concat(children);
         console.log('newNodes', newNodes);
