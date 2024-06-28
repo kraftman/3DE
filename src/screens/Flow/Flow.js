@@ -225,7 +225,8 @@ export const Flow = () => {
     const targetIsPane = event.target.classList.contains('react-flow__pane');
     const groupNodeElement = event.target.closest('.react-flow__node-group');
 
-    const currentText = fromNode.data.value;
+    const currentText = flatFiles[fromNode.data.fullPath].fileData;
+    console.log('currentText', currentText);
     const startLine = fromHandle.loc.start.line;
     const endLine = fromHandle.loc.end.line;
     const { updatedText, extractedChunk } = removeTextChunk(
@@ -236,8 +237,6 @@ export const Flow = () => {
 
     const currentDir = path.dirname(fromHandle.nodePath);
     const newFullPath = path.join(currentDir, `${fromHandle.name}.js`);
-    console.log('current dir', currentDir);
-    console.log('newFullPath', newFullPath);
 
     if (targetIsPane) {
       const newNode = {
@@ -290,7 +289,7 @@ export const Flow = () => {
       const line = Math.floor((position.y - targetNode.position.y) / 16);
 
       const newText = insertTextChunk(
-        targetNode.data.value,
+        flatFiles[targetNode.data.fullPath].fileData,
         extractedChunk,
         line
       );
