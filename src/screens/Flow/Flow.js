@@ -190,12 +190,19 @@ export const Flow = () => {
         };
         return newFiles;
       });
+      const lines = value.split('\n');
+      const newHeight = Math.min(300, lines.length * 16);
       const newHandles = getHandles(nodeId, node.data.fullPath, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
           node.data = {
             ...node.data,
             handles: newHandles,
+            height: newHeight,
+          };
+          node.style = {
+            ...node.style,
+            height: `${newHeight}px`,
           };
         }
         return node;

@@ -4,7 +4,7 @@ import { Handle, Position, NodeToolbar } from 'reactflow';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import TextField from '@mui/material/TextField';
+import { EDITOR } from '../../constants';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -31,6 +31,7 @@ export const EditorNode = ({
 }) => {
   const editorRef = useRef(null);
   const [decorations, setDecorations] = useState([]);
+  const [verticalScroll, setVerticalScroll] = useState(0);
 
   const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
   const text = flatFiles[data.fullPath]?.fileData;
@@ -55,6 +56,9 @@ export const EditorNode = ({
     editor.onDidChangeCursorSelection((e) => {
       checkIfTextIsSelected();
     });
+    editor.onDidScrollChange((e) => {
+      setVerticalScroll(editor.getScrollTop());
+    });
   };
 
   const addDecorators = () => {
@@ -71,15 +75,21 @@ export const EditorNode = ({
     setDecorations(newDecorationIds);
   };
 
-  const renderedHandles = data?.handles?.map((handle) => (
-    <Handle
-      key={handle.id}
-      type={handle.type}
-      position={handle.position}
-      id={handle.id}
-      style={handle.style}
-    />
-  ));
+  const renderedHandles = data?.handles?.map((handle) => {
+    const newTop = handle.style.top - verticalScroll;
+    if (newTop < 40 || newTop > data.height) {
+      return null;
+    }
+    return (
+      <Handle
+        key={handle.id}
+        type={handle.type}
+        position={handle.position}
+        id={handle.id}
+        style={{ ...handle.style, top: newTop }}
+      />
+    );
+  });
 
   return (
     <>
@@ -87,12 +97,7 @@ export const EditorNode = ({
       <div className="text-updater-node">
         <ThemeProvider theme={darkTheme}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <TextField
-              size="small"
-              variant="outlined"
-              value={data.fileName}
-              onChange={(event) => onFileNameChange(id, event.target.value)}
-            />
+            <span>{data.fileName}</span>
             <IconButton aria-label="delete" onClick={() => onClose(id)}>
               <CloseIcon />
             </IconButton>
@@ -102,14 +107,16 @@ export const EditorNode = ({
           <Editor
             className="editor nodrag"
             onChange={onChange}
-            height="100%"
+            height="90%"
             width="100%"
             defaultLanguage="javascript"
             automaticLayout="true"
             value={text}
             options={{
-              fontSize: 8,
+              fontSize: EDITOR.FONT_SIZE,
               lineNumbersMinChars: 2,
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
               minimap: {
                 enabled: false,
               },

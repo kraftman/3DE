@@ -19,10 +19,10 @@ body,
 .text-updater-node {
   height: 100%;
   width: 100%;
-  border: 1px solid #292929;
-  padding: 5px;
-  border-radius: 10px;
-  background: rgb(8, 8, 8);
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #2a2929; /* Nice grey color */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Slight drop shadow */
 }
 
 .text-updater-node {
@@ -32,12 +32,14 @@ body,
 }
 
 .editor-container {
-  flex: 1;
+  height: 100%;
+  width: 100%;
   display: flex;
+  flex-direction: column;
 }
 
 .editor {
-  flex: 1;
+  flex-grow: 1;
 }
 
 .node-toolbar {

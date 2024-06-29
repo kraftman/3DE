@@ -1,17 +1,7 @@
-import * as acorn from 'acorn';
-import tsPlugin from 'acorn-typescript';
-import estraverse from 'estraverse';
 import * as monaco from 'monaco-editor';
-import ReactFlow, {
-  useNodesState,
-  useEdgesState,
-  MiniMap,
-  Controls,
-  Position,
-  Background,
-  useReactFlow,
-  useUpdateNodeInternals,
-} from 'reactflow';
+import ReactFlow, { Position } from 'reactflow';
+
+import { EDITOR } from '../constants';
 
 import path from 'path-browserify';
 
@@ -256,7 +246,7 @@ export const getHandles = (nodeId, fullPath, code) => {
       position: getHandlePosition(feature),
       style: {
         left: getLeftPosition(feature),
-        top: 40 + 10 * feature.line,
+        top: 40 + EDITOR.FONT_SIZE * feature.line,
         background: getColor(feature),
         zIndex: 1000,
       },
