@@ -439,6 +439,8 @@ export const Flow = () => {
     async (event) => {
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
+      console.log('fullPath', fullPath);
+      console.log('rootPath', rootPath);
       const relativePath = path.relative(rootPath, fullPath);
       const parsedPaths = relativePath.split(path.sep);
       const fileInfo = flatFiles[fullPath];

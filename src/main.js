@@ -69,10 +69,11 @@ app.whenReady().then(() => {
   ipcMain.handle('load-folder-tree', async (event, folderPath) => {
     const readDirectory = (directory) => {
       const items = fs.readdirSync(directory);
+      const basePath = path.resolve(directory);
       return items
         .filter((item) => item !== '.git' && item !== 'node_modules')
         .map((item) => {
-          const fullPath = path.join(directory, item);
+          const fullPath = path.join(basePath, item);
           const isDirectory = fs.statSync(fullPath).isDirectory();
           const newData = {
             name: item,
