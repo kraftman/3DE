@@ -85,7 +85,8 @@ app.whenReady().then(() => {
     };
 
     const full = readDirectory(folderPath);
-    return full;
+    const fullRootPath = path.resolve(folderPath);
+    return { fullRootPath, folderTree: full };
   });
 
   // On OS X it's common to re-create a window in the app when the

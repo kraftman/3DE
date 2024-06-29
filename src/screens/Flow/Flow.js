@@ -48,7 +48,6 @@ import {
   createSelectionHandle,
   getNewEdges,
   getNewNodeId,
-  stringToDarkTransparentColor,
   createChildren,
 } from './utils';
 import { initialSettingsState } from './mocks';
@@ -67,7 +66,7 @@ export const Flow = () => {
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
   useEffect(() => {
-    loadFileSystem('/home/chris/marvel-app');
+    loadFileSystem('../marvel-app');
   }, []);
 
   const onNodesChange = (changes) => {
@@ -141,7 +140,6 @@ export const Flow = () => {
   };
 
   const onClose = (nodeId) => {
-    console.log('closing node', nodeId);
     setEdges((edges) =>
       edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
     );

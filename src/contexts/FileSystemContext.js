@@ -12,9 +12,8 @@ export const FileSystemProvider = ({ children }) => {
   const [rootPath, setRootPath] = useState('');
 
   const loadFileSystem = useCallback(async (newRootPath) => {
-    const folderTree = await loadFolderTree(newRootPath);
-    console.log('set root path', newRootPath);
-    setRootPath(newRootPath);
+    const { fullRootPath, folderTree } = await loadFolderTree(newRootPath);
+    setRootPath(fullRootPath);
     setFolderData(folderTree);
     const flatFiles = flattenFileTree(folderTree);
 
