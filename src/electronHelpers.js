@@ -8,6 +8,9 @@ const invokeMain = async (channel, ...args) => {
 
 export const loadFile = (fileId) => invokeMain('load-file', fileId);
 
+export const saveFile = (filePath, fileData) =>
+  invokeMain('save-file', { filePath, fileData });
+
 export const loadFolderTree = (folderId) =>
   invokeMain('load-folder-tree', folderId);
 

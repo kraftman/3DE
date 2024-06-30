@@ -33,7 +33,7 @@ import path from 'path-browserify';
 
 import { useLayer } from './useLayer';
 
-import { loadFolderTree, loadFile } from '../../electronHelpers';
+import { loadFolderTree, loadFile, saveFile } from '../../electronHelpers';
 
 import { LayerManager } from '../../components/LayerManager';
 
@@ -62,6 +62,8 @@ export const Flow = () => {
 
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
+  const [focusNode, setFocusNode] = useState(null);
+
   const updateNodeInternals = useUpdateNodeInternals();
 
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
@@ -69,6 +71,27 @@ export const Flow = () => {
   useEffect(() => {
     loadFileSystem('../marvel-app');
   }, []);
+
+  const onNodeClick = (event, node) => {
+    setFocusNode(node);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = async (e) => {
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        const fullPath = nodes.find((node) => node.id === focusNode.id).data
+          .fullPath;
+        const fileData = flatFiles[fullPath].fileData;
+        const res = await saveFile(fullPath, fileData);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [focusNode, flatFiles]);
 
   const onNodesChange = (changes) => {
     setNodes((prevNodes) => {
@@ -569,6 +592,7 @@ export const Flow = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
         defaultViewport={defaultViewport}
         minZoom={0.2}
         maxZoom={4}

@@ -76,6 +76,11 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('save-file', async (event, { filePath, fileData }) => {
+    fs.writeFileSync(filePath, fileData);
+    return '';
+  });
+
   ipcMain.handle('select-folder', async (event, arg) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],
