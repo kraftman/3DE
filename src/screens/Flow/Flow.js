@@ -24,6 +24,7 @@ import { EditorNode } from '../../components/nodes/EditorNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { GroupNode } from '../../components/nodes/GroupNode';
 import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
+import { ImageNode } from '../../components/nodes/ImageNode';
 
 import FolderSelectButton from '../../components/FolderSelectButton';
 import { BasicTree } from '../../components/FolderTree';
@@ -157,6 +158,7 @@ export const Flow = () => {
           {...props}
         />
       ),
+      image: ImageNode,
       preview: PreviewNode,
       group: GroupNode,
       settings: (props) => (
@@ -439,8 +441,6 @@ export const Flow = () => {
     async (event) => {
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
-      console.log('fullPath', fullPath);
-      console.log('rootPath', rootPath);
       const relativePath = path.relative(rootPath, fullPath);
       const parsedPaths = relativePath.split(path.sep);
       const fileInfo = flatFiles[fullPath];
@@ -460,7 +460,6 @@ export const Flow = () => {
         );
         let parentId = null;
         const lines = fileContents.split('\n');
-        const editorHeight = 300;
         // if (!existingGroup) {
         //   // create a new group node
         //   // recursively create group nodes for each folder in the path
@@ -486,6 +485,8 @@ export const Flow = () => {
 
         const nextNodeId = getNewNodeId();
 
+        const isImage = /\.(gif|jpe?g|tiff?|png|webp|bmp|svg)$/i.test(fileName);
+
         const newNode = {
           id: nextNodeId,
           data: {
@@ -494,14 +495,14 @@ export const Flow = () => {
             value: fileContents,
             handles: [],
           },
-          type: 'editor',
+          type: isImage ? 'image' : 'editor',
           position: {
             x: parentId ? 10 : newPos.x,
             y: parentId ? 10 : newPos.y,
           },
           style: {
             width: '500px',
-            height: `${editorHeight}px`,
+            height: '500px',
           },
           parentId,
         };
@@ -527,9 +528,10 @@ export const Flow = () => {
       console.log('parsedPaths', parsedPaths);
 
       let parentId = null;
-      const editorHeight = 300;
 
       const nextNodeId = getNewNodeId();
+
+      const isImage = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i.test(fileName);
 
       const newNode = {
         id: nextNodeId,
@@ -539,14 +541,14 @@ export const Flow = () => {
           value: fileContents,
           handles: [],
         },
-        type: 'editor',
+        type: isImage ? 'image' : 'editor',
         position: {
           x: 500,
           y: 500,
         },
         style: {
           width: '500px',
-          height: `${editorHeight}px`,
+          height: '500px',
         },
         parentId,
       };

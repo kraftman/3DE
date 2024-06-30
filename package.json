@@ -85,6 +85,7 @@
     "react-jsx-parser": "^1.29.0",
     "react-resizable": "^3.0.5",
     "reactflow": "^11.11.3",
+    "sqlite3": "^5.1.7",
     "ts-loader": "^9.5.1",
     "ts-morph": "^23.0.0",
     "use-react-screenshot": "^4.0.0"

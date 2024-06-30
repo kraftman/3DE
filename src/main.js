@@ -55,8 +55,25 @@ app.whenReady().then(() => {
   const mainWindow = createWindow();
 
   ipcMain.handle('load-file', async (event, filePath) => {
-    const fileContents = fs.readFileSync(filePath, 'utf8');
-    return fileContents;
+    const ext = path.extname(filePath).toLowerCase();
+
+    if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)) {
+      // Read image file and encode in Base64
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Image = fileBuffer.toString('base64');
+      const mimeType = `image/${ext.substring(1)}`; // Get MIME type from file extension
+      return `data:${mimeType};base64,${base64Image}`;
+    } else if (ext === '.svg') {
+      // Read SVG file as text
+      const svgContents = fs.readFileSync(filePath, 'utf8');
+      return `data:image/svg+xml;base64,${Buffer.from(svgContents).toString(
+        'base64'
+      )}`;
+    } else {
+      // Read as text file
+      const fileContents = fs.readFileSync(filePath, 'utf8');
+      return fileContents;
+    }
   });
 
   ipcMain.handle('select-folder', async (event, arg) => {
