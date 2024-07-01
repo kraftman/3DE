@@ -4,6 +4,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
 
 import { ChromePicker } from 'react-color';
 import { useLayer } from '../screens/Flow/useLayer';
@@ -68,10 +69,23 @@ export const getRandomDarkHexColorWithAlpha = () => {
   return hexColorWithAlpha;
 };
 
+const rgbaToHex = (r, g, b, a) => {
+  let hexR = r.toString(16).padStart(2, '0');
+  let hexG = g.toString(16).padStart(2, '0');
+  let hexB = b.toString(16).padStart(2, '0');
+  let hexA = Math.round(a * 255)
+    .toString(16)
+    .padStart(2, '0');
+
+  return `#${hexR}${hexG}${hexB}${hexA}`;
+};
+
 const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
   const { color = '#ffffffff' } = layer;
   const [hover, setHover] = useState(false);
   const [open, setOpen] = useState(false);
+  const [localLayerName, setLocalLayerName] = useState(layerName);
+  const [localColor, setLocalColor] = useState(color);
 
   const { nodes, edges, currentLayer, layers, setLayers, setCurrentLayer } =
     useLayer();
@@ -91,8 +105,8 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
     setOpen(false);
   };
 
-  const onLayerNameChange = (e) => {
-    const newName = e.target.value;
+  const onLayerUpdated = () => {
+    const newName = localLayerName;
     let found;
     setLayers((layers) => {
       const newLayers = {};
@@ -103,8 +117,7 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
           found = layer;
         }
       }
-      newLayers[newName] = { ...found };
-      console.log('new layrse', newLayers);
+      newLayers[newName] = { ...found, color: localColor };
       return newLayers;
     });
     setCurrentLayer(newName);
@@ -169,10 +182,16 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
             id="standard-basic"
             label="Layer Name"
             variant="standard"
-            value={layerName}
-            onChange={onLayerNameChange}
+            value={localLayerName}
+            onChange={(e) => setLocalLayerName(e.target.value)}
           />
-          <ChromePicker color={layer.color} />
+          <ChromePicker
+            color={localColor}
+            onChange={(e) =>
+              setLocalColor(rgbaToHex(e.rgb.r, e.rgb.g, e.rgb.b, e.rgb.a))
+            }
+          />
+          <Button onClick={onLayerUpdated}>Save</Button>
         </Box>
       </Modal>
     </>
