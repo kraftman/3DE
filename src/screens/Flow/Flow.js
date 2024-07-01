@@ -33,7 +33,12 @@ import path from 'path-browserify';
 
 import { useLayer } from './useLayer';
 
-import { loadFolderTree, loadFile, saveFile } from '../../electronHelpers';
+import {
+  getAllSessions,
+  loadSession,
+  saveSession,
+  saveFile,
+} from '../../electronHelpers';
 
 import { LayerManager } from '../../components/LayerManager';
 
@@ -45,12 +50,7 @@ import {
   insertTextChunk,
 } from '../../components/editorUtils';
 
-import {
-  createSelectionHandle,
-  getNewEdges,
-  getNewNodeId,
-  createChildren,
-} from './utils';
+import { createSelectionHandle, getNewEdges, getNewNodeId } from './utils';
 import { initialSettingsState } from './mocks';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
@@ -65,6 +65,8 @@ export const Flow = () => {
     setEdges,
     nodes,
     edges,
+    state: layerState,
+    setState: setLayerState,
     currentLayer,
   } = useLayer();
 
@@ -76,8 +78,22 @@ export const Flow = () => {
 
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
-  useEffect(() => {
-    loadFileSystem('../marvel-app');
+  useEffect(async () => {
+    const startUpFolder = '../marvel-app';
+    const fullRootPath = await loadFileSystem(startUpFolder);
+    const sessions = await getAllSessions();
+    console.log('got sessions', sessions);
+    if (!sessions) {
+      return;
+    }
+    console.log(`checking for session ${fullRootPath} in ${sessions}`);
+    const found = sessions.find((session) => session === fullRootPath);
+    if (!found) {
+      return;
+    }
+    const sessionData = await loadSession(fullRootPath);
+    console.log('got session data', sessionData);
+    setLayerState(sessionData);
   }, []);
 
   const onNodeClick = (event, node) => {
@@ -92,6 +108,8 @@ export const Flow = () => {
           .fullPath;
         const fileData = flatFiles[fullPath].fileData;
         const res = await saveFile(fullPath, fileData);
+        console.log('saving session', rootPath, layerState);
+        await saveSession(rootPath, layerState);
       }
       // if ctrl plus arrow up
       if (e.ctrlKey && e.key === 'ArrowUp') {
@@ -537,7 +555,6 @@ export const Flow = () => {
           data: {
             fullPath,
             fileName,
-            value: fileContents,
             handles: [],
           },
           type: isImage ? 'image' : 'editor',
@@ -583,7 +600,6 @@ export const Flow = () => {
         data: {
           fullPath,
           fileName,
-          value: fileContents,
           handles: [],
         },
         type: isImage ? 'image' : 'editor',

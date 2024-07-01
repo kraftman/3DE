@@ -15,3 +15,11 @@ export const loadFolderTree = (folderId) =>
   invokeMain('load-folder-tree', folderId);
 
 export const selectFolder = () => invokeMain('select-folder');
+
+export const getAllSessions = () => invokeMain('load-sessions');
+
+export const loadSession = (sessionPath) =>
+  invokeMain('load-session', sessionPath);
+
+export const saveSession = (rootPath, layerState) =>
+  invokeMain('save-session', { rootPath, layerState });

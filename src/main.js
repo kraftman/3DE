@@ -5,6 +5,13 @@ const { exec } = require('child_process');
 const util = require('util');
 const runTest = require('./run-tests');
 
+import { LowSync } from 'lowdb';
+import { JSONFileSync } from 'lowdb/node';
+
+const db = new LowSync(new JSONFileSync('session-state.json'), {
+  sessions: {},
+});
+
 const execPromise = util.promisify(exec);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -53,6 +60,33 @@ app.whenReady().then(() => {
   });
 
   const mainWindow = createWindow();
+
+  ipcMain.handle('save-session', async (event, sessionData) => {
+    // use the root path for the session id
+    // store the layers and nodes in lowdb
+    console.log('raw', sessionData);
+    console.log(
+      'saving to lowdb',
+      sessionData.rootPath,
+      sessionData.layerState
+    );
+
+    db.data.sessions[sessionData.rootPath] = sessionData.layerState;
+    db.write();
+    return '';
+  });
+
+  ipcMain.handle('load-session', async (event, rootPath) => {
+    const sessionData = db.data.sessions[rootPath];
+    return sessionData;
+  });
+
+  ipcMain.handle('load-sessions', async (event, sessionData) => {
+    console.log('db.data', db.data);
+    const sessionNames = Object.keys(db.data.sessions);
+    console.log('sessions', sessionNames);
+    return sessionNames;
+  });
 
   ipcMain.handle('load-file', async (event, filePath) => {
     const ext = path.extname(filePath).toLowerCase();

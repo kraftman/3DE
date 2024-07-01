@@ -9,6 +9,8 @@ const initialState = {
 
 const reducer = (state, action) => {
   switch (action.type) {
+    case 'SET_STATE':
+      return action.payload;
     case 'SET_LAYERS':
       return {
         ...state,
@@ -19,9 +21,6 @@ const reducer = (state, action) => {
       };
     case 'SET_CURRENT_LAYER':
       if (!state.layers[action.payload]) {
-        // add a new layer
-        console.log('adding new layer:', action.payload);
-        console.log('state:', state);
         return {
           ...state,
           layers: {

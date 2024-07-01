@@ -1,0 +1,76 @@
+{
+  "sessions": {
+    "/home/chris/marvel-app": {
+      "layers": {
+        "0": {
+          "nodes": [
+            {
+              "id": "0",
+              "data": {
+                "fullPath": "/home/chris/marvel-app/jest.config.ts",
+                "fileName": "jest.config.ts",
+                "handles": [
+                  {
+                    "id": "0-import-Config",
+                    "name": "Config",
+                    "nodeId": "0",
+                    "fileName": "jest",
+                    "nodePath": "/home/chris/marvel-app/jest.config.ts",
+                    "type": "source",
+                    "handleType": "import",
+                    "position": "right",
+                    "style": {
+                      "left": 500,
+                      "top": 100,
+                      "background": "#b30f00",
+                      "zIndex": 1000
+                    },
+                    "importPath": "/home/chris/marvel-app/jest"
+                  },
+                  {
+                    "id": "0-export-config",
+                    "name": "config",
+                    "nodeId": "0",
+                    "fileName": "",
+                    "nodePath": "/home/chris/marvel-app/jest.config.ts",
+                    "type": "source",
+                    "handleType": "export",
+                    "position": "left",
+                    "style": {
+                      "left": -5,
+                      "top": 2070,
+                      "background": "#03ad1a",
+                      "zIndex": 1000
+                    }
+                  }
+                ],
+                "height": 300
+              },
+              "type": "editor",
+              "position": {
+                "x": 688,
+                "y": 358.66666666666663
+              },
+              "style": {
+                "width": "500px",
+                "height": "300px"
+              },
+              "parentId": null,
+              "width": 500,
+              "height": 300,
+              "selected": true,
+              "positionAbsolute": {
+                "x": 688,
+                "y": 358.66666666666663
+              },
+              "dragging": false
+            }
+          ],
+          "edges": [],
+          "color": "#11441166"
+        }
+      },
+      "currentLayer": 0
+    }
+  }
+}
