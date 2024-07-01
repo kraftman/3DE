@@ -31,6 +31,7 @@ import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
 import path from 'path-browserify';
 
+import { SnackbarProvider, enqueueSnackbar } from 'notistack';
 import { useLayer } from './useLayer';
 
 import {
@@ -119,8 +120,15 @@ export const Flow = () => {
         const isJsFile = jsFiles.includes(extension);
 
         const fileData = flatFiles[fullPath].fileData;
+        const isValid = isValidCode(fileData);
         if (isJsFile && !isValidCode(fileData)) {
           console.log('invalid code');
+          enqueueSnackbar({
+            message: 'Invalid code',
+            options: {
+              variant: 'error',
+            },
+          });
           return;
         }
         const res = await saveFile(fullPath, fileData);
@@ -135,8 +143,7 @@ export const Flow = () => {
 
         console.log(currentLayer, nextLayer);
         setCurrentLayer(nextLayer);
-      } else if (e.ctrlKey && e.shiftKey && e.key === 't') {
-        console.log('adding new layer');
+      } else if (e.ctrlKey && e.shiftKey && e.key === 'T') {
         setLayers((layers) => {
           const layerCount = Object.keys(layers).length;
           return {
@@ -278,7 +285,7 @@ export const Flow = () => {
         return newFiles;
       });
       const lines = value.split('\n');
-      const newHeight = Math.min(300, lines.length * 16);
+      const newHeight = Math.min(300, lines.length * 20);
       const newHandles = getHandles(nodeId, node.data.fullPath, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
@@ -679,6 +686,12 @@ export const Flow = () => {
           <LayerManager />
         </Panel>
         <Panel position="top">
+          <SnackbarProvider
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
+            }}
+          />
           <SearchBar
             flatFiles={flatFiles}
             onFileSelected={onFileSelectedSearchBar}

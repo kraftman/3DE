@@ -114,9 +114,7 @@ export const isValidCode = (code) => {
     ts.ScriptTarget.Latest,
     true
   );
-  const diagnostics = ts.getPreEmitDiagnostics(sourceFile);
-
-  if (diagnostics.length > 0) {
+  if (sourceFile.parseDiagnostics.length > 0) {
     return false;
   }
   return true;
