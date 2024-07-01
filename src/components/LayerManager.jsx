@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import IconButton from '@mui/material/IconButton';
+import SettingsIcon from '@mui/icons-material/Settings';
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
 
 import { useLayer } from '../screens/Flow/useLayer';
 
@@ -64,31 +68,86 @@ export const getRandomDarkHexColorWithAlpha = () => {
 
 const LayerPreview = ({ index, layer, onLayerSelected, selectedLayer }) => {
   const { color = '#ffffffff' } = layer;
+  const [hover, setHover] = useState(false);
+  const [open, setOpen] = useState(false);
+
   let outlineColor = lightenColor(color, 20); // Lighten by 20%
 
   if (selectedLayer === index) {
     outlineColor = '#ffffffff';
   }
+
+  const handleOpen = (e) => {
+    e.stopPropagation(); // Prevent the parent div's onClick from firing
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   return (
-    <div
-      onClick={() => onLayerSelected(index)}
-      style={{
-        width: '100px',
-        height: '100px',
-        background: color,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: '10px', // Rounded edges
-        border: `2px solid ${outlineColor}`, // Slightly lighter outline
-        color: 'white', // Text color for better contrast
-        fontWeight: 'bold', // Bold text
-      }}
-    >
-      {index}
-    </div>
+    <>
+      <div
+        onClick={() => onLayerSelected(index)}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          width: '100px',
+          height: '100px',
+          background: color,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative', // Position relative for absolute positioning of the icon
+          borderRadius: '10px', // Rounded edges
+          border: `2px solid ${outlineColor}`, // Slightly lighter outline
+          color: 'white', // Text color for better contrast
+          fontWeight: 'bold', // Bold text
+        }}
+      >
+        {index}
+        {hover && (
+          <IconButton
+            onClick={handleOpen}
+            style={{
+              position: 'absolute',
+              top: '5px',
+              right: '5px',
+            }}
+            size="small"
+          >
+            <SettingsIcon style={{ color: 'white' }} />
+          </IconButton>
+        )}
+      </div>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
+        <Box
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            backgroundColor: 'white',
+            border: '2px solid #000',
+            boxShadow: 24,
+            padding: '16px',
+          }}
+        >
+          <h2 id="modal-title">Settings</h2>
+          <p id="modal-description">Your content here</p>
+        </Box>
+      </Modal>
+    </>
   );
 };
+
 export const LayerManager = ({}) => {
   const { nodes, edges, currentLayer, layers, setLayers, setCurrentLayer } =
     useLayer();

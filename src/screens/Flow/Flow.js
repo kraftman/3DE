@@ -87,21 +87,25 @@ export const Flow = () => {
 
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
-  useEffect(async () => {
-    const startUpFolder = '../marvel-app';
-    const fullRootPath = await loadFileSystem(startUpFolder);
-    const sessions = await getAllSessions();
-    if (!sessions) {
-      return;
-    }
-    console.log(`checking for session ${fullRootPath} in ${sessions}`);
-    const found = sessions.find((session) => session === fullRootPath);
-    if (!found) {
-      return;
-    }
-    const sessionData = await loadSession(fullRootPath);
-    console.log('got session data', sessionData);
-    setLayerState(sessionData);
+  useEffect(() => {
+    const loadSessions = async () => {
+      const startUpFolder = '../marvel-app';
+      const fullRootPath = await loadFileSystem(startUpFolder);
+      const sessions = await getAllSessions();
+      if (!sessions) {
+        return;
+      }
+      console.log('got sessions', sessions);
+      console.log(`checking for session ${fullRootPath} in ${sessions}`);
+      const found = sessions.find((session) => session === fullRootPath);
+      if (!found) {
+        return;
+      }
+      const sessionData = await loadSession(fullRootPath);
+      console.log('got session data', sessionData);
+      setLayerState(sessionData);
+    };
+    loadSessions();
   }, []);
 
   const onNodeClick = (event, node) => {

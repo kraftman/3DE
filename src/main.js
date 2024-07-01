@@ -5,12 +5,9 @@ const { exec } = require('child_process');
 const util = require('util');
 const runTest = require('./run-tests');
 
-import { LowSync } from 'lowdb';
-import { JSONFileSync } from 'lowdb/node';
-
-const db = new LowSync(new JSONFileSync('session-state.json'), {
-  sessions: {},
-});
+const sessionStates =
+  fs.readFileSync('./session-states.json', 'utf8') || '{sessions: {}}';
+const db = JSON.parse(sessionStates);
 
 const execPromise = util.promisify(exec);
 
@@ -62,18 +59,19 @@ app.whenReady().then(() => {
   const mainWindow = createWindow();
 
   ipcMain.handle('save-session', async (event, sessionData) => {
-    db.data.sessions[sessionData.rootPath] = sessionData.layerState;
-    db.write();
+    db.sessions[sessionData.rootPath] = sessionData.layerState;
+    fs.writeFileSync('./session-states.json', JSON.stringify(db));
     return '';
   });
 
   ipcMain.handle('load-session', async (event, rootPath) => {
-    const sessionData = db.data.sessions[rootPath];
+    const sessionData = db.sessions[rootPath];
     return sessionData;
   });
 
-  ipcMain.handle('load-sessions', async (event, sessionData) => {
-    const sessionNames = Object.keys(db.data.sessions);
+  ipcMain.handle('load-sessions', async () => {
+    console.log('database:', db.data);
+    const sessionNames = Object.keys(db.sessions);
     return sessionNames;
   });
 
