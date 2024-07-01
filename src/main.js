@@ -62,15 +62,6 @@ app.whenReady().then(() => {
   const mainWindow = createWindow();
 
   ipcMain.handle('save-session', async (event, sessionData) => {
-    // use the root path for the session id
-    // store the layers and nodes in lowdb
-    console.log('raw', sessionData);
-    console.log(
-      'saving to lowdb',
-      sessionData.rootPath,
-      sessionData.layerState
-    );
-
     db.data.sessions[sessionData.rootPath] = sessionData.layerState;
     db.write();
     return '';
@@ -82,9 +73,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('load-sessions', async (event, sessionData) => {
-    console.log('db.data', db.data);
     const sessionNames = Object.keys(db.data.sessions);
-    console.log('sessions', sessionNames);
     return sessionNames;
   });
 

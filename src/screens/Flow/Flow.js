@@ -40,7 +40,10 @@ import {
   saveFile,
 } from '../../electronHelpers';
 
-import { LayerManager } from '../../components/LayerManager';
+import {
+  LayerManager,
+  getRandomDarkHexColorWithAlpha,
+} from '../../components/LayerManager';
 
 import { SearchBar } from '../../components/SearchBar';
 
@@ -58,7 +61,7 @@ const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
   const {
-    setLayer,
+    setLayers,
     setCurrentLayer,
     layers,
     setNodes,
@@ -110,20 +113,29 @@ export const Flow = () => {
         const res = await saveFile(fullPath, fileData);
         console.log('saving session', rootPath, layerState);
         await saveSession(rootPath, layerState);
-      }
-      // if ctrl plus arrow up
-      if (e.ctrlKey && e.key === 'ArrowUp') {
+      } else if (e.ctrlKey && e.key === 'ArrowUp') {
         const nextLayer = Math.max(currentLayer - 1, 0);
         console.log(currentLayer, nextLayer);
         setCurrentLayer(nextLayer);
-      }
-      // if ctrl plus arrow down
-      if (e.ctrlKey && e.key === 'ArrowDown') {
+      } else if (e.ctrlKey && e.key === 'ArrowDown') {
         const numLayers = Object.keys(layers).length;
         const nextLayer = Math.min(currentLayer + 1, numLayers - 1);
 
         console.log(currentLayer, nextLayer);
         setCurrentLayer(nextLayer);
+      } else if (e.ctrlKey && e.shiftKey && e.key === 't') {
+        console.log('adding new layer');
+        setLayers((layers) => {
+          const layerCount = Object.keys(layers).length;
+          return {
+            ...layers,
+            [layerCount]: {
+              nodes: [],
+              edges: [],
+              color: getRandomDarkHexColorWithAlpha(),
+            },
+          };
+        });
       }
     };
 

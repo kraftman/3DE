@@ -40,7 +40,7 @@ const lightenColor = (color, percent) => {
   }
 };
 
-function getRandomDarkHexColorWithAlpha() {
+export const getRandomDarkHexColorWithAlpha = () => {
   // Generate random values for R, G, B between 0 and 100 for darker shades
   const r = Math.floor(Math.random() * 100);
   const g = Math.floor(Math.random() * 100);
@@ -60,7 +60,7 @@ function getRandomDarkHexColorWithAlpha() {
   const hexColorWithAlpha = `#${hexR}${hexG}${hexB}${alpha}`;
 
   return hexColorWithAlpha;
-}
+};
 
 const LayerPreview = ({ index, layer, onLayerSelected, selectedLayer }) => {
   const { color = '#ffffffff' } = layer;
