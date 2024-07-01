@@ -235,7 +235,6 @@ export const LayerManager = ({}) => {
 
   return (
     <div>
-      <h1>LayerManager</h1>
       {layerComponents}
       <div
         onClick={onNewLayer}

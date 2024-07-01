@@ -1,5 +1,11 @@
 import React from 'react';
-export const Pip = ({ status, label }) => {
+export const Pip = ({
+  status,
+  label,
+  targetTooltip,
+  tooltipContent,
+  onClick,
+}) => {
   let className = 'pip';
   if (status === 'pass') {
     className += ' pip-green';
@@ -9,5 +15,13 @@ export const Pip = ({ status, label }) => {
     className += ' pip-red';
   }
 
-  return <span className={className}></span>;
+  return (
+    <span
+      onClick={onClick}
+      style={onClick ? { cursor: 'pointer' } : {}}
+      data-tooltip-id={targetTooltip}
+      data-tooltip-content={tooltipContent}
+      className={className}
+    ></span>
+  );
 };

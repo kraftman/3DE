@@ -91,7 +91,7 @@ export const Flow = () => {
 
   useEffect(() => {
     const loadSessions = async () => {
-      const startUpFolder = '../marvel-app';
+      const startUpFolder = './';
       const fullRootPath = await loadFileSystem(startUpFolder);
       const sessions = await getAllSessions();
       if (!sessions) {
@@ -135,6 +135,7 @@ export const Flow = () => {
           return;
         }
         const res = await saveFile(fullPath, fileData);
+        //TODO use the result as the new file contents, as it should be formatted
         setFlatFiles((files) => {
           const newFiles = {
             ...files,

@@ -7,8 +7,8 @@ import * as monaco from 'monaco-editor';
 import { EDITOR } from '../../constants';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import { Tooltip } from 'react-tooltip';
 import { Pip } from '../Pip';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { getDecorators } from '../editorUtils';
 
@@ -19,11 +19,37 @@ import 'react-tooltip/dist/react-tooltip.css';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
+const detectLanguage = (fileName) => {
+  const ext = fileName.split('.').pop();
+  if (ext === 'js') {
+    return 'javascript';
+  }
+  if (ext === 'py') {
+    return 'python';
+  }
+  if (ext === 'java') {
+    return 'java';
+  }
+  if (ext === 'html') {
+    return 'html';
+  }
+  if (ext === 'css') {
+    return 'css';
+  }
+  if (ext === 'json') {
+    return 'json';
+  }
+  if (ext === 'xml') {
+    return 'xml';
+  }
+  if (ext === 'yaml') {
+    return 'yaml';
+  }
+  if (ext === 'ts') {
+    return 'typescript';
+  }
+  return 'plaintext';
+};
 
 export const EditorNode = ({
   id,
@@ -41,10 +67,15 @@ export const EditorNode = ({
   const text = flatFiles[data.fullPath]?.fileData;
   const savedText = flatFiles[data.fullPath]?.savedData;
   const isSaved = text === savedText;
-  console.log('isSaved: ', isSaved);
+
+  const debouncedOnChange = useDebouncedCallback((newText) => {
+    onTextChange(id, newText);
+    addDecorators();
+  }, 500);
 
   const onChange = (newText) => {
-    onTextChange(id, newText);
+    //onTextChange(id, newText);
+    debouncedOnChange(newText);
     addDecorators();
   };
 
@@ -105,16 +136,17 @@ export const EditorNode = ({
         <span>{data.fileName}</span>
         <div className="pip-container">
           <Pip
-            data-tooltip-id="saved-tooltip"
-            data-tooltip-content="Hello world!"
+            targetTooltip="saved-tooltip"
+            tooltipContent={isSaved ? 'Saved' : 'Unsaved changes'}
             status={isSaved ? 'pass' : 'warn'}
           />
-          <span
-            data-tooltip-id="saved-tooltip"
-            data-tooltip-content="Hello world!"
-          >
-            test
-          </span>
+
+          <Pip
+            onClick={() => onClose(id)}
+            targetTooltip="saved-tooltip"
+            tooltipContent={'close'}
+            status="error"
+          />
 
           {/* <Pip status="warn" />
           <Pip status="error" />
@@ -127,7 +159,7 @@ export const EditorNode = ({
             onChange={onChange}
             height="90%"
             width="100%"
-            defaultLanguage="javascript"
+            defaultLanguage={detectLanguage(data.fileName)}
             automaticLayout="true"
             value={text}
             options={{
