@@ -7,11 +7,14 @@ import * as monaco from 'monaco-editor';
 import { EDITOR } from '../../constants';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import { Tooltip } from 'react-tooltip';
 import { Pip } from '../Pip';
 
 import { getDecorators } from '../editorUtils';
 
 import { useFileSystem } from '../../contexts/FileSystemContext';
+
+import 'react-tooltip/dist/react-tooltip.css';
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });
@@ -36,6 +39,9 @@ export const EditorNode = ({
 
   const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
   const text = flatFiles[data.fullPath]?.fileData;
+  const savedText = flatFiles[data.fullPath]?.savedData;
+  const isSaved = text === savedText;
+  console.log('isSaved: ', isSaved);
 
   const onChange = (newText) => {
     onTextChange(id, newText);
@@ -98,10 +104,21 @@ export const EditorNode = ({
       <div className="text-updater-node">
         <span>{data.fileName}</span>
         <div className="pip-container">
-          <Pip status="pass" />
-          <Pip status="warn" />
+          <Pip
+            data-tooltip-id="saved-tooltip"
+            data-tooltip-content="Hello world!"
+            status={isSaved ? 'pass' : 'warn'}
+          />
+          <span
+            data-tooltip-id="saved-tooltip"
+            data-tooltip-content="Hello world!"
+          >
+            test
+          </span>
+
+          {/* <Pip status="warn" />
           <Pip status="error" />
-          <Pip status="pass" />
+          <Pip status="pass" /> */}
         </div>
 
         <div className="editor-container">

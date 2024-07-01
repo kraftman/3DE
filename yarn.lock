@@ -2369,6 +2369,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@floating-ui/core@npm:^1.6.0":
+  version: 1.6.4
+  resolution: "@floating-ui/core@npm:1.6.4"
+  dependencies:
+    "@floating-ui/utils": "npm:^0.2.4"
+  checksum: 10c0/545684b6f76cda7579b6049bafb9903542d3f9c177300192fe83db19d99b1df285bc33aba3b8ec2978d021151c4168356876e8181002dd2ff4fb93d9e4b7bf71
+  languageName: node
+  linkType: hard
+
 "@floating-ui/dom@npm:^1.0.0":
   version: 1.6.5
   resolution: "@floating-ui/dom@npm:1.6.5"
@@ -2376,6 +2385,16 @@ __metadata:
     "@floating-ui/core": "npm:^1.0.0"
     "@floating-ui/utils": "npm:^0.2.0"
   checksum: 10c0/ebdc14806f786e60df8e7cc2c30bf9cd4d75fe734f06d755588bbdef2f60d0a0f21dffb14abdc58dea96e5577e2e366feca6d66ba962018efd1bc91a3ece4526
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:^1.6.1":
+  version: 1.6.7
+  resolution: "@floating-ui/dom@npm:1.6.7"
+  dependencies:
+    "@floating-ui/core": "npm:^1.6.0"
+    "@floating-ui/utils": "npm:^0.2.4"
+  checksum: 10c0/5255f522534e0022b554c366b969fa26951677a1cf39ddd58614071a909a340c5e1ffe645501037b221808f01bfac4e7edba14728978ee7e2438e8432c1a163f
   languageName: node
   linkType: hard
 
@@ -2395,6 +2414,13 @@ __metadata:
   version: 0.2.2
   resolution: "@floating-ui/utils@npm:0.2.2"
   checksum: 10c0/b2becdcafdf395af1641348da0031ff1eaad2bc60c22e14bd3abad4acfe2c8401e03097173d89a2f646a99b75819a78ef21ebb2572cab0042a56dd654b0065cd
+  languageName: node
+  linkType: hard
+
+"@floating-ui/utils@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "@floating-ui/utils@npm:0.2.4"
+  checksum: 10c0/154924b01157cb45cf305f4835d7f603e931dda8b00bbe52666729bccc5e7b99630e8b951333725e526d4e53d9b342976434ad5750b8b1da58728e3698bdcc2b
   languageName: node
   linkType: hard
 
@@ -5285,7 +5311,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:^2.3.1":
+"classnames@npm:^2.3.0, classnames@npm:^2.3.1":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
   checksum: 10c0/afff4f77e62cea2d79c39962980bf316bacb0d7c49e13a21adaadb9221e1c6b9d3cdb829d8bb1b23c406f4e740507f37e1dcf506f7e3b7113d17c5bab787aa69
@@ -9904,6 +9930,7 @@ __metadata:
     react-folder-tree: "npm:^5.1.1"
     react-jsx-parser: "npm:^1.29.0"
     react-resizable: "npm:^3.0.5"
+    react-tooltip: "npm:^5.27.0"
     reactflow: "npm:^11.11.3"
     sqlite3: "npm:^5.1.7"
     style-loader: "npm:^3.0.0"
@@ -11303,6 +11330,19 @@ __metadata:
   peerDependencies:
     react: ">= 16.3"
   checksum: 10c0/cfe50aa6efb79e0aa09bd681a5beab2fcd1186737c4952eb4c3974ed9395d5d263ccd1130961d06b8f5e24c8f544dd2967b5c740ce68719962d1771de7bdb350
+  languageName: node
+  linkType: hard
+
+"react-tooltip@npm:^5.27.0":
+  version: 5.27.0
+  resolution: "react-tooltip@npm:5.27.0"
+  dependencies:
+    "@floating-ui/dom": "npm:^1.6.1"
+    classnames: "npm:^2.3.0"
+  peerDependencies:
+    react: ">=16.14.0"
+    react-dom: ">=16.14.0"
+  checksum: 10c0/4b105dcef7b3d166e359b97fdbbef9c622de3c91e3c9387f959495c66d4caefb25e38cd75e0258dac104c3814c0ae74b97807382d36f45dfae6200645bafd3a3
   languageName: node
   linkType: hard
 

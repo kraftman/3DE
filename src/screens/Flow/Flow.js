@@ -18,8 +18,10 @@ import ReactFlow, {
   applyEdgeChanges,
   applyNodeChanges,
 } from 'reactflow';
+import { Tooltip } from 'react-tooltip';
 
 import 'reactflow/dist/style.css';
+import 'react-tooltip/dist/react-tooltip.css';
 import { EditorNode } from '../../components/nodes/EditorNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { GroupNode } from '../../components/nodes/GroupNode';
@@ -123,8 +125,7 @@ export const Flow = () => {
 
         const fileData = flatFiles[fullPath].fileData;
         const isValid = isValidCode(fileData);
-        if (isJsFile && !isValidCode(fileData)) {
-          console.log('invalid code');
+        if (isJsFile && isValid) {
           enqueueSnackbar({
             message: 'Invalid code',
             options: {
@@ -134,6 +135,14 @@ export const Flow = () => {
           return;
         }
         const res = await saveFile(fullPath, fileData);
+        setFlatFiles((files) => {
+          const newFiles = {
+            ...files,
+            [fullPath]: { ...files[fullPath], savedData: fileData },
+          };
+          console.log('set saved data');
+          return newFiles;
+        });
         await saveSession(rootPath, layerState);
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         const nextLayer = Math.max(currentLayer - 1, 0);
@@ -696,6 +705,11 @@ export const Flow = () => {
           <SearchBar
             flatFiles={flatFiles}
             onFileSelected={onFileSelectedSearchBar}
+          />
+          <Tooltip
+            id="saved-tooltip"
+            place="bottom"
+            content="Hello world! I'm a Tooltip"
           />
         </Panel>
         <MiniMap zoomable pannable nodeClassName={nodeClassName} />
