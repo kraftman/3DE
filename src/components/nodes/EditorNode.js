@@ -7,6 +7,7 @@ import * as monaco from 'monaco-editor';
 import { EDITOR } from '../../constants';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import { Pip } from '../Pip';
 
 import { getDecorators } from '../editorUtils';
 
@@ -95,14 +96,14 @@ export const EditorNode = ({
     <>
       {renderedHandles}
       <div className="text-updater-node">
-        <ThemeProvider theme={darkTheme}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span>{data.fileName}</span>
-            <IconButton aria-label="delete" onClick={() => onClose(id)}>
-              <CloseIcon />
-            </IconButton>
-          </div>
-        </ThemeProvider>
+        <span>{data.fileName}</span>
+        <div className="pip-container">
+          <Pip status="pass" />
+          <Pip status="warn" />
+          <Pip status="error" />
+          <Pip status="pass" />
+        </div>
+
         <div className="editor-container">
           <Editor
             className="editor nodrag"

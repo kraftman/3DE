@@ -19,7 +19,8 @@ body,
 .text-updater-node {
   height: 100%;
   width: 100%;
-  padding: 10px;
+  padding: 2px;
+  padding-top: 10px;
   border-radius: 4px;
   background-color: #2a2929; /* Nice grey color */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Slight drop shadow */
@@ -103,4 +104,31 @@ body,
 }
 .dark-grey-edges {
   stroke: darkgrey;
+}
+
+.pip-container {
+  position: absolute;
+  top: 10px; /* Adjust as needed */
+  right: 10px; /* Adjust as needed */
+  display: flex;
+}
+
+.pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 3px; /* Space between pips */
+  box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+}
+
+.pip-green {
+  background-color: rgb(0, 150, 0);
+}
+
+.pip-red {
+  background-color: rgb(152, 0, 0);
+}
+
+.pip-yellow {
+  background-color: rgb(150, 150, 0);
 }

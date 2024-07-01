@@ -95,14 +95,12 @@ export const Flow = () => {
       if (!sessions) {
         return;
       }
-      console.log('got sessions', sessions);
       console.log(`checking for session ${fullRootPath} in ${sessions}`);
       const found = sessions.find((session) => session === fullRootPath);
       if (!found) {
         return;
       }
       const sessionData = await loadSession(fullRootPath);
-      console.log('got session data', sessionData);
       setLayerState(sessionData);
     };
     loadSessions();
@@ -682,7 +680,6 @@ export const Flow = () => {
           }}
         />
         <Panel position="top-left">
-          <div>Current Layer: {currentLayer}</div>
           <FolderSelectButton onFolderSelected={onFolderSelected} />
           <BasicTree flatFiles={flatFiles} onFileSelected={onFileSelected} />
         </Panel>
