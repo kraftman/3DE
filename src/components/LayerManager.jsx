@@ -3,7 +3,9 @@ import IconButton from '@mui/material/IconButton';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
 
+import { ChromePicker } from 'react-color';
 import { useLayer } from '../screens/Flow/useLayer';
 
 const lightenColor = (color, percent) => {
@@ -66,14 +68,17 @@ export const getRandomDarkHexColorWithAlpha = () => {
   return hexColorWithAlpha;
 };
 
-const LayerPreview = ({ index, layer, onLayerSelected, selectedLayer }) => {
+const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
   const { color = '#ffffffff' } = layer;
   const [hover, setHover] = useState(false);
   const [open, setOpen] = useState(false);
 
+  const { nodes, edges, currentLayer, layers, setLayers, setCurrentLayer } =
+    useLayer();
+
   let outlineColor = lightenColor(color, 20); // Lighten by 20%
 
-  if (selectedLayer === index) {
+  if (selectedLayer === layerName) {
     outlineColor = '#ffffffff';
   }
 
@@ -86,10 +91,29 @@ const LayerPreview = ({ index, layer, onLayerSelected, selectedLayer }) => {
     setOpen(false);
   };
 
+  const onLayerNameChange = (e) => {
+    const newName = e.target.value;
+    let found;
+    setLayers((layers) => {
+      const newLayers = {};
+      for (const [key, layer] of Object.entries(layers)) {
+        if (!key === layerName) {
+          newLayers[key] = value;
+        } else {
+          found = layer;
+        }
+      }
+      newLayers[newName] = { ...found };
+      console.log('new layrse', newLayers);
+      return newLayers;
+    });
+    setCurrentLayer(newName);
+  };
+
   return (
     <>
       <div
-        onClick={() => onLayerSelected(index)}
+        onClick={() => onLayerSelected(layerName)}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         style={{
@@ -106,7 +130,7 @@ const LayerPreview = ({ index, layer, onLayerSelected, selectedLayer }) => {
           fontWeight: 'bold', // Bold text
         }}
       >
-        {index}
+        {layerName}
         {hover && (
           <IconButton
             onClick={handleOpen}
@@ -141,7 +165,14 @@ const LayerPreview = ({ index, layer, onLayerSelected, selectedLayer }) => {
           }}
         >
           <h2 id="modal-title">Settings</h2>
-          <p id="modal-description">Your content here</p>
+          <TextField
+            id="standard-basic"
+            label="Layer Name"
+            variant="standard"
+            value={layerName}
+            onChange={onLayerNameChange}
+          />
+          <ChromePicker color={layer.color} />
         </Box>
       </Modal>
     </>
@@ -166,8 +197,8 @@ export const LayerManager = ({}) => {
     });
   };
 
-  const onLayerSelected = (index) => {
-    setCurrentLayer(index);
+  const onLayerSelected = (layerName) => {
+    setCurrentLayer(layerName);
   };
 
   const layerComponents = [];
@@ -175,7 +206,7 @@ export const LayerManager = ({}) => {
     layerComponents.push(
       <LayerPreview
         key={index}
-        index={index}
+        layerName={index}
         layer={layer}
         onLayerSelected={onLayerSelected}
         selectedLayer={currentLayer}

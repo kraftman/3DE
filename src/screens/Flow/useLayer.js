@@ -23,8 +23,8 @@ export const useLayer = () => {
     dispatch({ type: 'SET_STATE', payload: newState });
   };
 
-  const nodes = state.layers[state.currentLayer].nodes;
-  const edges = state.layers[state.currentLayer].edges;
+  const nodes = state.layers[state.currentLayer]?.nodes;
+  const edges = state.layers[state.currentLayer]?.edges;
   const currentLayer = state.currentLayer;
   const layers = state.layers;
 
