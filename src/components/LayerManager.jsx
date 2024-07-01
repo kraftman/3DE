@@ -62,10 +62,13 @@ function getRandomDarkHexColorWithAlpha() {
   return hexColorWithAlpha;
 }
 
-const LayerPreview = ({ index, layer, onLayerSelected }) => {
+const LayerPreview = ({ index, layer, onLayerSelected, selectedLayer }) => {
   const { color = '#ffffffff' } = layer;
-  const outlineColor = lightenColor(color, 20); // Lighten by 20%
+  let outlineColor = lightenColor(color, 20); // Lighten by 20%
 
+  if (selectedLayer === index) {
+    outlineColor = '#ffffffff';
+  }
   return (
     <div
       onClick={() => onLayerSelected(index)}
@@ -89,13 +92,6 @@ const LayerPreview = ({ index, layer, onLayerSelected }) => {
 export const LayerManager = ({}) => {
   const { nodes, edges, currentLayer, layers, setLayers, setCurrentLayer } =
     useLayer();
-
-  const onLayerChange = (newLayer) => {
-    setLayers((layers) => ({
-      ...layers,
-      [currentLayer]: { nodes, edges, image: image },
-    }));
-  };
 
   const onNewLayer = () => {
     setLayers((layers) => {
@@ -123,6 +119,7 @@ export const LayerManager = ({}) => {
         index={index}
         layer={layer}
         onLayerSelected={onLayerSelected}
+        selectedLayer={currentLayer}
       />
     );
   }

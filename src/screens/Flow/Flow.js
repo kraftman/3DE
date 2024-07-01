@@ -57,8 +57,16 @@ import { useFileSystem } from '../../contexts/FileSystemContext';
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
-  const { setLayer, layers, setNodes, setEdges, nodes, edges, currentLayer } =
-    useLayer();
+  const {
+    setLayer,
+    setCurrentLayer,
+    layers,
+    setNodes,
+    setEdges,
+    nodes,
+    edges,
+    currentLayer,
+  } = useLayer();
 
   const [settings, setSettings] = useState(initialSettingsState);
   const [handles, setHandles] = useState([]);
@@ -85,13 +93,27 @@ export const Flow = () => {
         const fileData = flatFiles[fullPath].fileData;
         const res = await saveFile(fullPath, fileData);
       }
+      // if ctrl plus arrow up
+      if (e.ctrlKey && e.key === 'ArrowUp') {
+        const nextLayer = Math.max(currentLayer - 1, 0);
+        console.log(currentLayer, nextLayer);
+        setCurrentLayer(nextLayer);
+      }
+      // if ctrl plus arrow down
+      if (e.ctrlKey && e.key === 'ArrowDown') {
+        const numLayers = Object.keys(layers).length;
+        const nextLayer = Math.min(currentLayer + 1, numLayers - 1);
+
+        console.log(currentLayer, nextLayer);
+        setCurrentLayer(nextLayer);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [focusNode, flatFiles]);
+  }, [focusNode, flatFiles, currentLayer, layers]);
 
   const onNodesChange = (changes) => {
     setNodes((prevNodes) => {
