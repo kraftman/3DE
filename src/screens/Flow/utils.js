@@ -11,6 +11,8 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
+import * as ts from 'typescript';
+
 import { getHandles } from '../../components/editorUtils';
 let nodeIdCount = 0;
 
@@ -88,11 +90,6 @@ export const getNewEdges = (nodeId, existingHandles, newHandles) => {
         existingHandle.nodePath,
         importHandle.importPath
       );
-      console.log('existingHandle:', existingHandle);
-      console.log('importHandle:', importHandle);
-      console.log('pathsMatch:', pathsMatch);
-
-      console.log('namesMatch:', namesMatch);
       const isMatching =
         existingHandle.handleType === 'import' && namesMatch && pathsMatch;
 
@@ -108,6 +105,21 @@ export const getNewEdges = (nodeId, existingHandles, newHandles) => {
     });
   });
   return newEdges;
+};
+
+export const isValidCode = (code) => {
+  const sourceFile = ts.createSourceFile(
+    'tempFile.ts',
+    code,
+    ts.ScriptTarget.Latest,
+    true
+  );
+  const diagnostics = ts.getPreEmitDiagnostics(sourceFile);
+
+  if (diagnostics.length > 0) {
+    return false;
+  }
+  return true;
 };
 
 export const stringToDarkTransparentColor = (str) => {

@@ -53,7 +53,12 @@ import {
   insertTextChunk,
 } from '../../components/editorUtils';
 
-import { createSelectionHandle, getNewEdges, getNewNodeId } from './utils';
+import {
+  createSelectionHandle,
+  getNewEdges,
+  getNewNodeId,
+  isValidCode,
+} from './utils';
 import { initialSettingsState } from './mocks';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
@@ -85,7 +90,6 @@ export const Flow = () => {
     const startUpFolder = '../marvel-app';
     const fullRootPath = await loadFileSystem(startUpFolder);
     const sessions = await getAllSessions();
-    console.log('got sessions', sessions);
     if (!sessions) {
       return;
     }
@@ -109,9 +113,17 @@ export const Flow = () => {
         e.preventDefault();
         const fullPath = nodes.find((node) => node.id === focusNode.id).data
           .fullPath;
+
+        const extension = path.extname(fullPath);
+        const jsFiles = ['.js', '.jsx', '.ts', '.tsx'];
+        const isJsFile = jsFiles.includes(extension);
+
         const fileData = flatFiles[fullPath].fileData;
+        if (isJsFile && !isValidCode(fileData)) {
+          console.log('invalid code');
+          return;
+        }
         const res = await saveFile(fullPath, fileData);
-        console.log('saving session', rootPath, layerState);
         await saveSession(rootPath, layerState);
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         const nextLayer = Math.max(currentLayer - 1, 0);
