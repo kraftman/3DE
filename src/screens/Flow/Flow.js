@@ -126,7 +126,7 @@ export const Flow = () => {
 
         const fileData = flatFiles[fullPath].fileData;
         const isValid = isValidCode(fileData);
-        if (isJsFile && isValid) {
+        if (!isJsFile || !isValid) {
           enqueueSnackbar({
             message: 'Invalid code',
             options: {
@@ -326,7 +326,7 @@ export const Flow = () => {
         return newFiles;
       });
       const lines = value.split('\n');
-      const newHeight = Math.min(600, lines.length * 20);
+      const newHeight = Math.max(100, Math.min(600, lines.length * 20));
       const newHandles = getHandles(nodeId, node.data.fullPath, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
