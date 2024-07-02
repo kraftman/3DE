@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import ReactFlow, { Position } from 'reactflow';
+import { Position } from 'reactflow';
 
 import { EDITOR } from '../constants';
 
