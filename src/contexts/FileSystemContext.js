@@ -24,6 +24,7 @@ export const FileSystemProvider = ({ children }) => {
           continue;
         }
         fileInfo.fileData = await loadFile(fullPath);
+        fileInfo.savedData = fileInfo.fileData;
       } catch (error) {
         console.error('error loading file', fullPath, error);
       }

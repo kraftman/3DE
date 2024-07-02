@@ -68,10 +68,12 @@ export const EditorNode = ({
   const savedText = flatFiles[data.fullPath]?.savedData;
   const isSaved = text === savedText;
 
+  //TODOO split apart saving and updating the saved data
+  // so that debounce only applies to saving/formatting
   const debouncedOnChange = useDebouncedCallback((newText) => {
     onTextChange(id, newText);
     addDecorators();
-  }, 500);
+  }, 50);
 
   const onChange = (newText) => {
     //onTextChange(id, newText);
@@ -133,7 +135,7 @@ export const EditorNode = ({
     <>
       {renderedHandles}
       <div className="text-updater-node">
-        <span>{data.fileName}</span>
+        <span style={{ color: 'grey', fontSize: '10px' }}>{data.fileName}</span>
         <div className="pip-container">
           <Pip
             targetTooltip="saved-tooltip"

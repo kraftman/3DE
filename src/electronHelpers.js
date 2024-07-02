@@ -8,6 +8,8 @@ const invokeMain = async (channel, ...args) => {
 
 export const loadFile = (fileId) => invokeMain('load-file', fileId);
 
+export const formatFile = (fileData) => invokeMain('format-file', fileData);
+
 export const saveFile = (filePath, fileData) =>
   invokeMain('save-file', { filePath, fileData });
 

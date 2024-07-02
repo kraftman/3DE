@@ -20,7 +20,6 @@ body,
   height: 100%;
   width: 100%;
   padding: 2px;
-  padding-top: 10px;
   border-radius: 4px;
   background-color: #2a2929; /* Nice grey color */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Slight drop shadow */
@@ -108,7 +107,7 @@ body,
 
 .pip-container {
   position: absolute;
-  top: 10px; /* Adjust as needed */
+  top: 3px; /* Adjust as needed */
   right: 5px; /* Adjust as needed */
   display: flex;
 }
@@ -117,7 +116,7 @@ body,
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin: 0 3px; /* Space between pips */
+  margin: 0 2px; /* Space between pips */
   box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
   z-index: 101;
 }
@@ -127,7 +126,7 @@ body,
 }
 
 .pip-red {
-  background-color: rgb(152, 0, 0);
+  background-color: rgb(170, 1, 1);
 }
 
 .pip-yellow {
