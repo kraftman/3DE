@@ -9,6 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import { Pip } from '../Pip';
 import { useDebouncedCallback } from 'use-debounce';
+import { FileName } from '../FileName';
 
 import { getDecorators } from '../editorUtils';
 
@@ -20,6 +21,9 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });
 
 const detectLanguage = (fileName) => {
+  if (!fileName) {
+    return 'plaintext';
+  }
   const ext = fileName.split('.').pop();
   if (ext === 'js') {
     return 'javascript';
@@ -69,6 +73,7 @@ export const EditorNode = ({
   const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
   const text = flatFiles[data.fullPath]?.fileData;
   const savedText = flatFiles[data.fullPath]?.savedData;
+  const fileName = flatFiles[data.fullPath]?.data;
   const isSaved = text === savedText;
 
   //TODOO split apart saving and updating the saved data
@@ -134,11 +139,19 @@ export const EditorNode = ({
     );
   });
 
+  const onNameUpdated = (newName) => {
+    onFileNameChange(id, data.fullPath, newName);
+  };
+
   return (
     <>
       {renderedHandles}
       <div className="text-updater-node">
-        <span style={{ color: 'grey', fontSize: '10px' }}>{data.fileName}</span>
+        <FileName
+          key={fileName}
+          startValue={fileName}
+          onFileNameChange={onNameUpdated}
+        />
         <div className="pip-container">
           <Pip
             targetTooltip="saved-tooltip"
@@ -164,7 +177,7 @@ export const EditorNode = ({
             onChange={onChange}
             height="90%"
             width="100%"
-            defaultLanguage={detectLanguage(data.fileName)}
+            defaultLanguage={detectLanguage(fileName)}
             automaticLayout="true"
             value={text}
             options={{

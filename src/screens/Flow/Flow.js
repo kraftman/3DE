@@ -193,11 +193,39 @@ export const Flow = () => {
   const connectingHandleId = useRef(null);
   const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
-  const onFileNameChange = (nodeId, fileName) => {
+  const onFileNameChange = (nodeId, oldFullPath, newFileName) => {
+    const newFullPath = path.join(path.dirname(oldFullPath), newFileName);
+
+    setFlatFiles((files) => {
+      const newFiles = { ...files };
+      const fileData = newFiles[oldFullPath];
+      console.log('old flatfile data', fileData);
+      delete newFiles[oldFullPath];
+
+      console.log('newFullPath', newFullPath);
+      newFiles[newFullPath] = { ...fileData, data: newFileName };
+
+      console.log('new flatfile data', newFiles[newFullPath]);
+
+      for (const [key, value] of Object.entries(files)) {
+        if (value.children.includes(oldFullPath)) {
+          value.children = value.children.map((child) =>
+            child === oldFullPath ? newFullPath : child
+          );
+        }
+      }
+
+      return newFiles;
+    });
+
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === nodeId) {
-          node.data = { ...node.data, fileName };
+          node.data = {
+            ...node.data,
+            fileName: newFileName,
+            fullPath: newFullPath,
+          };
         }
         return node;
       })

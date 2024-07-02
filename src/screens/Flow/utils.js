@@ -177,17 +177,6 @@ export const getInitialNodes = (initialSettingsState) => [
     type: 'editor',
     position: { x: 100, y: 300 },
   },
-  // {
-  //   id: '2',
-  //   data: {
-  //     fileName: 'Settings.js',
-  //     value: '',
-  //     handles: [],
-  //     settings: initialSettingsState,
-  //   },
-  //   type: 'settings',
-  //   position: { x: 200, y: 100 },
-  // },
 ];
 
 export const createSelectionHandle = (node, selection) => {
