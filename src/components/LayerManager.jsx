@@ -110,14 +110,18 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
     let found;
     setLayers((layers) => {
       const newLayers = {};
+      console.log('layers:', layers);
       for (const [key, layer] of Object.entries(layers)) {
-        if (!key === layerName) {
-          newLayers[key] = value;
+        if (key !== layerName) {
+          newLayers[key] = layer;
         } else {
           found = layer;
         }
       }
+
       newLayers[newName] = { ...found, color: localColor };
+
+      console.log('newLayers:', newLayers);
       return newLayers;
     });
     setCurrentLayer(newName);
