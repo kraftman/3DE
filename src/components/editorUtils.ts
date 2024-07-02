@@ -195,7 +195,8 @@ const getLeftPosition = (feature) => {
     case 'export':
       return -5;
     case 'function':
-      return -5;
+      console.log('feature', feature);
+      return 40 + feature.loc.start.column * EDITOR.FONT_SIZE;
     default:
       return 500;
   }
@@ -246,7 +247,7 @@ export const getHandles = (nodeId, fullPath, code) => {
       position: getHandlePosition(feature),
       style: {
         left: getLeftPosition(feature),
-        top: 40 + EDITOR.FONT_SIZE * feature.line,
+        top: 10 + (EDITOR.FONT_SIZE + 4) * feature.line,
         background: getColor(feature),
         zIndex: 1000,
       },

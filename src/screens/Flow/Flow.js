@@ -326,7 +326,7 @@ export const Flow = () => {
         return newFiles;
       });
       const lines = value.split('\n');
-      const newHeight = Math.min(300, lines.length * 20);
+      const newHeight = Math.min(600, lines.length * 20);
       const newHandles = getHandles(nodeId, node.data.fullPath, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {

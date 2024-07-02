@@ -76,6 +76,10 @@ export const EditorNode = ({
   const fileName = flatFiles[data.fullPath]?.data;
   const isSaved = text === savedText;
 
+  useEffect(() => {
+    onTextChange(id, text);
+  }, []);
+
   //TODOO split apart saving and updating the saved data
   // so that debounce only applies to saving/formatting
   const debouncedOnChange = useDebouncedCallback((newText) => {

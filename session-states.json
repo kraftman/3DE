@@ -1,1 +1,1 @@
-{ "sessions": {} }
+{"sessions":{"/home/chris/3DE":{"layers":{"0":{"nodes":[{"id":"2","data":{"fullPath":"/home/chris/3DE/README.md","fileName":"README.md","handles":[],"height":120},"type":"editor","position":{"x":662.6284093290642,"y":343.3851838660094},"style":{"width":"500px","height":"120px"},"parentId":null,"width":500,"height":120,"selected":true,"positionAbsolute":{"x":662.6284093290642,"y":343.3851838660094},"dragging":false}],"edges":[],"color":"#11441166"}},"currentLayer":0}}}
