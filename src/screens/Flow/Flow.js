@@ -333,6 +333,19 @@ export const Flow = () => {
     connectingHandleId.current = handleId;
   }, []);
 
+  const makeSafeFilename = (input) => {
+    // Extract the first 8 characters
+    let base = input.slice(0, 8);
+
+    // Define a regex pattern for characters not allowed in filenames
+    const unsafeChars = /[\/\?<>\\:\*\|\"=\s]/g;
+
+    // Replace unsafe characters with an underscore
+    let safeFilename = base.replace(unsafeChars, '_');
+
+    return safeFilename;
+  };
+
   const handleFunctionDrag = (fromNode, fromHandle, event) => {
     const targetIsPane = event.target.classList.contains('react-flow__pane');
     const groupNodeElement = event.target.closest('.react-flow__node-group');
@@ -351,13 +364,18 @@ export const Flow = () => {
     );
 
     const currentDir = path.dirname(fromHandle.nodePath);
-    const newFullPath = path.join(currentDir, `${fromHandle.name}.js`);
+    console.log('fromhandle', fromHandle);
+    const newFileName =
+      fromHandle.handleType === 'function'
+        ? fromHandle.name
+        : makeSafeFilename(extractedChunk);
+    const newFullPath = path.join(currentDir, `${newFileName}.js`);
 
     if (targetIsPane) {
       const newNode = {
         id: (nodes.length + 1).toString(),
         data: {
-          fileName: `${fromHandle.name}.js`,
+          fileName: `${newFileName}.js`,
           fullPath: newFullPath,
           value: extractedChunk,
           handles: [],
@@ -376,7 +394,7 @@ export const Flow = () => {
       const newFile = {
         index: newFullPath,
         children: [],
-        data: `${fromHandle.name}.js`,
+        data: `${newFileName}.js`,
         fileData: extractedChunk,
         isFolder: false,
       };
