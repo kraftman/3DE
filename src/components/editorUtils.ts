@@ -7,6 +7,30 @@ import path from 'path-browserify';
 
 import * as ts from 'typescript';
 
+const fsMap = {
+  js: 'javascript',
+  py: 'python',
+  java: 'java',
+  html: 'html',
+  css: 'css',
+  json: 'json',
+  xml: 'xml',
+  yaml: 'yaml',
+  ts: 'typescript',
+  tsx: 'typescript'
+}
+export const detectLanguage = (fileName) => {
+  if (!fileName) {
+    return 'plaintext';
+  }
+  const ext = fileName.split('.').pop();
+  
+  if (fsMap[ext]) {
+    return fsMap[ext]
+  }
+  return 'plaintext';
+};
+
 export const getFeatures = (code: string) => {
   try {
     const sourceFile = ts.createSourceFile(
@@ -386,4 +410,4 @@ export const getDecorators = (text) => {
     options: match.options,
   }));
   return newDecorations;
-};
+}

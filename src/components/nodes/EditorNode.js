@@ -11,7 +11,7 @@ import { Pip } from '../Pip';
 import { useDebouncedCallback } from 'use-debounce';
 import { FileName } from '../FileName';
 
-import { getDecorators } from '../editorUtils';
+import { getDecorators, detectLanguage } from '../editorUtils';
 
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
@@ -19,44 +19,6 @@ import 'react-tooltip/dist/react-tooltip.css';
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });
-
-const detectLanguage = (fileName) => {
-  if (!fileName) {
-    return 'plaintext';
-  }
-  const ext = fileName.split('.').pop();
-  if (ext === 'js') {
-    return 'javascript';
-  }
-  if (ext === 'jsx') {
-    return 'javascript';
-  }
-  if (ext === 'py') {
-    return 'python';
-  }
-  if (ext === 'java') {
-    return 'java';
-  }
-  if (ext === 'html') {
-    return 'html';
-  }
-  if (ext === 'css') {
-    return 'css';
-  }
-  if (ext === 'json') {
-    return 'json';
-  }
-  if (ext === 'xml') {
-    return 'xml';
-  }
-  if (ext === 'yaml') {
-    return 'yaml';
-  }
-  if (ext === 'ts') {
-    return 'typescript';
-  }
-  return 'plaintext';
-};
 
 export const EditorNode = ({
   id,
@@ -85,7 +47,7 @@ export const EditorNode = ({
   const debouncedOnChange = useDebouncedCallback((newText) => {
     onTextChange(id, newText);
     addDecorators();
-  }, 50);
+  }, 1);
 
   const onChange = (newText) => {
     //onTextChange(id, newText);

@@ -127,13 +127,13 @@ export const Flow = () => {
         const fileData = flatFiles[fullPath].fileData;
         const isValid = isValidCode(fileData);
         if (!isJsFile || !isValid) {
-          enqueueSnackbar({
-            message: 'Invalid code',
-            options: {
-              variant: 'error',
-            },
-          });
-          return;
+          // enqueueSnackbar({
+          //   message: 'Invalid code',
+          //   options: {
+          //     variant: 'error',
+          //   },
+          // });
+          // return;
         }
         const res = await saveFile(fullPath, fileData);
         //TODO use the result as the new file contents, as it should be formatted
