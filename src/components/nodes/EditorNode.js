@@ -24,6 +24,9 @@ const detectLanguage = (fileName) => {
   if (ext === 'js') {
     return 'javascript';
   }
+  if (ext === 'jsx') {
+    return 'javascript';
+  }
   if (ext === 'py') {
     return 'python';
   }

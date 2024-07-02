@@ -261,18 +261,58 @@ export const getHandles = (nodeId, fullPath, code) => {
   return handles;
 };
 
-export const removeTextChunk = (text, fromLine, toLine) => {
+export const removeTextChunk = (
+  text,
+  fromLine,
+  toLine,
+  startColumn = 0,
+  endColumn = null
+) => {
   const lines = text.split('\n');
 
   if (fromLine < 1 || toLine > lines.length || fromLine > toLine) {
     throw new Error('Invalid fromLine or toLine');
   }
 
-  // Extract lines from fromLine to toLine (inclusive)
-  const extractedChunk = lines.slice(fromLine - 1, toLine).join('\n');
+  // Handle the case where endColumn is null or exceeds line length
+  const adjustedEndColumn = (line, column) =>
+    column === null || column > line.length ? line.length : column;
 
-  // Remove lines from fromLine to toLine (inclusive)
-  const newLines = lines.slice(0, fromLine - 1).concat(lines.slice(toLine));
+  // Extract the chunk and handle partial lines
+  const extractedChunk = lines
+    .slice(fromLine - 1, toLine)
+    .map((line, index) => {
+      if (index === 0 && fromLine === toLine) {
+        return line.slice(startColumn, adjustedEndColumn(line, endColumn));
+      } else if (index === 0) {
+        return line.slice(startColumn);
+      } else if (index === toLine - fromLine) {
+        return line.slice(0, adjustedEndColumn(line, endColumn));
+      } else {
+        return line;
+      }
+    })
+    .join('\n');
+
+  // Remove the chunk and handle partial lines
+  const newLines = lines
+    .map((line, index) => {
+      if (index + 1 === fromLine && fromLine === toLine) {
+        return (
+          line.slice(0, startColumn) +
+          line.slice(adjustedEndColumn(line, endColumn))
+        );
+      } else if (index + 1 === fromLine) {
+        return line.slice(0, startColumn);
+      } else if (index + 1 === toLine) {
+        return line.slice(adjustedEndColumn(line, endColumn));
+      } else if (index + 1 > fromLine && index + 1 < toLine) {
+        return '';
+      } else {
+        return line;
+      }
+    })
+    .filter((line) => line !== '');
 
   // Join the remaining lines back into a single string
   const updatedText = newLines.join('\n');

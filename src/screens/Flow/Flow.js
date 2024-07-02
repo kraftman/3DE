@@ -41,6 +41,7 @@ import {
   loadSession,
   saveSession,
   saveFile,
+  formatFile,
 } from '../../electronHelpers';
 
 import {
@@ -238,7 +239,7 @@ export const Flow = () => {
           const newHandles = node.data.handles.filter(
             (handle) => handle.handleType !== 'selection'
           );
-          newHandles.push(createSelectionHandle(nodeId, selection));
+          newHandles.push(createSelectionHandle(node, selection));
           node.data = { ...node.data, handles: newHandles };
         }
         return node;
@@ -285,7 +286,7 @@ export const Flow = () => {
     });
   };
 
-  const onTextChange = (nodeId, value) => {
+  const onTextChange = async (nodeId, value) => {
     setNodes((nodes) => {
       const node = nodes.find((node) => node.id === nodeId);
       const fullPath = node.data.fullPath;
@@ -332,20 +333,21 @@ export const Flow = () => {
     connectingHandleId.current = handleId;
   }, []);
 
-  const handleSelectionDrag = (fromNode, fromHandle, event) => {};
-
   const handleFunctionDrag = (fromNode, fromHandle, event) => {
     const targetIsPane = event.target.classList.contains('react-flow__pane');
     const groupNodeElement = event.target.closest('.react-flow__node-group');
 
     const currentText = flatFiles[fromNode.data.fullPath].fileData;
-    console.log('currentText', currentText);
-    const startLine = fromHandle.loc.start.line;
-    const endLine = fromHandle.loc.end.line;
+    const startLine = fromHandle?.loc?.start.line || fromHandle.startLine;
+    const endLine = fromHandle?.loc?.end.line || fromHandle.endLine;
+    const startColumn = fromHandle.startColumn || undefined;
+    const endColumn = fromHandle.endColumn || undefined;
     const { updatedText, extractedChunk } = removeTextChunk(
       currentText,
       startLine,
-      endLine
+      endLine,
+      startColumn,
+      endColumn
     );
 
     const currentDir = path.dirname(fromHandle.nodePath);
@@ -430,7 +432,8 @@ export const Flow = () => {
         return handleFunctionDrag(fromNode, fromHandle, event);
       }
       if (fromHandle?.handleType === 'selection') {
-        return handleSelectionDrag(fromNode, fromHandle, event);
+        return handleFunctionDrag(fromNode, fromHandle, event);
+        //return handleSelectionDrag(fromNode, fromHandle, event);
       }
       if (!targetIsPane && !groupNodeElement) {
         return;

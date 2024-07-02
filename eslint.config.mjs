@@ -19,6 +19,8 @@ export default [
   ...tseslint.configs.recommended,
   pluginReactConfig,
   {
-    rules: {},
+    rules: {
+      '@typescript-eslint/no-var-requires': 'off',
+    },
   },
 ];

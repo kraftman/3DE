@@ -4,9 +4,16 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const util = require('util');
 const runTest = require('./run-tests');
+const { ESLint } = require('eslint');
 
-const sessionStates =
-  fs.readFileSync('./session-states.json', 'utf8') || '{sessions: {}}';
+const eslintConfig = require('../eslint.config.mjs');
+
+const filePath = './session-states.json';
+if (!fs.existsSync(filePath)) {
+  // If the file doesn't exist, create it with an empty array
+  fs.writeFileSync(filePath, '{ "sessions": {} }', 'utf8');
+}
+const sessionStates = fs.readFileSync(filePath, 'utf8');
 const db = JSON.parse(sessionStates);
 
 const execPromise = util.promisify(exec);
@@ -69,8 +76,21 @@ app.whenReady().then(() => {
     return sessionData;
   });
 
+  ipcMain.handle('format-file', async (event, { fileData, eslintPath }) => {
+    const eslint = new ESLint({
+      overrideConfig: eslintConfig,
+      fix: true,
+    });
+    const results = await eslint.lintText(fileData);
+    const resultWithFixes = results[0];
+    const formattedCode = resultWithFixes.output || fileData;
+    const unfixableErrors = resultWithFixes.messages.filter(
+      (message) => !message.fix
+    );
+    return { formattedCode, unfixableErrors };
+  });
+
   ipcMain.handle('load-sessions', async () => {
-    console.log('database:', db.data);
     const sessionNames = Object.keys(db.sessions);
     return sessionNames;
   });

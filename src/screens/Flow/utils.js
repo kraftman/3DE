@@ -190,9 +190,12 @@ export const getInitialNodes = (initialSettingsState) => [
   // },
 ];
 
-export const createSelectionHandle = (nodeId, selection) => {
+export const createSelectionHandle = (node, selection) => {
+  console.log('selection node:', node);
   const startLine = selection.startLineNumber;
   const endLine = selection.endLineNumber;
+  const startColumn = selection.startColumn;
+  const endColumn = selection.endColumn;
 
   const handle = {
     id: `selection-${startLine}-${endLine}`,
@@ -201,7 +204,11 @@ export const createSelectionHandle = (nodeId, selection) => {
     type: 'source',
     position: Position.Right,
     startLine,
+    nodePath: node.data.fullPath,
+    fileName: node.data.fileName,
     endLine,
+    startColumn,
+    endColumn,
     style: {
       left: 40 + selection.endColumn * 7,
       top: 16 * endLine,
