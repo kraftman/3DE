@@ -127,13 +127,13 @@ export const Flow = () => {
         const fileData = flatFiles[fullPath].fileData;
         const isValid = isValidCode(fileData);
         if (!isJsFile || !isValid) {
-          // enqueueSnackbar({
-          //   message: 'Invalid code',
-          //   options: {
-          //     variant: 'error',
-          //   },
-          // });
-          // return;
+          enqueueSnackbar({
+            message: 'Invalid code',
+            options: {
+              variant: 'error',
+            },
+          });
+          return;
         }
         const res = await saveFile(fullPath, fileData);
         //TODO use the result as the new file contents, as it should be formatted
@@ -247,17 +247,17 @@ export const Flow = () => {
 
   const onSelectionChange = (nodeId, selection) => {
     if (!selection) {
-      setNodes((nodes) =>
-        nodes.map((node) => {
-          if (node.id === nodeId) {
-            const newHandles = node.data.handles.filter(
-              (handle) => handle.handleType !== 'selection'
-            );
-            node.data = { ...node.data, handles: newHandles };
-          }
-          return node;
-        })
-      );
+      // setNodes((nodes) =>
+      //   nodes.map((node) => {
+      //     if (node.id === nodeId) {
+      //       const newHandles = node.data.handles.filter(
+      //         (handle) => handle.handleType !== 'selection'
+      //       );
+      //       node.data = { ...node.data, handles: newHandles };
+      //     }
+      //     return node;
+      //   })
+      // );
       return;
     }
 
@@ -267,8 +267,19 @@ export const Flow = () => {
           const newHandles = node.data.handles.filter(
             (handle) => handle.handleType !== 'selection'
           );
+
+          // const newSelection = {
+          //   start: from,
+          //   end: endLine,
+          // };
+
           newHandles.push(createSelectionHandle(node, selection));
           node.data = { ...node.data, handles: newHandles };
+          // if (node.data.selections) {
+          //   node.data.selections.push(newSelection);
+          // } else {
+          //   node.data.selections = [newSelection];
+          // }
         }
         return node;
       })
@@ -459,6 +470,35 @@ export const Flow = () => {
 
     onTextChange(fromNode.id, updatedText);
   };
+
+  const handleSelectionDrag = (fromNode, fromHandle, event) => {
+    const newPos = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+    // create a new Partial node - can it be an editor
+    setNodes((nodes) => {
+      nodes.map((node) => {
+        if (node.id === fromNode.id) {
+          // add a new selection
+          node.data.selections = node.data.selections || [];
+          node.data.selections = [
+            ...node.data.selections,
+            {
+              startLine: fromHandle.startLine,
+              endLine: fromHandle.endLine,
+            },
+          ];
+          console.log('addig selection');
+        }
+        node.data = { ...node.data };
+        console.log('new node data', node);
+        return node;
+      });
+      return nodes;
+    });
+    updateNodeInternals(fromNode.id);
+  };
   const onConnectEnd = useCallback(
     (event) => {
       const targetIsPane = event.target.classList.contains('react-flow__pane');
@@ -478,8 +518,8 @@ export const Flow = () => {
         return handleFunctionDrag(fromNode, fromHandle, event);
       }
       if (fromHandle?.handleType === 'selection') {
-        return handleFunctionDrag(fromNode, fromHandle, event);
-        //return handleSelectionDrag(fromNode, fromHandle, event);
+        //return handleFunctionDrag(fromNode, fromHandle, event);
+        return handleSelectionDrag(fromNode, fromHandle, event);
       }
       if (!targetIsPane && !groupNodeElement) {
         return;

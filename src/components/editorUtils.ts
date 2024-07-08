@@ -17,16 +17,16 @@ const fsMap = {
   xml: 'xml',
   yaml: 'yaml',
   ts: 'typescript',
-  tsx: 'typescript'
-}
+  tsx: 'typescript',
+};
 export const detectLanguage = (fileName) => {
   if (!fileName) {
     return 'plaintext';
   }
   const ext = fileName.split('.').pop();
-  
+
   if (fsMap[ext]) {
-    return fsMap[ext]
+    return fsMap[ext];
   }
   return 'plaintext';
 };
@@ -168,7 +168,6 @@ export const getFeatures = (code: string) => {
         (ts.isArrowFunction(node.initializer) ||
           ts.isFunctionExpression(node.initializer))
       ) {
-        console.log('function found', node);
         const name = node.name.getText();
         const { line, character } = sourceFile.getLineAndCharacterOfPosition(
           node.getStart()
@@ -219,7 +218,6 @@ const getLeftPosition = (feature) => {
     case 'export':
       return -5;
     case 'function':
-      console.log('feature', feature);
       return 40 + feature.loc.start.column * (EDITOR.FONT_SIZE - 4);
     default:
       return 500;
@@ -284,11 +282,11 @@ export const getHandles = (nodeId, fullPath, code) => {
         zIndex: 1000,
       },
     };
+    console.log('loc', feature.loc);
     if (feature.type === 'import') {
       // @ts-expect-error bleh
       newHandle.importPath = path.resolve(path.dirname(fullPath), fileName);
     }
-    console.log('newhandles', newHandle);
     return newHandle;
   });
   return handles;
@@ -410,4 +408,4 @@ export const getDecorators = (text) => {
     options: match.options,
   }));
   return newDecorations;
-}
+};
