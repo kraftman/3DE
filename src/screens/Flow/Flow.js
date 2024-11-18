@@ -18,17 +18,21 @@ import ReactFlow, {
   applyEdgeChanges,
   applyNodeChanges,
 } from 'reactflow';
+
+import Button from '@mui/material/Button';
 import { Tooltip } from 'react-tooltip';
 
 import 'reactflow/dist/style.css';
 import 'react-tooltip/dist/react-tooltip.css';
 import { EditorNode } from '../../components/nodes/EditorNode';
+import { FunctionNode } from '../../components/nodes/FunctionNode/FunctionNode.jsx';
+import { CodeNode } from '../../components/nodes/CodeNode/CodeNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { GroupNode } from '../../components/nodes/GroupNode';
 import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import { ImageNode } from '../../components/nodes/ImageNode';
 
-import FolderSelectButton from '../../components/FolderSelectButton';
+import { FolderSelectButton } from '../../components/FolderSelectButton';
 import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
 import path from 'path-browserify';
@@ -63,7 +67,6 @@ import {
   getNewNodeId,
   isValidCode,
 } from './utils';
-import { initialSettingsState } from './mocks';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
@@ -78,12 +81,9 @@ export const Flow = () => {
     nodes,
     edges,
     state: layerState,
-    setState: setLayerState,
     currentLayer,
   } = useLayer();
 
-  const [settings, setSettings] = useState(initialSettingsState);
-  const [handles, setHandles] = useState([]);
   const [focusNode, setFocusNode] = useState(null);
 
   const updateNodeInternals = useUpdateNodeInternals();
@@ -92,19 +92,7 @@ export const Flow = () => {
 
   useEffect(() => {
     const loadSessions = async () => {
-      const startUpFolder = './';
-      const fullRootPath = await loadFileSystem(startUpFolder);
-      const sessions = await getAllSessions();
-      if (!sessions) {
-        return;
-      }
-      console.log(`checking for session ${fullRootPath} in ${sessions}`);
-      const found = sessions.find((session) => session === fullRootPath);
-      if (!found) {
-        return;
-      }
-      const sessionData = await loadSession(fullRootPath);
-      setLayerState(sessionData);
+      return;
     };
     loadSessions();
   }, []);
@@ -304,6 +292,8 @@ export const Flow = () => {
           {...props}
         />
       ),
+      code: (props) => <CodeNode onTextChange={onTextChange} {...props} />,
+      functionNode: FunctionNode,
       image: ImageNode,
       preview: PreviewNode,
       group: GroupNode,
@@ -325,6 +315,15 @@ export const Flow = () => {
     });
   };
 
+  const getMaxWidth = (lines) => {
+    let maxWidth = 0;
+    lines.forEach((line) => {
+      maxWidth = Math.max(maxWidth, line.length);
+    });
+    console.log('maxWidth:', maxWidth);
+    return maxWidth;
+  };
+
   const onTextChange = async (nodeId, value) => {
     setNodes((nodes) => {
       const node = nodes.find((node) => node.id === nodeId);
@@ -337,7 +336,8 @@ export const Flow = () => {
         return newFiles;
       });
       const lines = value.split('\n');
-      const newHeight = Math.max(100, Math.min(600, lines.length * 20));
+      const newHeight = 50 + lines.length * 15;
+      const newWidth = 100 + getMaxWidth(lines) * 6;
       const newHandles = getHandles(nodeId, node.data.fullPath, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
@@ -345,10 +345,12 @@ export const Flow = () => {
             ...node.data,
             handles: newHandles,
             height: newHeight,
+            width: newWidth,
           };
           node.style = {
             ...node.style,
             height: `${newHeight}px`,
+            width: `${newWidth}px`,
           };
         }
         return node;
@@ -552,20 +554,52 @@ export const Flow = () => {
 
   const onConnect = (connection) => {};
 
-  const onNodeDragStop = (event, node) => {
-    const intersections = getIntersectingNodes(node, true);
-    const groupNode = intersections.find((n) => n.type === 'group');
+  const getParentIntersections = (node, intersections) => {
+    // find the smallest node that the current node is inside of
 
-    //if it landed on a group it isnt a child of
-    if (groupNode && node.parentId !== groupNode.id) {
-      console.log('new node landed on group');
+    const parentNodes = intersections.filter((search) => {
+      console.log('search', search);
+      return (
+        node.positionAbsolute.x > search.positionAbsolute.x &&
+        node.positionAbsolute.y > search.positionAbsolute.y &&
+        node.positionAbsolute.x + node.width <
+          search.positionAbsolute.x + search.width &&
+        node.positionAbsolute.y + node.height <
+          search.positionAbsolute.y + search.height
+      );
+    });
+    console.log('found parent nodes', parentNodes);
+    if (!parentNodes) {
+      return null;
+    }
+    const sorted = parentNodes.sort((a, b) => {
+      //calculate the area of the intersection and sort by that
+      const areaA = a.width * a.height;
+      const areaB = b.width * b.height;
+      return areaA - areaB;
+    });
+    return sorted[0];
+  };
+
+  const onNodeDragStop = (event, node) => {
+    const allIntersections = getIntersectingNodes(node, true);
+    console.log('allIntersections', allIntersections);
+    const immediateParent = getParentIntersections(node, allIntersections);
+
+    if (immediateParent && immediateParent.id !== node.parentId) {
+      if (node.parentId === immediateParent.id) {
+        return;
+      }
+      console.log('new node landed on function');
       setNodes((nodes) => {
         const newNodes = nodes
           .map((search) => {
             if (search.id === node.id) {
-              search.parentId = groupNode.id;
-              search.position.x = node.position.x - groupNode.position.x;
-              search.position.y = node.position.y - groupNode.position.y;
+              search.parentId = immediateParent.id;
+              search.position.x =
+                node.positionAbsolute.x - immediateParent.positionAbsolute.x;
+              search.position.y =
+                node.positionAbsolute.y - immediateParent.positionAbsolute.y;
             }
             return search;
           })
@@ -584,29 +618,7 @@ export const Flow = () => {
       });
 
       // its still inside its parent group
-    } else if (groupNode && node.parentId === groupNode.id) {
-      const groupRight = parseInt(groupNode.style.width, 10);
-      const nodeRight = node.position.x + parseInt(node.style.width, 10);
-      if (nodeRight > groupRight) {
-        setNodes((nodes) => {
-          const newNodes = nodes.map((search) => {
-            if (search.id === groupNode.id) {
-              return {
-                ...search,
-                style: {
-                  ...search.style,
-                  width: nodeRight + 100,
-                },
-              };
-            } else {
-              return search;
-            }
-          });
-          return newNodes;
-        });
-        updateNodeInternals(groupNode.id);
-      }
-    } else if (!groupNode && node.parentId) {
+    } else if (!immediateParent && node.parentId) {
       console.log('moved out of group');
       const oldGroupNode = nodes.find(
         (searchNode) => searchNode.id === node.parentId
@@ -754,6 +766,43 @@ export const Flow = () => {
     });
   };
 
+  const createFunction = () => {
+    const newNode = {
+      id: (nodes.length + 1).toString(),
+      data: {},
+      type: 'functionNode',
+      position: {
+        x: 500,
+        y: 500,
+      },
+      style: {
+        width: '500px',
+        height: '500px',
+      },
+    };
+    setNodes((nodes) => {
+      return nodes.concat(newNode);
+    });
+  };
+  const createCodeNode = () => {
+    const newNode = {
+      id: (nodes.length + 1).toString(),
+      data: {},
+      type: 'code',
+      position: {
+        x: 200,
+        y: 500,
+      },
+      style: {
+        width: '200px',
+        height: '200px',
+      },
+    };
+    setNodes((nodes) => {
+      return nodes.concat(newNode);
+    });
+  };
+
   return (
     <>
       <ReactFlow
@@ -780,6 +829,12 @@ export const Flow = () => {
         />
         <Panel position="top-left">
           <FolderSelectButton onFolderSelected={onFolderSelected} />
+          <Button variant="contained" color="primary" onClick={createFunction}>
+            New function
+          </Button>
+          <Button variant="contained" color="primary" onClick={createCodeNode}>
+            New code
+          </Button>
           <BasicTree flatFiles={flatFiles} onFileSelected={onFileSelected} />
         </Panel>
         <Panel position="top-right">
