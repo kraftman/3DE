@@ -782,6 +782,8 @@ export const Flow = () => {
 
   const onNodeDragStart = (event, node) => {};
 
+  const onSearchSelect = (selected) => {};
+
   return (
     <>
       <ReactFlow
@@ -828,8 +830,8 @@ export const Flow = () => {
             }}
           />
           <SearchBar
-            flatFiles={flatFiles}
-            onFileSelected={onFileSelectedSearchBar}
+            searchContent={functions}
+            onSearchSelect={onSearchSelect}
           />
           <Tooltip
             id="saved-tooltip"

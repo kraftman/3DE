@@ -48,11 +48,11 @@ const darkTheme = createTheme({
   },
 });
 
-export const SearchBar = ({ flatFiles, onFileSelected }) => {
+export const SearchBar = ({ searchContent, onSearchSelect }) => {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredFiles, setFilteredFiles] = useState([]);
+  const [filteredContent, setFilteredContent] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchRef = useRef(null);
 
@@ -63,13 +63,15 @@ export const SearchBar = ({ flatFiles, onFileSelected }) => {
       setOpen(true);
     } else if (open) {
       if (e.key === 'ArrowDown') {
-        setSelectedIndex((prevIndex) => (prevIndex + 1) % filteredFiles.length);
+        setSelectedIndex(
+          (prevIndex) => (prevIndex + 1) % filteredContent.length
+        );
       } else if (e.key === 'ArrowUp') {
         setSelectedIndex((prevIndex) =>
-          prevIndex === 0 ? filteredFiles.length - 1 : prevIndex - 1
+          prevIndex === 0 ? filteredContent.length - 1 : prevIndex - 1
         );
       } else if (e.key === 'Enter') {
-        onFileSelected(filteredFiles[selectedIndex]);
+        //onFileSelected(filteredFiles[selectedIndex]);
         setOpen(false);
       } else if (e.key === 'Escape') {
         setOpen(false);
@@ -86,7 +88,7 @@ export const SearchBar = ({ flatFiles, onFileSelected }) => {
     return () => {
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [open, filteredFiles, selectedIndex]);
+  }, [open, filteredContent, selectedIndex]);
 
   useEffect(() => {
     if (open && searchRef.current) {
@@ -96,15 +98,16 @@ export const SearchBar = ({ flatFiles, onFileSelected }) => {
 
   useEffect(() => {
     if (searchTerm) {
-      const results = Object.keys(flatFiles).filter((file) =>
-        file.toLowerCase().includes(searchTerm.toLowerCase())
+      console.log(searchContent);
+      const results = searchContent.filter((item) =>
+        item.content.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredFiles(results);
+      setFilteredContent(results);
       setSelectedIndex(0);
     } else {
-      setFilteredFiles([]);
+      setFilteredContent([]);
     }
-  }, [searchTerm, flatFiles]);
+  }, [searchTerm, searchContent]);
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -120,20 +123,20 @@ export const SearchBar = ({ flatFiles, onFileSelected }) => {
             variant="outlined"
             size="small"
           />
-          {filteredFiles.length > 0 && (
+          {filteredContent.length > 0 && (
             <List className={classes.list}>
-              {filteredFiles.map((file, index) => (
+              {filteredContent.map((item, index) => (
                 <ListItem
-                  key={file}
+                  key={item.id}
                   button
                   selected={index === selectedIndex}
                   onClick={() => {
-                    onFileSelected(file);
+                    onSearchSelect(item);
                     setOpen(false);
                   }}
                   className={classes.listItem}
                 >
-                  <ListItemText primary={file} />
+                  <ListItemText primary={item.content} />
                 </ListItem>
               ))}
             </List>

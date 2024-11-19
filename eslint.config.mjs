@@ -21,6 +21,8 @@ export default [
   {
     rules: {
       '@typescript-eslint/no-var-requires': 'off',
+      'react/prop-types': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
     },
   },
 ];
