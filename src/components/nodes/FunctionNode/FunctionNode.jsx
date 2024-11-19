@@ -1,12 +1,12 @@
 import React from 'react';
-import { Handle, Position, NodeResizer } from 'reactflow';
+import { NodeResizer } from 'reactflow';
 
 export const FunctionNode = () => {
   return (
     <>
       <NodeResizer
-        minWidth={400}
-        minHeight={400}
+        minWidth={300}
+        minHeight={300}
         style={{ background: 'none' }}
       />
       <div className="text-updater-node">

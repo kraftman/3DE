@@ -26,6 +26,7 @@ import 'reactflow/dist/style.css';
 import 'react-tooltip/dist/react-tooltip.css';
 import { EditorNode } from '../../components/nodes/EditorNode';
 import { FunctionNode } from '../../components/nodes/FunctionNode/FunctionNode.jsx';
+import { PureFunctionNode } from '../../components/nodes/PureFunctionNode/PureFunctionNode';
 import { CodeNode } from '../../components/nodes/CodeNode/CodeNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { GroupNode } from '../../components/nodes/GroupNode';
@@ -294,6 +295,7 @@ export const Flow = () => {
       ),
       code: (props) => <CodeNode onTextChange={onTextChange} {...props} />,
       functionNode: FunctionNode,
+      pureFunctionNode: PureFunctionNode,
       image: ImageNode,
       preview: PreviewNode,
       group: GroupNode,
@@ -356,14 +358,7 @@ export const Flow = () => {
         return node;
       });
       updateNodeInternals(nodeId);
-      setHandles((handles) => {
-        const existingHandles = handles.filter(
-          (handle) => handle.nodeId !== nodeId
-        );
-        const mergedHandles = existingHandles.concat(newHandles);
-        updateEdges(nodeId, existingHandles, newHandles);
-        return mergedHandles;
-      });
+
       return newNodes;
     });
   };
@@ -501,58 +496,9 @@ export const Flow = () => {
     });
     updateNodeInternals(fromNode.id);
   };
-  const onConnectEnd = useCallback(
-    (event) => {
-      const targetIsPane = event.target.classList.contains('react-flow__pane');
-      const groupNodeElement = event.target.closest('.react-flow__node-group');
+  const onConnectEnd = () => {};
 
-      let parentId = null;
-      if (groupNodeElement) {
-        parentId = groupNodeElement.getAttribute('data-id');
-      }
-      const fromNode = nodes.find(
-        (node) => node.id === connectingNodeId.current
-      );
-      const fromHandle = fromNode?.data?.handles.find(
-        (handle) => handle.id === connectingHandleId.current
-      );
-      if (fromHandle?.handleType === 'function') {
-        return handleFunctionDrag(fromNode, fromHandle, event);
-      }
-      if (fromHandle?.handleType === 'selection') {
-        //return handleFunctionDrag(fromNode, fromHandle, event);
-        return handleSelectionDrag(fromNode, fromHandle, event);
-      }
-      if (!targetIsPane && !groupNodeElement) {
-        return;
-      }
-
-      const fileName = fromNode.data.fileName;
-
-      const content = `import { ${fromHandle.name} } from '${fileName}';`;
-
-      const id = (nodes.length + 1).toString();
-
-      const handles = [];
-      const newNode = {
-        id,
-        position: screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        }),
-
-        data: { fileName: `newFile-${id}.js`, value: content, handles },
-        type: 'editor',
-        origin: [0.5, 0.0],
-        parentId: parentId || fromNode.parentId,
-      };
-
-      setNodes((nds) => nds.concat(newNode));
-    },
-    [screenToFlowPosition, nodes, edges]
-  );
-
-  const onConnect = (connection) => {};
+  const onConnect = () => {};
 
   const getParentIntersections = (node, intersections) => {
     // find the smallest node that the current node is inside of
@@ -601,6 +547,7 @@ export const Flow = () => {
               search.position.y =
                 node.positionAbsolute.y - immediateParent.positionAbsolute.y;
             }
+
             return search;
           })
           // sort nodes by if they have a parentId or not
@@ -636,7 +583,7 @@ export const Flow = () => {
         return newNodes;
       });
     } else {
-      console.log('shouldnt get here');
+      console.log('moved on canvas');
     }
   };
 
@@ -770,14 +717,14 @@ export const Flow = () => {
     const newNode = {
       id: (nodes.length + 1).toString(),
       data: {},
-      type: 'functionNode',
+      type: 'pureFunctionNode',
       position: {
         x: 500,
         y: 500,
       },
       style: {
-        width: '500px',
-        height: '500px',
+        width: '400px',
+        height: '300px',
       },
     };
     setNodes((nodes) => {
@@ -803,6 +750,8 @@ export const Flow = () => {
     });
   };
 
+  const onNodeDragStart = (event, node) => {};
+
   return (
     <>
       <ReactFlow
@@ -821,6 +770,7 @@ export const Flow = () => {
         onConnect={onConnect}
         connectionMode="loose"
         onNodeDragStop={onNodeDragStop}
+        onNodeDragStart={onNodeDragStart}
       >
         <Background
           style={{
