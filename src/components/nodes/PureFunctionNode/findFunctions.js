@@ -2,14 +2,19 @@ import * as ts from 'typescript';
 
 export const findFunctions = (code) => {
   // Create a TypeScript program in memory
-  const sourceFile = ts.createSourceFile(
-    'tempFile.ts',
-    code,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.JS
-  );
-
+  let sourceFile;
+  try {
+    sourceFile = ts.createSourceFile(
+      'tempFile.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.JS
+    );
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
   const result = [];
 
   function visit(node) {

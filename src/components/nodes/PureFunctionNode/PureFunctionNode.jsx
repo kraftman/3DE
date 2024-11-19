@@ -31,7 +31,7 @@ export const PureFunctionNode = ({ data, selected, onTextChanged }) => {
         key={label + ':' + lineNumber}
         position="right"
         type="source"
-        id={data.id + ':= ' + label + ':' + lineNumber}
+        id={data.functionId + ':= ' + label + ':' + lineNumber}
       >
         <div style={handleTextStyle}>{label}</div>
       </Handle>

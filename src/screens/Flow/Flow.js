@@ -290,7 +290,7 @@ export const Flow = () => {
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.data.functionId === functionId) {
-          node.data = { ...foundfunc };
+          node.data = { ...node.data, content };
           console.log('found func', foundfunc);
         }
         return node;
@@ -782,7 +782,24 @@ export const Flow = () => {
 
   const onNodeDragStart = (event, node) => {};
 
-  const onSearchSelect = (selected) => {};
+  const onSearchSelect = (selected) => {
+    const newNode = {
+      id: (nodes.length + 1).toString(),
+      data: { functionId: selected.id, content: selected.content },
+      type: 'pureFunctionNode',
+      position: {
+        x: 500,
+        y: 500,
+      },
+      style: {
+        width: '400px',
+        height: '300px',
+      },
+    };
+    setNodes((nodes) => {
+      return nodes.concat(newNode);
+    });
+  };
 
   return (
     <>
