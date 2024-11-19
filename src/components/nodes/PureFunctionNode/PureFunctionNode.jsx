@@ -4,6 +4,7 @@ import Editor from '@monaco-editor/react';
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { findFunctions } from './findFunctions';
+import { EditableText } from '../../EditableText';
 
 loader.config({ monaco });
 
@@ -16,7 +17,12 @@ const handleTextStyle = {
   color: 'white',
 };
 
-export const PureFunctionNode = ({ data, selected, onTextChanged }) => {
+export const PureFunctionNode = ({
+  data,
+  selected,
+  onTextChanged,
+  onTitleChanged,
+}) => {
   const editorRef = useRef(null);
 
   const text = data.content;
@@ -39,8 +45,14 @@ export const PureFunctionNode = ({ data, selected, onTextChanged }) => {
   });
 
   const onChange = (value) => {
+    console.log('onChange', value);
     onTextChanged(data.functionId, value);
   };
+
+  const onTitleChangeInternal = (value) => {
+    onTitleChanged(data.functionId, value);
+  };
+
   return (
     <>
       <NodeResizer
@@ -51,11 +63,10 @@ export const PureFunctionNode = ({ data, selected, onTextChanged }) => {
       />
       {renderedHandles}
       <div className="text-updater-node">
-        <div className="function-node-header">
-          <div className="function-node-header-text" style={{ color: 'white' }}>
-            Function Name
-          </div>
-        </div>
+        <EditableText
+          text={data.functionName}
+          onChange={onTitleChangeInternal}
+        />
         <div className="editor-container">
           <Editor
             className="editor nodrag"

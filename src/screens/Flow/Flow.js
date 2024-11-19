@@ -290,8 +290,29 @@ export const Flow = () => {
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.data.functionId === functionId) {
-          node.data = { ...node.data, content };
+          node.data = { ...node.data, content, functionName: foundfunc.name };
           console.log('found func', foundfunc);
+        }
+        return node;
+      })
+    );
+  };
+
+  const onfunctionTitledChanged = (functionId, title) => {
+    console.log('functionId', functionId);
+    console.log('title', title);
+    setFunctions((functions) =>
+      functions.map((func) => {
+        if (func.id === functionId) {
+          func.name = title;
+        }
+        return func;
+      })
+    );
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.data.functionId === functionId) {
+          node.data = { ...node.data, functionName: title };
         }
         return node;
       })
@@ -315,6 +336,7 @@ export const Flow = () => {
         <PureFunctionNode
           functions={functions}
           onTextChanged={onFunctionTextChanged}
+          onTitleChanged={onfunctionTitledChanged}
           {...props}
         />
       ),
@@ -737,7 +759,7 @@ export const Flow = () => {
 
   const createFunction = () => {
     const newFunction = {
-      name: '',
+      name: 'testfunchere',
       id: uuidv4(),
       content: 'meep()',
     };
@@ -746,7 +768,11 @@ export const Flow = () => {
     });
     const newNode = {
       id: (nodes.length + 1).toString(),
-      data: { functionId: newFunction.id, content: newFunction.content },
+      data: {
+        functionId: newFunction.id,
+        content: newFunction.content,
+        functionName: newFunction.name,
+      },
       type: 'pureFunctionNode',
       position: {
         x: 500,
@@ -783,9 +809,14 @@ export const Flow = () => {
   const onNodeDragStart = (event, node) => {};
 
   const onSearchSelect = (selected) => {
+    const newId = (nodes.length + 1).toString();
     const newNode = {
-      id: (nodes.length + 1).toString(),
-      data: { functionId: selected.id, content: selected.content },
+      id: newId,
+      data: {
+        functionId: selected.id,
+        content: selected.content,
+        functionName: 'TestFunction' + newId,
+      },
       type: 'pureFunctionNode',
       position: {
         x: 500,
