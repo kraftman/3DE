@@ -16,11 +16,12 @@ const handleTextStyle = {
   color: 'white',
 };
 
-export const PureFunctionNode = ({ data, selected }) => {
+export const PureFunctionNode = ({ data, selected, onTextChanged }) => {
   const editorRef = useRef(null);
-  const [text, setText] = useState('meep()');
 
-  const functionNodes = useMemo(() => findFunctions(text), [text]);
+  const text = data.content;
+
+  const functionNodes = useMemo(() => findFunctions(text), [data.content]);
 
   const renderedHandles = functionNodes.map((node) => {
     const label = node.expression.getText();
@@ -30,7 +31,7 @@ export const PureFunctionNode = ({ data, selected }) => {
         key={label + ':' + lineNumber}
         position="right"
         type="source"
-        id={label + ':' + lineNumber}
+        id={data.id + ':= ' + label + ':' + lineNumber}
       >
         <div style={handleTextStyle}>{label}</div>
       </Handle>
@@ -38,7 +39,7 @@ export const PureFunctionNode = ({ data, selected }) => {
   });
 
   const onChange = (value) => {
-    setText(value);
+    onTextChanged(data.functionId, value);
   };
   return (
     <>

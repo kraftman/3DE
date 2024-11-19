@@ -41,13 +41,7 @@ import path from 'path-browserify';
 import { SnackbarProvider, enqueueSnackbar } from 'notistack';
 import { useLayer } from './useLayer';
 
-import {
-  getAllSessions,
-  loadSession,
-  saveSession,
-  saveFile,
-  formatFile,
-} from '../../electronHelpers';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   LayerManager,
@@ -86,6 +80,7 @@ export const Flow = () => {
   } = useLayer();
 
   const [focusNode, setFocusNode] = useState(null);
+  const [functions, setFunctions] = useState([]);
 
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -124,7 +119,7 @@ export const Flow = () => {
           });
           return;
         }
-        const res = await saveFile(fullPath, fileData);
+
         //TODO use the result as the new file contents, as it should be formatted
         setFlatFiles((files) => {
           const newFiles = {
@@ -134,7 +129,6 @@ export const Flow = () => {
           console.log('set saved data');
           return newFiles;
         });
-        await saveSession(rootPath, layerState);
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         const nextLayer = Math.max(currentLayer - 1, 0);
         console.log(currentLayer, nextLayer);
@@ -282,6 +276,28 @@ export const Flow = () => {
     setNodes((nodes) => nodes.filter((node) => node.id !== nodeId));
   };
 
+  const onFunctionTextChanged = (functionId, content) => {
+    let foundfunc;
+    setFunctions((functions) =>
+      functions.map((func) => {
+        if (func.id === functionId) {
+          func.content = content;
+          foundfunc = func;
+        }
+        return func;
+      })
+    );
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.data.functionId === functionId) {
+          node.data = { ...foundfunc };
+          console.log('found func', foundfunc);
+        }
+        return node;
+      })
+    );
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -295,7 +311,13 @@ export const Flow = () => {
       ),
       code: (props) => <CodeNode onTextChange={onTextChange} {...props} />,
       functionNode: FunctionNode,
-      pureFunctionNode: PureFunctionNode,
+      pureFunctionNode: (props) => (
+        <PureFunctionNode
+          functions={functions}
+          onTextChanged={onFunctionTextChanged}
+          {...props}
+        />
+      ),
       image: ImageNode,
       preview: PreviewNode,
       group: GroupNode,
@@ -714,9 +736,17 @@ export const Flow = () => {
   };
 
   const createFunction = () => {
+    const newFunction = {
+      name: '',
+      id: uuidv4(),
+      content: 'meep()',
+    };
+    setFunctions((functions) => {
+      return functions.concat(newFunction);
+    });
     const newNode = {
       id: (nodes.length + 1).toString(),
-      data: {},
+      data: { functionId: newFunction.id, content: newFunction.content },
       type: 'pureFunctionNode',
       position: {
         x: 500,
