@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 
 export const EditableText = ({ text, onChange }) => {
   const [isEditing, setIsEditing] = useState(false);
-  console.log('EditableText', text);
 
   const handleDoubleClick = () => {
     setIsEditing(true);
   };
 
   const handleChange = (e) => {
-    console.log('===== ,', e.target.value);
     onChange(e.target.value);
   };
 

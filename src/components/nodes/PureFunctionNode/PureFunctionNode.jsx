@@ -55,12 +55,7 @@ export const PureFunctionNode = ({
 
   return (
     <>
-      <NodeResizer
-        minWidth={300}
-        minHeight={300}
-        isVisible={selected}
-        style={{ background: 'none' }}
-      />
+      <NodeResizer isVisible={selected} style={{ background: 'none' }} />
       {renderedHandles}
       <div className="text-updater-node">
         <EditableText

@@ -17,6 +17,7 @@ import ReactFlow, {
   useUpdateNodeInternals,
   applyEdgeChanges,
   applyNodeChanges,
+  getNodesBounds,
 } from 'reactflow';
 
 import Button from '@mui/material/Button';
@@ -81,6 +82,7 @@ export const Flow = () => {
 
   const [focusNode, setFocusNode] = useState(null);
   const [functions, setFunctions] = useState([]);
+  const [draggingNode, setDraggingNode] = useState(null);
 
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -291,7 +293,6 @@ export const Flow = () => {
       nodes.map((node) => {
         if (node.data.functionId === functionId) {
           node.data = { ...node.data, content, functionName: foundfunc.name };
-          console.log('found func', foundfunc);
         }
         return node;
       })
@@ -299,8 +300,6 @@ export const Flow = () => {
   };
 
   const onfunctionTitledChanged = (functionId, title) => {
-    console.log('functionId', functionId);
-    console.log('title', title);
     setFunctions((functions) =>
       functions.map((func) => {
         if (func.id === functionId) {
@@ -572,6 +571,7 @@ export const Flow = () => {
   };
 
   const onNodeDragStop = (event, node) => {
+    setDraggingNode(null);
     const allIntersections = getIntersectingNodes(node, true);
     console.log('allIntersections', allIntersections);
     const immediateParent = getParentIntersections(node, allIntersections);
@@ -806,7 +806,9 @@ export const Flow = () => {
     });
   };
 
-  const onNodeDragStart = (event, node) => {};
+  const onNodeDragStart = (event, node) => {
+    setDraggingNode(node);
+  };
 
   const onSearchSelect = (selected) => {
     const newId = (nodes.length + 1).toString();
@@ -832,6 +834,64 @@ export const Flow = () => {
     });
   };
 
+  const updateParentSize = (nodes, node) => {
+    const parent = nodes.find((search) => search.id === node.parentId);
+    console.log('parent before:', parent);
+    const nx = node.positionAbsolute.x;
+    const ny = node.positionAbsolute.y;
+    const nw = node.width;
+    const nh = node.height;
+
+    const px = parent?.positionAbsolute?.x || parent?.position?.x || 0;
+    const py = parent?.positionAbsolute?.y || parent?.position?.y || 0;
+    const pw = parent.width;
+    const ph = parent.height;
+
+    if (nx < px + 50) {
+      const diff = px + 50 - nx;
+      console.log('diff:', diff);
+      parent.position.x = px - diff;
+      parent.width = pw + diff;
+      parent.style.width = `${pw + diff}px`;
+    }
+
+    if (ny < py + 50) {
+      const diff = py + 50 - ny;
+      parent.position.y = py - diff;
+      parent.height = ph + diff;
+      parent.style.height = `${ph + diff}px`;
+    }
+
+    if (nx + nw > px + pw - 50) {
+      const diff = nx + nw - (px + pw - 50);
+      parent.width = pw + diff;
+      parent.style.width = `${pw + diff}px`;
+    }
+
+    if (ny + nh > py + ph - 50) {
+      const diff = ny + nh - (py + ph - 50);
+      parent.height = ph + diff;
+      parent.style.height = `${ph + diff}px`;
+    }
+
+    console.log('parent after:', parent);
+    // if (parent.parentId) {
+    //   updateParentSize(nodes, parent);
+    // }
+  };
+
+  const onNodeDrag = (event, node) => {
+    console.log('dragging node', node);
+    if (!node.parentId) {
+      return;
+    }
+    setNodes((nodes) => {
+      const newNodes = [...nodes];
+      updateParentSize(newNodes, node);
+      return newNodes;
+    });
+  };
+
   return (
     <>
       <ReactFlow
@@ -851,6 +911,7 @@ export const Flow = () => {
         connectionMode="loose"
         onNodeDragStop={onNodeDragStop}
         onNodeDragStart={onNodeDragStart}
+        onNodeDrag={onNodeDrag}
       >
         <Background
           style={{
