@@ -56,3 +56,21 @@ const privateFunction = () => {
 }
 
 `;
+
+export const mockModule = `
+import { something } from './module';
+
+export const a = 10;
+
+function doSomething() {
+  console.log('doing something');
+}
+
+export function doSomethingElse() {
+  console.log('doing something else');
+}
+
+const b = a + 20;
+
+export default b;
+`;

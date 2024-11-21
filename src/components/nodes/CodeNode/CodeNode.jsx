@@ -22,7 +22,7 @@ const codeNodeStyle = {
 
 export const CodeNode = ({ id, data, onTextChange }) => {
   const editorRef = useRef(null);
-  const text = 'test string';
+  const text = data.content || 'test string';
 
   //TODOO split apart saving and updating the saved data
   // so that debounce only applies to saving/formatting

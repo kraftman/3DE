@@ -26,7 +26,7 @@ import { Tooltip } from 'react-tooltip';
 import 'reactflow/dist/style.css';
 import 'react-tooltip/dist/react-tooltip.css';
 import { EditorNode } from '../../components/nodes/EditorNode';
-import { FunctionNode } from '../../components/nodes/FunctionNode/FunctionNode.jsx';
+import { ModuleNode } from '../../components/nodes/ModuleNode/ModuleNode.jsx';
 import { PureFunctionNode } from '../../components/nodes/PureFunctionNode/PureFunctionNode';
 import { CodeNode } from '../../components/nodes/CodeNode/CodeNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
@@ -55,6 +55,7 @@ import {
   getHandles,
   removeTextChunk,
   insertTextChunk,
+  analyzeSourceFile,
 } from '../../components/editorUtils';
 
 import {
@@ -64,6 +65,8 @@ import {
   isValidCode,
 } from './utils';
 import { useFileSystem } from '../../contexts/FileSystemContext';
+
+import { mockModule } from './mocks.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
@@ -88,11 +91,59 @@ export const Flow = () => {
 
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
+  const loadModules = () => {
+    // parse the module into an AST, getting the exports, the imports, the root level declarations,
+    const parsed = analyzeSourceFile(mockModule);
+    console.log('parsed:', parsed);
+    const childCount = parsed.functions.length;
+
+    const moduleNode = {
+      id: getNewNodeId(),
+      data: {
+        handles: [],
+      },
+      type: 'module',
+      position: {
+        x: 200,
+        y: 200,
+      },
+      style: {
+        width: '500px',
+        height: `${50 + childCount * 300}px`,
+      },
+    };
+
+    const children = parsed.functions.map((func, index) => {
+      return {
+        id: getNewNodeId(),
+        data: {
+          content: func.getText(),
+        },
+        type: 'code',
+        parentId: moduleNode.id,
+        extent: 'parent',
+        position: {
+          x: 10,
+          y: 30 + index * 200,
+        },
+        style: {
+          width: '300px',
+          height: '200px',
+        },
+      };
+    });
+
+    setNodes((nodes) => {
+      return nodes.concat(moduleNode).concat(children);
+    });
+  };
+
   useEffect(() => {
     const loadSessions = async () => {
       return;
     };
     loadSessions();
+    loadModules();
   }, []);
 
   const onNodeClick = (event, node) => {
@@ -330,7 +381,7 @@ export const Flow = () => {
         />
       ),
       code: (props) => <CodeNode onTextChange={onTextChange} {...props} />,
-      functionNode: FunctionNode,
+      module: ModuleNode,
       pureFunctionNode: (props) => (
         <PureFunctionNode
           functions={functions}
@@ -383,12 +434,12 @@ export const Flow = () => {
       const lines = value.split('\n');
       const newHeight = 50 + lines.length * 15;
       const newWidth = 100 + getMaxWidth(lines) * 6;
-      const newHandles = getHandles(nodeId, node.data.fullPath, value);
+      //const newHandles = getHandles(nodeId, node.data.fullPath, value);
       const newNodes = nodes.map((node) => {
         if (node.id === nodeId) {
           node.data = {
             ...node.data,
-            handles: newHandles,
+            handles: [],
             height: newHeight,
             width: newWidth,
           };
@@ -773,7 +824,7 @@ export const Flow = () => {
         content: newFunction.content,
         functionName: newFunction.name,
       },
-      type: 'pureFunctionNode',
+      type: 'functionNode',
       position: {
         x: 500,
         y: 500,
@@ -875,21 +926,20 @@ export const Flow = () => {
     }
 
     console.log('parent after:', parent);
-    // if (parent.parentId) {
-    //   updateParentSize(nodes, parent);
-    // }
+    if (parent.parentId) {
+      updateParentSize(nodes, parent);
+    }
   };
 
   const onNodeDrag = (event, node) => {
-    console.log('dragging node', node);
-    if (!node.parentId) {
-      return;
-    }
-    setNodes((nodes) => {
-      const newNodes = [...nodes];
-      updateParentSize(newNodes, node);
-      return newNodes;
-    });
+    // if (!node.parentId) {
+    //   return;
+    // }
+    // setNodes((nodes) => {
+    //   const newNodes = [...nodes];
+    //   updateParentSize(newNodes, node);
+    //   return newNodes;
+    // });
   };
 
   return (
