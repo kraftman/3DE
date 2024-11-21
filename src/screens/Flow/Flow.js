@@ -56,6 +56,7 @@ import {
   removeTextChunk,
   insertTextChunk,
   analyzeSourceFile,
+  getEditorSize,
 } from '../../components/editorUtils';
 
 import {
@@ -97,6 +98,11 @@ export const Flow = () => {
     console.log('parsed:', parsed);
     const childCount = parsed.functions.length;
 
+    const childHeights = parsed.functions.reduce((acc, func) => {
+      const dim = getEditorSize(func.getText());
+      return acc + dim.height;
+    }, 0);
+
     const moduleNode = {
       id: getNewNodeId(),
       data: {
@@ -109,11 +115,14 @@ export const Flow = () => {
       },
       style: {
         width: '500px',
-        height: `${50 + childCount * 300}px`,
+        height: `${200 + childHeights}px`,
       },
     };
 
+    let currentHeight = 0;
     const children = parsed.functions.map((func, index) => {
+      const dim = getEditorSize(func.getText());
+      currentHeight += dim.height + 10;
       return {
         id: getNewNodeId(),
         data: {
@@ -124,11 +133,11 @@ export const Flow = () => {
         extent: 'parent',
         position: {
           x: 10,
-          y: 30 + index * 200,
+          y: 30 + currentHeight,
         },
         style: {
-          width: '300px',
-          height: '200px',
+          width: `${dim.width}px`,
+          height: `${dim.height}px`,
         },
       };
     });

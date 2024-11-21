@@ -315,6 +315,22 @@ const getColor = (feature) => {
   }
 };
 
+const getMaxWidth = (lines) => {
+  let maxWidth = 0;
+  lines.forEach((line) => {
+    maxWidth = Math.max(maxWidth, line.length);
+  });
+  console.log('maxWidth:', maxWidth);
+  return maxWidth;
+};
+
+export const getEditorSize = (code) => {
+  const lines = code.split('\n');
+  const newHeight = 50 + lines.length * 15;
+  const newWidth = 100 + getMaxWidth(lines) * 6;
+  return { height: newHeight, width: newWidth };
+};
+
 export const getHandles = (nodeId, fullPath, code) => {
   const features = getFeatures(code);
   const handles = features.map((feature) => {

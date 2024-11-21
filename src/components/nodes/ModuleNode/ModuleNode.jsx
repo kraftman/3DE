@@ -62,11 +62,6 @@ export const ModuleNode = () => {
             </AccordionDetails>
           </Accordion>
         </div>
-        <div className="function-node-body">
-          <div className="function-node-body-text" style={{ color: '#ffffff' }}>
-            Function Body
-          </div>
-        </div>
       </div>
     </ThemeProvider>
   );
