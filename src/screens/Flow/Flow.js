@@ -104,23 +104,10 @@ export const Flow = () => {
 
     const newModuleId = getNewNodeId();
 
-    const moduleNode = {
-      id: newModuleId,
-      data: {
-        handles: [],
-      },
-      type: 'module',
-      position: {
-        x: 200,
-        y: 200,
-      },
-      style: {
-        width: '500px',
-        height: `${500}px`,
-      },
-    };
-
     const children = [];
+
+    let moduleWidth = 0;
+    let moduleHeight = 0;
 
     for (let i = maxDepth; i >= 0; i--) {
       console.log('depth:', i);
@@ -129,6 +116,12 @@ export const Flow = () => {
         (func) => func.depth === i
       );
       let currentHeight = 0;
+      moduleWidth =
+        moduleWidth +
+        functionsAtDepth.reduce((acc, func) => {
+          return Math.max(acc, func.frameSize.width);
+        }, 0);
+
       functionsAtDepth.forEach((func) => {
         const localChildren = parsed.flatFunctions.filter(
           (child) => child.parentId === func.id
@@ -136,6 +129,7 @@ export const Flow = () => {
         const childWidth = localChildren.reduce((acc, child) => {
           return Math.max(acc, child.frameSize.width);
         }, func.frameSize.width);
+
         const height = localChildren.reduce((acc, child) => {
           return Math.max(acc, acc + child.frameSize.height);
         }, func.frameSize.height);
@@ -151,7 +145,7 @@ export const Flow = () => {
             : func.contentSize.width;
         const frame = {
           id: func.id,
-          data: { functionName: func.name },
+          data: { functionName: func.name, content: func.body },
           type: 'pureFunctionNode',
           parentId: func.parentId || newModuleId,
           extent: 'parent',
@@ -189,11 +183,53 @@ export const Flow = () => {
 
         console.log('pushed child:', children.length);
       });
+      if (i === 0) {
+        moduleHeight =
+          moduleHeight +
+          50 +
+          functionsAtDepth.reduce((acc, func) => {
+            return Math.max(acc, acc + func.frameSize.height);
+          }, 0);
+      }
     }
-    console.log('# children:', children.length);
+
+    const moduleNode = {
+      id: newModuleId,
+      data: {
+        handles: [],
+      },
+      type: 'module',
+      position: {
+        x: 200,
+        y: 100,
+      },
+      style: {
+        width: `${moduleWidth + 30}px`,
+        height: `${moduleHeight + 60}px`,
+      },
+    };
+    const rootSize = getEditorSize(parsed.rootLevelCode);
+    const rootCode = {
+      id: getNewNodeId(),
+      data: {
+        content: parsed.rootLevelCode,
+      },
+      type: 'code',
+      parentId: newModuleId,
+      extent: 'parent',
+      position: {
+        x: 10,
+        y: 30,
+      },
+      style: {
+        width: `${rootSize.width}px`,
+        height: `${rootSize.height}px`,
+      },
+    };
+
     const sortedChildren = children.reverse();
     setNodes((nodes) => {
-      return nodes.concat(moduleNode).concat(sortedChildren);
+      return nodes.concat(moduleNode).concat(rootCode).concat(sortedChildren);
     });
   };
 
@@ -682,63 +718,63 @@ export const Flow = () => {
 
   const onNodeDragStop = (event, node) => {
     setDraggingNode(null);
-    const allIntersections = getIntersectingNodes(node, true);
-    console.log('allIntersections', allIntersections);
-    const immediateParent = getParentIntersections(node, allIntersections);
+    // const allIntersections = getIntersectingNodes(node, true);
+    // console.log('allIntersections', allIntersections);
+    // const immediateParent = getParentIntersections(node, allIntersections);
 
-    if (immediateParent && immediateParent.id !== node.parentId) {
-      if (node.parentId === immediateParent.id) {
-        return;
-      }
-      console.log('new node landed on function');
-      setNodes((nodes) => {
-        const newNodes = nodes
-          .map((search) => {
-            if (search.id === node.id) {
-              search.parentId = immediateParent.id;
-              search.position.x =
-                node.positionAbsolute.x - immediateParent.positionAbsolute.x;
-              search.position.y =
-                node.positionAbsolute.y - immediateParent.positionAbsolute.y;
-            }
+    // if (immediateParent && immediateParent.id !== node.parentId) {
+    //   if (node.parentId === immediateParent.id) {
+    //     return;
+    //   }
+    //   console.log('new node landed on function');
+    //   setNodes((nodes) => {
+    //     const newNodes = nodes
+    //       .map((search) => {
+    //         if (search.id === node.id) {
+    //           search.parentId = immediateParent.id;
+    //           search.position.x =
+    //             node.positionAbsolute.x - immediateParent.positionAbsolute.x;
+    //           search.position.y =
+    //             node.positionAbsolute.y - immediateParent.positionAbsolute.y;
+    //         }
 
-            return search;
-          })
-          // sort nodes by if they have a parentId or not
-          .sort((a, b) => {
-            if (a.parentId && !b.parentId) {
-              return 1;
-            }
-            if (!a.parentId && b.parentId) {
-              return -1;
-            }
-            return 0;
-          });
+    //         return search;
+    //       })
+    //       // sort nodes by if they have a parentId or not
+    //       .sort((a, b) => {
+    //         if (a.parentId && !b.parentId) {
+    //           return 1;
+    //         }
+    //         if (!a.parentId && b.parentId) {
+    //           return -1;
+    //         }
+    //         return 0;
+    //       });
 
-        return newNodes;
-      });
+    //     return newNodes;
+    //   });
 
-      // its still inside its parent group
-    } else if (!immediateParent && node.parentId) {
-      console.log('moved out of group');
-      const oldGroupNode = nodes.find(
-        (searchNode) => searchNode.id === node.parentId
-      );
+    //   // its still inside its parent group
+    // } else if (!immediateParent && node.parentId) {
+    //   console.log('moved out of group');
+    //   const oldGroupNode = nodes.find(
+    //     (searchNode) => searchNode.id === node.parentId
+    //   );
 
-      setNodes((nodes) => {
-        const newNodes = nodes.map((search) => {
-          if (search.id === node.id) {
-            search.parentId = null;
-            search.position.x = node.position.x + oldGroupNode.position.x;
-            search.position.y = node.position.y + oldGroupNode.position.y;
-          }
-          return search;
-        });
-        return newNodes;
-      });
-    } else {
-      console.log('moved on canvas');
-    }
+    //   setNodes((nodes) => {
+    //     const newNodes = nodes.map((search) => {
+    //       if (search.id === node.id) {
+    //         search.parentId = null;
+    //         search.position.x = node.position.x + oldGroupNode.position.x;
+    //         search.position.y = node.position.y + oldGroupNode.position.y;
+    //       }
+    //       return search;
+    //     });
+    //     return newNodes;
+    //   });
+    // } else {
+    //   console.log('moved on canvas');
+    // }
   };
 
   const onFolderSelected = (folder) => {

@@ -136,17 +136,40 @@ const getExports = (ast) => {
 
 const getRootLevelCode = (ast) => {
   const rootLevelCode = [];
+
   ast.program.body.forEach((node) => {
+    // Include import declarations
+    if (n.ImportDeclaration.check(node)) {
+      rootLevelCode.push(recast.print(node).code);
+    }
+
+    // Include export declarations (but not functions)
     if (
-      !n.ImportDeclaration.check(node) &&
-      !n.ExportNamedDeclaration.check(node) &&
-      !n.FunctionDeclaration.check(node) &&
-      !n.VariableDeclaration.check(node) // Skip variables, as they may hold functions
+      (n.ExportNamedDeclaration.check(node) ||
+        n.ExportDefaultDeclaration.check(node)) &&
+      !(
+        n.FunctionDeclaration.check(node.declaration) ||
+        n.FunctionExpression.check(node.declaration)
+      )
+    ) {
+      rootLevelCode.push(recast.print(node).code);
+    }
+
+    // Include root-level constants, excluding those initialized with functions
+    if (
+      n.VariableDeclaration.check(node) &&
+      node.kind === 'const' &&
+      node.declarations.every(
+        (decl) =>
+          !n.FunctionExpression.check(decl.init) &&
+          !n.ArrowFunctionExpression.check(decl.init)
+      )
     ) {
       rootLevelCode.push(recast.print(node).code);
     }
   });
-  return rootLevelCode;
+
+  return rootLevelCode.join('\n');
 };
 
 const flattenFunctions = (functions) => {

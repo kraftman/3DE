@@ -13,7 +13,6 @@ loader.config({ monaco });
 const codeNodeStyle = {
   width: '100%',
   height: '100%',
-  padding: '5px',
   paddingTop: '15px',
   borderRadius: '5px',
   backgroundColor: 'black',

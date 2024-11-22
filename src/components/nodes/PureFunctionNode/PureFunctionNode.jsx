@@ -55,13 +55,37 @@ export const PureFunctionNode = ({
 
   return (
     <>
-      <NodeResizer isVisible={selected} style={{ background: 'none' }} />
       {/* {renderedHandles} */}
-      <div className="text-updater-node">
+      <div className="text-updater-node" style={{ border: '2px solid black' }}>
         <EditableText
           text={data.functionName}
           onChange={onTitleChangeInternal}
         />
+        {/* <div className="editor-container">
+          <Editor
+            className="editor nodrag"
+            onChange={onChange}
+            height="100%"
+            width="100%"
+            defaultLanguage={'javascript'}
+            automaticLayout="true"
+            value={data.content}
+            options={{
+              fontSize: 10,
+              lineNumbersMinChars: 2,
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              minimap: {
+                enabled: false,
+              },
+              lineNumbers: 'off',
+            }}
+            theme="vs-dark"
+            onMount={(editor) => {
+              editorRef.current = editor;
+            }}
+          />
+        </div> */}
       </div>
     </>
   );

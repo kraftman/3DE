@@ -34,7 +34,7 @@ export const EditableText = ({ text, onChange }) => {
       ) : (
         <div
           className="function-node-header-text"
-          style={{ color: 'white', cursor: 'pointer' }}
+          style={{ color: '#e0e0e0', cursor: 'pointer', fontSize: '12px' }}
           onDoubleClick={handleDoubleClick}
         >
           {text}

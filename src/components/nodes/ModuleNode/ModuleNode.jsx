@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { NodeResizer } from 'reactflow';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -6,6 +6,10 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Editor from '@monaco-editor/react';
+import { loader } from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
+import { EditableText } from '../../EditableText';
 
 const darkTheme = createTheme({
   palette: {
@@ -24,7 +28,9 @@ const darkTheme = createTheme({
   },
 });
 
-export const ModuleNode = () => {
+export const ModuleNode = ({ data }) => {
+  const editorRef = useRef(null);
+  console.log('data content', data.content);
   return (
     <ThemeProvider theme={darkTheme}>
       <NodeResizer
@@ -36,32 +42,30 @@ export const ModuleNode = () => {
         className="text-updater-node"
         style={{ background: '#121212', padding: '16px', borderRadius: '8px' }}
       >
-        <div className="function-node-accordions">
-          <Accordion>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon style={{ color: '#ffffff' }} />}
-              aria-controls="context-content"
-              id="context-header"
-            >
-              <Typography>Context</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <div></div>
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon style={{ color: '#ffffff' }} />}
-              aria-controls="imports-content"
-              id="imports-header"
-            >
-              <Typography>Imports</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <div></div>
-            </AccordionDetails>
-          </Accordion>
-        </div>
+        {/* <div className="editor-container">
+          <Editor
+            className="editor nodrag"
+            height="100%"
+            width="100%"
+            defaultLanguage={'javascript'}
+            automaticLayout="true"
+            value={data.content}
+            options={{
+              fontSize: 10,
+              lineNumbersMinChars: 2,
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              minimap: {
+                enabled: false,
+              },
+              lineNumbers: 'off',
+            }}
+            theme="vs-dark"
+            onMount={(editor) => {
+              editorRef.current = editor;
+            }}
+          />
+        </div> */}
       </div>
     </ThemeProvider>
   );
