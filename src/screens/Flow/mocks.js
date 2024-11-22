@@ -64,29 +64,29 @@ export const a = 10;
 
 
 const anonDepth1 = () => {
-  console.log('meep')
+  console.log('meeep in anon depth 1');
 }
 
 function decFunc2Depth1() {
-  console.log('doing something');
+  console.log('doing something decFunc2Depth1');
   return 'testreturn'
 }
 
 export function exportDepth1(param1, param2) {
-  const a = '1'
+  const a = '1 '
   const depth2Anon =() => {
-    console.log('inside another func')
+    console.log('inside another func depth2Anon')
   }
   function depth2Dec () {
-    console.log('also inside func')
+    console.log('also inside func depth2Dec')
     function depth3Dec() {
-      console.log('third depth')
+      console.log('third depth depth3Dec')
     }
     const depth3Anon = () => {
-      console.log('third depth anon')
+      console.log('third depth anon depth3Anon')
     }
   }
-  console.log('doing something else');
+  console.log('doing something else in exportDepth1');
 }
 
 const b = a + 20;

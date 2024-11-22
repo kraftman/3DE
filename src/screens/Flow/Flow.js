@@ -102,19 +102,10 @@ export const Flow = () => {
       return Math.max(acc, func.depth);
     }, 0);
 
-    let maxHeight = 0;
-    for (let i = maxDepth; i >= 0; i--) {
-      const functionsAtDepth = parsed.flatFunctions.filter(
-        (func) => func.depth === i
-      );
-      console.log('functions at depth:', functionsAtDepth);
-      functionsAtDepth.forEach((func) => {
-        maxHeight = Math.max(maxHeight, getEditorSize(func.body).height);
-      });
-    }
+    const newModuleId = getNewNodeId();
 
     const moduleNode = {
-      id: getNewNodeId(),
+      id: newModuleId,
       data: {
         handles: [],
       },
@@ -125,41 +116,56 @@ export const Flow = () => {
       },
       style: {
         width: '500px',
-        height: `${50 + maxHeight}px`,
+        height: `${500}px`,
       },
     };
 
     const children = [];
-    let width = 0;
-    for (let i = 0; i <= maxDepth; i++) {
+
+    for (let i = maxDepth; i >= 0; i--) {
       console.log('depth:', i);
-      let currentHeight = 0;
+
       const functionsAtDepth = parsed.flatFunctions.filter(
         (func) => func.depth === i
       );
-      let maxWidth = 0;
+      let currentHeight = 0;
       functionsAtDepth.forEach((func) => {
-        console.log('func:', func.name);
-        const dim = getEditorSize(func.body);
-        maxWidth = Math.max(maxWidth, dim.width);
+        const localChildren = parsed.flatFunctions.filter(
+          (child) => child.parentId === func.id
+        );
+        const childWidth = localChildren.reduce((acc, child) => {
+          return Math.max(acc, child.frameSize.width);
+        }, func.frameSize.width);
+        const height = localChildren.reduce((acc, child) => {
+          return Math.max(acc, acc + child.frameSize.height);
+        }, func.frameSize.height);
+        // update the frameSize to include the children, for use in the parent
+        func.frameSize = { width: childWidth + 20, height: height + 30 };
+        console.log('size: ', func.name, childWidth, height);
+        const parent = parsed.flatFunctions.find(
+          (parent) => parent.id === func.parentId
+        );
+        const frameWidth =
+          localChildren.length > 0
+            ? func.contentSize.width + childWidth
+            : func.contentSize.width;
         const frame = {
-          id: getNewNodeId(),
+          id: func.id,
           data: { functionName: func.name },
           type: 'pureFunctionNode',
-          parentId: moduleNode.id,
+          parentId: func.parentId || newModuleId,
           extent: 'parent',
           position: {
-            x: width,
-            y: 30 + currentHeight,
+            x: parent ? parent.contentSize.width : 20,
+            y: 30 + currentHeight + (parent ? parent.contentSize.height : 20),
           },
           style: {
-            width: `${dim.width + 20}px`,
-            height: `${dim.height + 30}px`,
+            width: `${frameWidth + 20}px`,
+            height: `${height + 30}px`,
           },
         };
-        children.push(frame);
-        const child = {
-          id: getNewNodeId(),
+        const codeFrame = {
+          id: func.id + 'code',
           data: {
             content: func.body,
           },
@@ -171,21 +177,23 @@ export const Flow = () => {
             y: 30,
           },
           style: {
-            width: `${dim.width}px`,
-            height: `${dim.height}px`,
+            width: `${func.contentSize.width}px`,
+            height: `${func.contentSize.height}px`,
           },
         };
 
-        currentHeight += dim.height + 50;
+        children.push(codeFrame);
+        children.push(frame);
 
-        children.push(child);
+        currentHeight += height + 50;
+
         console.log('pushed child:', children.length);
       });
-      width = width + maxWidth + 50;
     }
     console.log('# children:', children.length);
+    const sortedChildren = children.reverse();
     setNodes((nodes) => {
-      return nodes.concat(moduleNode).concat(children);
+      return nodes.concat(moduleNode).concat(sortedChildren);
     });
   };
 
