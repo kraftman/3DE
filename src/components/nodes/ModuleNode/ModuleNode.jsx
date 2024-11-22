@@ -1,15 +1,21 @@
 import React, { useRef } from 'react';
-import { NodeResizer } from 'reactflow';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import Typography from '@mui/material/Typography';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { NodeResizer, Handle } from 'reactflow';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import Editor from '@monaco-editor/react';
-import { loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
-import { EditableText } from '../../EditableText';
+
+const handleTextStyle = {
+  position: 'relative',
+  transform: 'translate(10px, -10px)',
+  fontSize: '12px',
+  pointerEvents: 'none',
+  color: 'white',
+  display: 'inline-block', // Ensures the width matches the text content
+  border: '1px solid white', // Adds the border
+  padding: '2px 4px', // Adds padding to make the border look better
+  boxSizing: 'border-box', // Ensures padding doesn't increase the element size
+  borderRadius: '4px',
+};
+
+const handleWrapper = {};
 
 const darkTheme = createTheme({
   palette: {
@@ -31,6 +37,25 @@ const darkTheme = createTheme({
 export const ModuleNode = ({ data }) => {
   const editorRef = useRef(null);
   console.log('data content', data.content);
+
+  const importHandles = data.imports.map((imp, index) => {
+    return (
+      <div key={imp.name} style={handleWrapper}>
+        <Handle
+          key={imp.name}
+          type="source"
+          position={'left'}
+          id={imp.name}
+          style={{
+            top: 100 + 30 * index,
+            left: -100,
+          }}
+        >
+          <div style={handleTextStyle}>{imp.name}</div>
+        </Handle>
+      </div>
+    );
+  });
   return (
     <ThemeProvider theme={darkTheme}>
       <NodeResizer
@@ -38,35 +63,11 @@ export const ModuleNode = ({ data }) => {
         minHeight={300}
         style={{ background: 'none' }}
       />
+      {importHandles}
       <div
         className="text-updater-node"
         style={{ background: '#121212', padding: '16px', borderRadius: '8px' }}
-      >
-        {/* <div className="editor-container">
-          <Editor
-            className="editor nodrag"
-            height="100%"
-            width="100%"
-            defaultLanguage={'javascript'}
-            automaticLayout="true"
-            value={data.content}
-            options={{
-              fontSize: 10,
-              lineNumbersMinChars: 2,
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              minimap: {
-                enabled: false,
-              },
-              lineNumbers: 'off',
-            }}
-            theme="vs-dark"
-            onMount={(editor) => {
-              editorRef.current = editor;
-            }}
-          />
-        </div> */}
-      </div>
+      ></div>
     </ThemeProvider>
   );
 };

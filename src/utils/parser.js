@@ -105,12 +105,30 @@ const getImports = (ast) => {
   visit(ast, {
     visitImportDeclaration(path) {
       const importNode = path.node;
-      imports.push({
-        node: importNode,
-        moduleSpecifier: importNode.source.value,
-        namedImports: importNode.specifiers
-          .filter((spec) => spec.type === 'ImportSpecifier')
-          .map((spec) => spec.imported.name),
+      importNode.specifiers.forEach((spec) => {
+        if (spec.type === 'ImportSpecifier') {
+          // Named import
+          imports.push({
+            node: importNode,
+            moduleSpecifier: importNode.source.value,
+            name: spec.local.name, // Local name
+            imported: spec.imported.name, // Original name
+          });
+        } else if (spec.type === 'ImportDefaultSpecifier') {
+          // Default import
+          imports.push({
+            node: importNode,
+            moduleSpecifier: importNode.source.value,
+            name: spec.local.name, // Local name
+          });
+        } else if (spec.type === 'ImportNamespaceSpecifier') {
+          // Namespace import
+          imports.push({
+            node: importNode,
+            moduleSpecifier: importNode.source.value,
+            name: spec.local.name, // Local name
+          });
+        }
       });
       this.traverse(path);
     },

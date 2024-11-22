@@ -199,7 +199,8 @@ export const Flow = () => {
     const moduleNode = {
       id: newModuleId,
       data: {
-        handles: [],
+        exports: parsed.exports,
+        imports: parsed.imports,
       },
       type: 'module',
       position: {

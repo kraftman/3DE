@@ -59,6 +59,10 @@ const privateFunction = () => {
 
 export const mockModule = `
 import { something } from './module';
+import DefaultExport from './module2.js';
+import { namedExport as alias } from './module3.js';
+import * as namespace from './module4.js';
+import DefaultExport2, { namedExport } from './module5.js';
 
 export const a = 10;
 
@@ -68,6 +72,7 @@ const anonDepth1 = () => {
 }
 
 function decFunc2Depth1() {
+  anonDepth1()
   console.log('doing something decFunc2Depth1');
   return 'testreturn'
 }
