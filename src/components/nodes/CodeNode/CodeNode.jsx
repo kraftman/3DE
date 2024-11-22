@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRef } from 'react';
+import { NodeResizer, Handle } from 'reactflow';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
@@ -34,8 +35,35 @@ export const CodeNode = ({ id, data, onTextChange }) => {
     debouncedOnChange(newText);
   };
 
+  const importDefinitons = data.codeNode?.body?.filter((node) => {
+    return node.type === 'ImportDeclaration';
+  });
+
+  const importHandles = importDefinitons?.map((node) => {
+    const line = node.loc.start.line;
+    let name = '';
+    if (node.specifiers) {
+      name =
+        node.specifiers[0]?.local.name || node.specifiers[0]?.imported.name;
+    }
+    console.log('import name:', name);
+    console.log(`==== node id: ${id} handle: ${name}:in`);
+    return (
+      <Handle
+        key={name + ':in'}
+        type="source"
+        position={'left'}
+        id={name + ':in'}
+        style={{
+          top: 10 + 14 * line,
+        }}
+      ></Handle>
+    );
+  });
+
   return (
     <>
+      {importHandles}
       <div style={{ ...codeNodeStyle }}>
         <div className="editor-container">
           <Editor

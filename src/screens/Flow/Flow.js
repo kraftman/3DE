@@ -212,11 +212,14 @@ export const Flow = () => {
         height: `${moduleHeight + 60}px`,
       },
     };
-    const rootSize = getEditorSize(parsed.rootLevelCode);
+    const rootSize = getEditorSize(parsed.rootLevelCode.code);
     const rootCode = {
       id: getNewNodeId(),
       data: {
-        content: parsed.rootLevelCode,
+        content: parsed.rootLevelCode.code,
+        imports: parsed.imports,
+        exports: parsed.exports,
+        codeNode: parsed.rootLevelCode.node,
       },
       type: 'code',
       parentId: newModuleId,
@@ -230,10 +233,23 @@ export const Flow = () => {
         height: `${rootSize.height}px`,
       },
     };
+    updateNodeInternals(newModuleId);
+    updateNodeInternals(rootCode.id);
 
     const sortedChildren = children.reverse();
     setNodes((nodes) => {
       return nodes.concat(moduleNode).concat(rootCode).concat(sortedChildren);
+    });
+
+    const newEdge = {
+      id: 'meep',
+      source: newModuleId,
+      target: rootCode.id,
+      targetHandle: 'something:in',
+      sourceHandle: 'something:out',
+    };
+    setEdges((edges) => {
+      return edges.concat(newEdge);
     });
   };
 
@@ -1041,6 +1057,7 @@ export const Flow = () => {
     // });
   };
 
+  console.log('==== edges', edges);
   return (
     <>
       <ReactFlow

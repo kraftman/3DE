@@ -34,18 +34,21 @@ const darkTheme = createTheme({
   },
 });
 
-export const ModuleNode = ({ data }) => {
+export const ModuleNode = (props) => {
+  console.log('mmodule props', props);
+  const data = props.data;
   const editorRef = useRef(null);
   console.log('data content', data.content);
 
   const importHandles = data.imports.map((imp, index) => {
+    console.log(`==== node id: ${props.id} handle: ${imp.name}:out`);
     return (
       <div key={imp.name} style={handleWrapper}>
         <Handle
-          key={imp.name}
+          key={imp.name + ':out'}
           type="source"
           position={'left'}
-          id={imp.name}
+          id={imp.name + ':out'}
           style={{
             top: 100 + 30 * index,
             left: -100,

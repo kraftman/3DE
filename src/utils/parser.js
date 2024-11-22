@@ -187,7 +187,13 @@ const getRootLevelCode = (ast) => {
     }
   });
 
-  return rootLevelCode.join('\n');
+  const newTree = recast.parse(rootLevelCode.join('\n'));
+
+  return {
+    body: newTree.program.body,
+    code: recast.print(newTree).code,
+    node: newTree.program,
+  };
 };
 
 const flattenFunctions = (functions) => {

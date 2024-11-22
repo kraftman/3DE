@@ -60,11 +60,14 @@ const privateFunction = () => {
 export const mockModule = `
 import { something } from './module';
 import DefaultExport from './module2.js';
+
+export const a = 10;
+
+
 import { namedExport as alias } from './module3.js';
 import * as namespace from './module4.js';
 import DefaultExport2, { namedExport } from './module5.js';
 
-export const a = 10;
 
 
 const anonDepth1 = () => {
