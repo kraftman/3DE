@@ -58,7 +58,7 @@ const privateFunction = () => {
 `;
 
 export const mockModule = `
-import { something } from './module' ;
+import { something } from './module';
 
 export const a = 10;
 

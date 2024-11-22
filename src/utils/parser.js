@@ -2,6 +2,26 @@ const recast = require('recast');
 const { namedTypes: n, visit } = require('ast-types');
 const babelParser = require('@babel/parser');
 
+function extractNonFunctionStatements(functionNode) {
+  const nonFunctionNodes = functionNode.body.body.filter(
+    (node) =>
+      !n.FunctionDeclaration.check(node) && // Exclude declared functions
+      !(
+        n.VariableDeclaration.check(node) &&
+        node.declarations.some(
+          (declaration) =>
+            declaration.init &&
+            (n.FunctionExpression.check(declaration.init) ||
+              n.ArrowFunctionExpression.check(declaration.init))
+        )
+      ) // Exclude function expressions
+  );
+  const extractedCode = nonFunctionNodes
+    .map((node) => recast.print(node).code)
+    .join('\n');
+  return extractedCode;
+}
+
 export const parseCode = (code) => {
   const imports = [];
   const exports = [];
@@ -39,7 +59,8 @@ export const parseCode = (code) => {
         const { node } = path;
         const name = node.id ? node.id.name : '<anonymous>';
         const parameters = node.params.map((param) => recast.print(param).code);
-        const body = node.body ? recast.print(node.body).code : null;
+
+        const body = extractNonFunctionStatements(node);
 
         const nestedFunctions = getFunctions(node.body, depth + 1);
         const funcInfo = {
@@ -71,7 +92,7 @@ export const parseCode = (code) => {
         }
 
         const parameters = node.params.map((param) => recast.print(param).code);
-        const body = node.body ? recast.print(node.body).code : null;
+        const body = extractNonFunctionStatements(node);
 
         const nestedFunctions = getFunctions(node.body, depth + 1);
         const funcInfo = {
