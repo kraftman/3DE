@@ -69,6 +69,8 @@ import { useFileSystem } from '../../contexts/FileSystemContext';
 
 import { mockModule } from './mocks.js';
 
+import { parseCode } from '../../utils/parser';
+
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
@@ -94,14 +96,22 @@ export const Flow = () => {
 
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
-    const parsed = analyzeSourceFile(mockModule);
+    const parsed = parseCode(mockModule);
     console.log('parsed:', parsed);
-    const childCount = parsed.functions.length;
-
-    const childHeights = parsed.functions.reduce((acc, func) => {
-      const dim = getEditorSize(func.getText());
-      return acc + dim.height;
+    const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
+      return Math.max(acc, func.depth);
     }, 0);
+
+    let maxHeight = 0;
+    for (let i = maxDepth; i >= 0; i--) {
+      const functionsAtDepth = parsed.flatFunctions.filter(
+        (func) => func.depth === i
+      );
+      console.log('functions at depth:', functionsAtDepth);
+      functionsAtDepth.forEach((func) => {
+        maxHeight = Math.max(maxHeight, getEditorSize(func.body).height);
+      });
+    }
 
     const moduleNode = {
       id: getNewNodeId(),
@@ -115,33 +125,65 @@ export const Flow = () => {
       },
       style: {
         width: '500px',
-        height: `${200 + childHeights}px`,
+        height: `${50 + maxHeight}px`,
       },
     };
 
-    let currentHeight = 0;
-    const children = parsed.functions.map((func, index) => {
-      const dim = getEditorSize(func.getText());
-      currentHeight += dim.height + 10;
-      return {
-        id: getNewNodeId(),
-        data: {
-          content: func.getText(),
-        },
-        type: 'code',
-        parentId: moduleNode.id,
-        extent: 'parent',
-        position: {
-          x: 10,
-          y: 30 + currentHeight,
-        },
-        style: {
-          width: `${dim.width}px`,
-          height: `${dim.height}px`,
-        },
-      };
-    });
+    const children = [];
+    let width = 0;
+    for (let i = 0; i <= maxDepth; i++) {
+      console.log('depth:', i);
+      let currentHeight = 0;
+      const functionsAtDepth = parsed.flatFunctions.filter(
+        (func) => func.depth === i
+      );
+      let maxWidth = 0;
+      functionsAtDepth.forEach((func) => {
+        console.log('func:', func.name);
+        const dim = getEditorSize(func.body);
+        maxWidth = Math.max(maxWidth, dim.width);
+        const frame = {
+          id: getNewNodeId(),
+          data: { functionName: func.name },
+          type: 'pureFunctionNode',
+          parentId: moduleNode.id,
+          extent: 'parent',
+          position: {
+            x: width,
+            y: 30 + currentHeight,
+          },
+          style: {
+            width: `${dim.width + 20}px`,
+            height: `${dim.height + 30}px`,
+          },
+        };
+        children.push(frame);
+        const child = {
+          id: getNewNodeId(),
+          data: {
+            content: func.body,
+          },
+          type: 'code',
+          parentId: frame.id,
+          extent: 'parent',
+          position: {
+            x: 10,
+            y: 30,
+          },
+          style: {
+            width: `${dim.width}px`,
+            height: `${dim.height}px`,
+          },
+        };
 
+        currentHeight += dim.height + 50;
+
+        children.push(child);
+        console.log('pushed child:', children.length);
+      });
+      width = width + maxWidth + 50;
+    }
+    console.log('# children:', children.length);
     setNodes((nodes) => {
       return nodes.concat(moduleNode).concat(children);
     });
@@ -833,7 +875,7 @@ export const Flow = () => {
         content: newFunction.content,
         functionName: newFunction.name,
       },
-      type: 'functionNode',
+      type: 'pureFunctionNode',
       position: {
         x: 500,
         y: 500,

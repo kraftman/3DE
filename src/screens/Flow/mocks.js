@@ -58,15 +58,34 @@ const privateFunction = () => {
 `;
 
 export const mockModule = `
-import { something } from './module';
+import { something } from './module' ;
 
 export const a = 10;
 
-function doSomething() {
-  console.log('doing something');
+
+const anonDepth1 = () => {
+  console.log('meep')
 }
 
-export function doSomethingElse() {
+function decFunc2Depth1() {
+  console.log('doing something');
+  return 'testreturn'
+}
+
+export function exportDepth1(param1, param2) {
+  const a = '1'
+  const depth2Anon =() => {
+    console.log('inside another func')
+  }
+  function depth2Dec () {
+    console.log('also inside func')
+    function depth3Dec() {
+      console.log('third depth')
+    }
+    const depth3Anon = () => {
+      console.log('third depth anon')
+    }
+  }
   console.log('doing something else');
 }
 

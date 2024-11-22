@@ -27,22 +27,22 @@ export const PureFunctionNode = ({
 
   const text = data.content;
 
-  const functionNodes = useMemo(() => findFunctions(text), [data.content]);
+  // const functionNodes = useMemo(() => findFunctions(text), [data.content]);
 
-  const renderedHandles = functionNodes.map((node) => {
-    const label = node.expression.getText();
-    const lineNumber = node.expression.getStart();
-    return (
-      <Handle
-        key={label + ':' + lineNumber}
-        position="right"
-        type="source"
-        id={data.functionId + ':= ' + label + ':' + lineNumber}
-      >
-        <div style={handleTextStyle}>{label}</div>
-      </Handle>
-    );
-  });
+  // const renderedHandles = functionNodes.map((node) => {
+  //   const label = node.expression.getText();
+  //   const lineNumber = node.expression.getStart();
+  //   return (
+  //     <Handle
+  //       key={label + ':' + lineNumber}
+  //       position="right"
+  //       type="source"
+  //       id={data.functionId + ':= ' + label + ':' + lineNumber}
+  //     >
+  //       <div style={handleTextStyle}>{label}</div>
+  //     </Handle>
+  //   );
+  // });
 
   const onChange = (value) => {
     console.log('onChange', value);
@@ -56,37 +56,12 @@ export const PureFunctionNode = ({
   return (
     <>
       <NodeResizer isVisible={selected} style={{ background: 'none' }} />
-      {renderedHandles}
+      {/* {renderedHandles} */}
       <div className="text-updater-node">
         <EditableText
           text={data.functionName}
           onChange={onTitleChangeInternal}
         />
-        <div className="editor-container">
-          <Editor
-            className="editor nodrag"
-            onChange={onChange}
-            height="100%"
-            width="100%"
-            defaultLanguage={'javascript'}
-            automaticLayout="true"
-            value={text}
-            options={{
-              fontSize: 10,
-              lineNumbersMinChars: 2,
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              minimap: {
-                enabled: false,
-              },
-              lineNumbers: 'off',
-            }}
-            theme="vs-dark"
-            onMount={(editor) => {
-              editorRef.current = editor;
-            }}
-          />
-        </div>
       </div>
     </>
   );

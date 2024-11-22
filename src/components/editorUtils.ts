@@ -7,6 +7,8 @@ import path from 'path-browserify';
 
 import * as ts from 'typescript';
 
+//const project = await createProject({ useInMemoryFileSystem: true });
+
 const fsMap = {
   js: 'javascript',
   py: 'python',
@@ -33,7 +35,7 @@ export const detectLanguage = (fileName) => {
 
 // for now this just gets imports, exports, root level logic, and functions
 // need to merge it with the function below it when we have a better idea of what we need
-export function analyzeSourceFile(code) {
+export async function analyzeSourceFile(code) {
   const sourceFile = ts.createSourceFile(
     'tempFile.ts',
     code,
@@ -43,7 +45,7 @@ export function analyzeSourceFile(code) {
   const imports = [];
   const exports = [];
   const rootLevelLogic = [];
-  const functions = [];
+  const functions: ts.Node[] = [];
 
   ts.forEachChild(sourceFile, (node) => {
     if (ts.isImportDeclaration(node)) {
@@ -320,7 +322,6 @@ const getMaxWidth = (lines) => {
   lines.forEach((line) => {
     maxWidth = Math.max(maxWidth, line.length);
   });
-  console.log('maxWidth:', maxWidth);
   return maxWidth;
 };
 
