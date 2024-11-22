@@ -82,7 +82,7 @@ export function exportDepth1(param1, param2) {
     function depth3Dec() {
       console.log('third depth depth3Dec')
     }
-    const depth3Anon = () => {
+    const depth3Anon = () => { 
       console.log('third depth anon depth3Anon')
     }
   }

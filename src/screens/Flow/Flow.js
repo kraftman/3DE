@@ -118,6 +118,7 @@ export const Flow = () => {
       let currentHeight = 0;
       moduleWidth =
         moduleWidth +
+        30 +
         functionsAtDepth.reduce((acc, func) => {
           return Math.max(acc, func.frameSize.width);
         }, 0);
@@ -126,15 +127,16 @@ export const Flow = () => {
         const localChildren = parsed.flatFunctions.filter(
           (child) => child.parentId === func.id
         );
+        console.log('found children:', localChildren.length);
         const childWidth = localChildren.reduce((acc, child) => {
           return Math.max(acc, child.frameSize.width);
-        }, func.frameSize.width);
+        }, 0);
 
         const height = localChildren.reduce((acc, child) => {
           return Math.max(acc, acc + child.frameSize.height);
         }, func.frameSize.height);
         // update the frameSize to include the children, for use in the parent
-        func.frameSize = { width: childWidth + 20, height: height + 30 };
+
         console.log('size: ', func.name, childWidth, height);
         const parent = parsed.flatFunctions.find(
           (parent) => parent.id === func.parentId
@@ -143,6 +145,7 @@ export const Flow = () => {
           localChildren.length > 0
             ? func.contentSize.width + childWidth
             : func.contentSize.width;
+        func.frameSize = { width: frameWidth + 30, height: height + 50 };
         const frame = {
           id: func.id,
           data: { functionName: func.name, content: func.body },
