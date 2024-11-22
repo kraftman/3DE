@@ -78,6 +78,7 @@ function decFunc2Depth1() {
   anonDepth1()
   console.log('doing something decFunc2Depth1');
   return 'testreturn'
+  anonDepth1()
 }
 
 export function exportDepth1(param1, param2) {

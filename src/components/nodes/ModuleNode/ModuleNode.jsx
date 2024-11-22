@@ -41,17 +41,16 @@ export const ModuleNode = (props) => {
   console.log('data content', data.content);
 
   const importHandles = data.imports.map((imp, index) => {
-    console.log(`==== node id: ${props.id} handle: ${imp.name}:out`);
     return (
       <div key={imp.name} style={handleWrapper}>
         <Handle
           key={imp.name + ':out'}
           type="source"
-          position={'left'}
+          position={'right'}
           id={imp.name + ':out'}
           style={{
             top: 100 + 30 * index,
-            left: -100,
+            right: -100,
           }}
         >
           <div style={handleTextStyle}>{imp.name}</div>
@@ -66,11 +65,12 @@ export const ModuleNode = (props) => {
         minHeight={300}
         style={{ background: 'none' }}
       />
-      {importHandles}
+
       <div
         className="text-updater-node"
         style={{ background: '#121212', padding: '16px', borderRadius: '8px' }}
       ></div>
+      {importHandles}
     </ThemeProvider>
   );
 };

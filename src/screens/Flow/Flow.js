@@ -165,6 +165,7 @@ export const Flow = () => {
           id: func.id + 'code',
           data: {
             content: func.body,
+            funcInfo: func,
           },
           type: 'code',
           parentId: frame.id,

@@ -7,9 +7,42 @@ import * as monaco from 'monaco-editor';
 import { Pip } from '../../Pip';
 import { useDebouncedCallback } from 'use-debounce';
 
+import * as recast from 'recast';
+
 import 'react-tooltip/dist/react-tooltip.css';
 
 loader.config({ monaco });
+
+function findCallExpressions(ast) {
+  const callExpressions = [];
+  const ignoreList = ['console.log', 'console.error', 'console.warn'];
+
+  // Use recast's `visit` function to traverse the AST
+  recast.types.visit(ast, {
+    visitCallExpression(path) {
+      // Add the current CallExpression node to the results
+
+      const node = path.node;
+      let functionName = null;
+      if (node.callee.type === 'Identifier') {
+        functionName = node.callee.name; // e.g., `myFunction()`
+      } else if (node.callee.type === 'MemberExpression') {
+        // For member expressions like `console.log` or `Math.max`
+        functionName = recast.print(node.callee).code;
+      }
+
+      if (!ignoreList.includes(functionName)) {
+        console.log('functionName in callexp', functionName);
+        callExpressions.push({ node: path.node, name: functionName });
+      }
+
+      // Continue traversing
+      this.traverse(path);
+    },
+  });
+
+  return callExpressions;
+}
 
 const codeNodeStyle = {
   width: '100%',
@@ -35,6 +68,34 @@ export const CodeNode = ({ id, data, onTextChange }) => {
     debouncedOnChange(newText);
   };
 
+  let functionHandles = [];
+  if (data.funcInfo) {
+    const subtreeCode = recast.print(data.funcInfo.node).code;
+
+    // Parse the source code into a new AST
+    const newAst = recast.parse(subtreeCode);
+    const functionCalls = findCallExpressions(newAst);
+    functionHandles = functionCalls.map((call, index) => {
+      const line = call.node.loc.start.line;
+
+      const key = 'func:' + call.name + ':out' + index;
+
+      return (
+        <Handle
+          key={key}
+          type="source"
+          position={'right'}
+          id={key}
+          style={{
+            top: 14 * line,
+          }}
+        >
+          <div style={{ color: 'white' }}>{call.name}</div>
+        </Handle>
+      );
+    });
+  }
+
   const importDefinitons = data.codeNode?.body?.filter((node) => {
     return node.type === 'ImportDeclaration';
   });
@@ -46,8 +107,6 @@ export const CodeNode = ({ id, data, onTextChange }) => {
       name =
         node.specifiers[0]?.local.name || node.specifiers[0]?.imported.name;
     }
-    console.log('import name:', name);
-    console.log(`==== node id: ${id} handle: ${name}:in`);
     return (
       <Handle
         key={name + ':in'}
@@ -63,8 +122,21 @@ export const CodeNode = ({ id, data, onTextChange }) => {
 
   return (
     <>
-      {importHandles}
       <div style={{ ...codeNodeStyle }}>
+        {functionHandles}
+        <Handle
+          key={data.functionName + ':in'}
+          type="source"
+          position={'left'}
+          id={data.functionName + ':in'}
+          style={{
+            top: 10,
+            left: -10,
+            color: 'blue',
+          }}
+        >
+          <div style={{ color: 'white' }}>{data.functionName}</div>
+        </Handle>
         <div className="editor-container">
           <Editor
             className="editor nodrag"
@@ -90,6 +162,7 @@ export const CodeNode = ({ id, data, onTextChange }) => {
             }}
           />
         </div>
+        {importHandles}
       </div>
     </>
   );
