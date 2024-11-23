@@ -6,6 +6,10 @@ import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
+import { useState } from 'react';
+import { IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import PolylineIcon from '@mui/icons-material/Polyline';
+
 loader.config({ monaco });
 
 const handleTextStyle = {
@@ -43,6 +47,17 @@ const darkTheme = createTheme({
 export const ModuleNode = (props) => {
   const data = props.data;
 
+  const [settings, setSettings] = useState([]);
+
+  // Toggle button state
+  const handleToggle = (event, newSettings) => {
+    setSettings((oldSettings) => {
+      props.toggleHideEdges(props.id, newSettings.showEdges);
+
+      return newSettings;
+    });
+  };
+
   const editorRef = useRef(null);
   const importHandles = data.handles.map((handle, index) => {
     return (
@@ -71,11 +86,24 @@ export const ModuleNode = (props) => {
         minHeight={300}
         style={{ background: 'none' }}
       />
-      <button onClick={toggleHidden}>Toggle Raw</button>
+
       <div
         className="text-updater-node"
         style={{ background: '#121212', padding: '16px', borderRadius: '8px' }}
       >
+        <div>
+          <button onClick={toggleHidden}>Toggle Raw</button>
+          <ToggleButtonGroup
+            value={settings}
+            onChange={handleToggle}
+            size="small"
+            aria-label="text alignment"
+          >
+            <ToggleButton value="showEdges" aria-label="justified">
+              <PolylineIcon />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </div>
         {!data.showRaw && (
           <div className="editor-container">
             <Editor

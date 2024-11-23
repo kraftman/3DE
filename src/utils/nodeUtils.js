@@ -23,7 +23,7 @@ export const getRaw = (module, node, children) => {
   const codeStrings = [];
 
   children.forEach((child) => {
-    codeStrings.push('/* ' + child.data.functionName + ' */');
+    codeStrings.push('/*  ' + child.data.functionName + ' */');
     codeStrings.push(child.data.content);
   });
   return codeStrings.join('\n');
@@ -78,7 +78,7 @@ export const getModule = () => {
     const functionsAtDepth = parsed.flatFunctions.filter(
       (func) => func.depth === i
     );
-    let currentHeight = 0;
+    let currentHeight = 30;
     moduleWidth =
       moduleWidth +
       30 +

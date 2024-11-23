@@ -364,6 +364,27 @@ export const Flow = () => {
     });
   };
 
+  const toggleHideEdges = (nodeId, hideEdges) => {
+    setNodes((nodes) => {
+      console.log('nodes in toggleHideEdges:', nodes);
+      const childIds = findChildren(nodes, nodeId);
+
+      setEdges((edges) => {
+        const newEdges = edges.map((edge) => {
+          if (
+            childIds.includes(edge.source) ||
+            childIds.includes(edge.target)
+          ) {
+            return { ...edge, hidden: hideEdges };
+          }
+          return edge;
+        });
+        return newEdges;
+      });
+      return nodes;
+    });
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -379,7 +400,11 @@ export const Flow = () => {
         <CodeNode onTextChange={onCodeNodeTextChange} {...props} />
       ),
       module: (props) => (
-        <ModuleNode toggleHideChildren={toggleHideChildren} {...props} />
+        <ModuleNode
+          toggleHideChildren={toggleHideChildren}
+          toggleHideEdges={toggleHideEdges}
+          {...props}
+        />
       ),
       pureFunctionNode: (props) => (
         <PureFunctionNode
@@ -940,6 +965,8 @@ export const Flow = () => {
     //   return newNodes;
     // });
   };
+
+  console.log('nodes:', nodes);
 
   return (
     <>

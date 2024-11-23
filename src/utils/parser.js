@@ -19,13 +19,15 @@ const extractNonFunctionStatements = (functionNode) => {
       ) // Exclude function expressions
   );
   const extractedCode = nonFunctionNodes
-    .map((node) => recast.print(node).code)
+    .map((node) => recast.print(node, { reuseWhitespace: true }).code)
     .join('\n');
   return extractedCode;
 };
 
 const createFunction = (node, name, parentId, depth) => {
-  const parameters = node.params.map((param) => recast.print(param).code);
+  const parameters = node.params.map(
+    (param) => recast.print(param, { reuseWhitespace: true }).code
+  );
   const body = extractNonFunctionStatements(node);
 
   const funcId = uuid();
@@ -148,7 +150,7 @@ const getExports = (ast) => {
       myExports.push({
         node: exportNode,
         name: exportNode.declaration?.id?.name || null,
-        declarations: recast.print(exportNode).code,
+        declarations: recast.print(exportNode, { reuseWhitespace: true }).code,
       });
       this.traverse(path);
     },
@@ -157,46 +159,49 @@ const getExports = (ast) => {
 };
 
 const getRootLevelCode = (ast) => {
-  const rootLevelCode = [];
+  // Traverse the AST to prune nodes
+  visit(ast, {
+    visitProgram(path) {
+      // Traverse through the body of the program
+      path.get('body').each((nodePath) => {
+        const node = nodePath.node;
 
-  ast.program.body.forEach((node) => {
-    // Include import declarations
-    if (n.ImportDeclaration.check(node)) {
-      rootLevelCode.push(recast.print(node).code);
-    }
+        // Check if the node matches root-level conditions
+        const isRootLevelNode =
+          n.ImportDeclaration.check(node) ||
+          ((n.ExportNamedDeclaration.check(node) ||
+            n.ExportDefaultDeclaration.check(node)) &&
+            !(
+              n.FunctionDeclaration.check(node.declaration) ||
+              n.FunctionExpression.check(node.declaration)
+            )) ||
+          (n.VariableDeclaration.check(node) &&
+            node.kind === 'const' &&
+            node.declarations.every(
+              (decl) =>
+                !n.FunctionExpression.check(decl.init) &&
+                !n.ArrowFunctionExpression.check(decl.init)
+            ));
 
-    // Include export declarations (but not functions)
-    if (
-      (n.ExportNamedDeclaration.check(node) ||
-        n.ExportDefaultDeclaration.check(node)) &&
-      !(
-        n.FunctionDeclaration.check(node.declaration) ||
-        n.FunctionExpression.check(node.declaration)
-      )
-    ) {
-      rootLevelCode.push(recast.print(node).code);
-    }
+        // Prune the node if it doesn't match
+        if (!isRootLevelNode) {
+          nodePath.prune();
+        }
+      });
 
-    // Include root-level constants, excluding those initialized with functions
-    if (
-      n.VariableDeclaration.check(node) &&
-      node.kind === 'const' &&
-      node.declarations.every(
-        (decl) =>
-          !n.FunctionExpression.check(decl.init) &&
-          !n.ArrowFunctionExpression.check(decl.init)
-      )
-    ) {
-      rootLevelCode.push(recast.print(node).code);
-    }
+      // Continue traversal after pruning
+      return false;
+    },
   });
 
-  const newTree = recast.parse(rootLevelCode.join('\n'));
+  // Generate the modified code with preserved formatting
+  console.log('new ast:', ast);
+  const combinedCode = recast.print(ast, { reuseWhitespace: true }).code;
 
   return {
-    body: newTree.program.body,
-    code: recast.print(newTree).code,
-    node: newTree.program,
+    body: ast.program.body,
+    code: combinedCode,
+    node: ast.program,
   };
 };
 
@@ -230,6 +235,14 @@ export const parseCode = (code) => {
       rootLevelCode,
     };
   }
+
+  const printedCode = recast.print(ast, { reuseWhitespace: true }).code;
+  const visibleCode = printedCode
+    .replace(/ /g, '␣') // Spaces as '␣'
+    .replace(/\t/g, '⇥') // Tabs as '⇥'
+    .replace(/\n/g, '↵\n'); // Newlines as '↵'
+
+  //console.log('=====', visibleCode);
 
   const imports = getImports(ast);
   const myExports = getExports(ast);
