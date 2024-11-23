@@ -67,9 +67,7 @@ import {
 } from './utils';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
-import { mockModule } from './mocks.js';
-
-import { parseCode } from '../../utils/parser';
+import { getModuleNodes } from '../../utils/nodeUtils.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
@@ -96,162 +94,24 @@ export const Flow = () => {
 
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
-    const parsed = parseCode(mockModule);
-    console.log('parsed:', parsed);
-    const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
-      return Math.max(acc, func.depth);
-    }, 0);
 
-    const newModuleId = getNewNodeId();
-
-    const children = [];
-
-    let moduleWidth = 0;
-    let moduleHeight = 0;
-
-    for (let i = maxDepth; i >= 0; i--) {
-      console.log('depth:', i);
-
-      const functionsAtDepth = parsed.flatFunctions.filter(
-        (func) => func.depth === i
-      );
-      let currentHeight = 0;
-      moduleWidth =
-        moduleWidth +
-        30 +
-        functionsAtDepth.reduce((acc, func) => {
-          return Math.max(acc, func.frameSize.width);
-        }, 0);
-
-      functionsAtDepth.forEach((func) => {
-        const localChildren = parsed.flatFunctions.filter(
-          (child) => child.parentId === func.id
-        );
-        console.log('found children:', localChildren.length);
-        const childWidth = localChildren.reduce((acc, child) => {
-          return Math.max(acc, child.frameSize.width);
-        }, 0);
-
-        const height = localChildren.reduce((acc, child) => {
-          return Math.max(acc, acc + child.frameSize.height);
-        }, func.frameSize.height);
-        // update the frameSize to include the children, for use in the parent
-
-        console.log('size: ', func.name, childWidth, height);
-        const parent = parsed.flatFunctions.find(
-          (parent) => parent.id === func.parentId
-        );
-        const frameWidth =
-          localChildren.length > 0
-            ? func.contentSize.width + childWidth
-            : func.contentSize.width;
-        func.frameSize = { width: frameWidth + 30, height: height + 50 };
-        const frame = {
-          id: func.id,
-          data: { functionName: func.name, content: func.body },
-          type: 'pureFunctionNode',
-          parentId: func.parentId || newModuleId,
-          extent: 'parent',
-          position: {
-            x: parent ? parent.contentSize.width : 20,
-            y: 30 + currentHeight + (parent ? parent.contentSize.height : 20),
-          },
-          style: {
-            width: `${frameWidth + 20}px`,
-            height: `${height + 30}px`,
-          },
-        };
-        const codeFrame = {
-          id: func.id + 'code',
-          data: {
-            content: func.body,
-            funcInfo: func,
-          },
-          type: 'code',
-          parentId: frame.id,
-          extent: 'parent',
-          position: {
-            x: 10,
-            y: 30,
-          },
-          style: {
-            width: `${func.contentSize.width}px`,
-            height: `${func.contentSize.height}px`,
-          },
-        };
-
-        children.push(codeFrame);
-        children.push(frame);
-
-        currentHeight += height + 50;
-
-        console.log('pushed child:', children.length);
-      });
-      if (i === 0) {
-        moduleHeight =
-          moduleHeight +
-          50 +
-          functionsAtDepth.reduce((acc, func) => {
-            return Math.max(acc, acc + func.frameSize.height);
-          }, 0);
-      }
-    }
-
-    const moduleNode = {
-      id: newModuleId,
-      data: {
-        exports: parsed.exports,
-        imports: parsed.imports,
-      },
-      type: 'module',
-      position: {
-        x: 200,
-        y: 100,
-      },
-      style: {
-        width: `${moduleWidth + 30}px`,
-        height: `${moduleHeight + 60}px`,
-      },
-    };
-    const rootSize = getEditorSize(parsed.rootLevelCode.code);
-    const rootCode = {
-      id: getNewNodeId(),
-      data: {
-        content: parsed.rootLevelCode.code,
-        imports: parsed.imports,
-        exports: parsed.exports,
-        codeNode: parsed.rootLevelCode.node,
-      },
-      type: 'code',
-      parentId: newModuleId,
-      extent: 'parent',
-      position: {
-        x: 10,
-        y: 30,
-      },
-      style: {
-        width: `${rootSize.width}px`,
-        height: `${rootSize.height}px`,
-      },
-    };
-    updateNodeInternals(newModuleId);
-    updateNodeInternals(rootCode.id);
-
-    const sortedChildren = children.reverse();
+    const { moduleNode, rootCode, children } = getModuleNodes();
     setNodes((nodes) => {
-      return nodes.concat(moduleNode).concat(rootCode).concat(sortedChildren);
+      return nodes.concat(moduleNode).concat(rootCode).concat(children);
     });
 
-    const newEdge = {
-      id: 'meep',
-      source: newModuleId,
-      target: rootCode.id,
-      targetHandle: 'something:in',
-      sourceHandle: 'something:out',
-    };
-    setEdges((edges) => {
-      return edges.concat(newEdge);
-    });
+    // define edges here
+
+    // const newEdge = {
+    //   id: 'meep',
+    //   source: newModuleId,
+    //   target: rootCode.id,
+    //   targetHandle: 'something:in',
+    //   sourceHandle: 'something:out',
+    // };
+    // setEdges((edges) => {
+    //   return edges.concat(newEdge);
+    // });
   };
 
   useEffect(() => {

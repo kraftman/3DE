@@ -35,27 +35,19 @@ const darkTheme = createTheme({
 });
 
 export const ModuleNode = (props) => {
-  console.log('mmodule props', props);
   const data = props.data;
-  const editorRef = useRef(null);
-  console.log('data content', data.content);
 
-  const importHandles = data.imports.map((imp, index) => {
+  const importHandles = data.handles.map((handle, index) => {
     return (
-      <div key={imp.name} style={handleWrapper}>
-        <Handle
-          key={imp.name + ':out'}
-          type="source"
-          position={'right'}
-          id={imp.name + ':out'}
-          style={{
-            top: 100 + 30 * index,
-            right: -100,
-          }}
-        >
-          <div style={handleTextStyle}>{imp.name}</div>
-        </Handle>
-      </div>
+      <Handle
+        key={handle.key}
+        type="source"
+        position={'right'}
+        id={handle.id}
+        style={{ ...handle.style }}
+      >
+        <div style={handleTextStyle}>{handle.data.name}</div>
+      </Handle>
     );
   });
   return (

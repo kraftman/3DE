@@ -31,6 +31,8 @@ const createFunction = (node, name, parentId, depth) => {
   const funcId = uuid();
   const nestedFunctions = getFunctions(node.body, funcId, depth + 1);
   const contentSize = getEditorSize(body);
+  const subtreeCode = recast.print(node).code;
+  const newAst = recast.parse(subtreeCode);
   const funcInfo = {
     id: funcId,
     name,
@@ -40,6 +42,7 @@ const createFunction = (node, name, parentId, depth) => {
     body,
     nestedFunctions,
     node,
+    localAst: newAst,
     contentSize,
     frameSize: {
       ...contentSize,
