@@ -2,6 +2,8 @@ import { mockModule } from '../screens/Flow/mocks';
 import { v4 as uuid } from 'uuid';
 import { findCallExpressions } from './astUtils.js';
 
+import * as recast from 'recast';
+
 import { parseCode } from './parser';
 
 import { getEditorSize } from './codeUtils.js';
@@ -23,10 +25,25 @@ export const getRaw = (module, node, children) => {
   const codeStrings = [];
 
   children.forEach((child) => {
-    codeStrings.push('/*  ' + child.data.functionName + ' */');
-    codeStrings.push(child.data.content);
+    const ast = child.data?.functionInfo?.localAst;
+    if (ast) {
+      //console.log('ast:', ast.program.body);
+      console.log('ast:', recast.print(ast).code);
+      codeStrings.push(...ast.program.body);
+    }
   });
-  return codeStrings.join('\n');
+
+  const mergedAst = {
+    type: 'File',
+    program: {
+      type: 'Program',
+      body: [],
+      sourceType: 'module', // Adjust sourceType as needed
+    },
+  };
+
+  const raw = recast.print(mergedAst).code;
+  console.log('raw:', raw);
 };
 
 const getEdges = (handles) => {
@@ -112,6 +129,7 @@ export const getModule = () => {
         id: func.id,
         moduleId: newModuleId,
         data: {
+          functionInfo: func,
           functionName: func.name,
           content: func.body,
           handles: handles,

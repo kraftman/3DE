@@ -24,7 +24,8 @@ const extractNonFunctionStatements = (functionNode) => {
   return extractedCode;
 };
 
-const createFunction = (node, name, parentId, depth) => {
+const createFunction = (path, name, parentId, depth) => {
+  const node = path.node;
   const parameters = node.params.map(
     (param) => recast.print(param, { reuseWhitespace: true }).code
   );
@@ -35,7 +36,7 @@ const createFunction = (node, name, parentId, depth) => {
   const contentSize = getEditorSize(body);
   //const subtreeCode = recast.print(node).code;
   const newAst = recast.parse(body);
-  console.log('newAst:', newAst);
+  console.log('newAst at parse:', recast.print(node).code);
   const funcInfo = {
     id: funcId,
     name,
@@ -62,7 +63,7 @@ function getFunctions(node, parentId = null, depth = 0) {
       const { node } = path;
       const name = node.id ? node.id.name : '<anonymous>';
 
-      const funcInfo = createFunction(node, name, parentId, depth);
+      const funcInfo = createFunction(path, name, parentId, depth);
       functionList.push(funcInfo);
 
       return false;
@@ -78,7 +79,7 @@ function getFunctions(node, parentId = null, depth = 0) {
         name = path.parentPath.node.key.name;
       }
 
-      const funcInfo = createFunction(node, name, parentId, depth);
+      const funcInfo = createFunction(path, name, parentId, depth);
       functionList.push(funcInfo);
       functionList.push(funcInfo);
 
@@ -96,7 +97,7 @@ function getFunctions(node, parentId = null, depth = 0) {
         name = path.parentPath.node.key.name;
       }
 
-      const funcInfo = createFunction(node, name, parentId, depth);
+      const funcInfo = createFunction(path, name, parentId, depth);
       functionList.push(funcInfo);
 
       return false;
