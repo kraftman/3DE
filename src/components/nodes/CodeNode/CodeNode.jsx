@@ -30,8 +30,8 @@ export const CodeNode = ({ id, data, onTextChange }) => {
   }, 1);
 
   const onChange = (newText) => {
-    //onTextChange(id, newText);
-    debouncedOnChange(newText);
+    onTextChange(id, newText);
+    //debouncedOnChange(newText);
   };
 
   const newHandles = data.handles.map((handle, index) => {

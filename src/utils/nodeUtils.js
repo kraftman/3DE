@@ -6,6 +6,29 @@ import { parseCode } from './parser';
 
 import { getEditorSize } from './codeUtils.js';
 
+export const findChildren = (nodes, parentId) => {
+  //rucursively find children from nodes and add to a flat array of children
+  let children = [];
+  const foundChildren = nodes.filter((node) => node.parentId === parentId);
+  foundChildren.forEach((child) => {
+    children.push(child.id);
+    children = children.concat(findChildren(nodes, child.id));
+  });
+  return children;
+};
+
+export const getRaw = (module, node, children) => {
+  // need to decide if this should be raw or asts
+
+  const codeStrings = [];
+
+  children.forEach((child) => {
+    codeStrings.push('/* ' + child.data.functionName + ' */');
+    codeStrings.push(child.data.content);
+  });
+  return codeStrings.join('\n');
+};
+
 const getEdges = (handles) => {
   // loop through all the handles and create edges between them
   // how to avoid duplicates when checking each side?
@@ -35,8 +58,9 @@ const getEdges = (handles) => {
   return edges;
 };
 
-export const getModuleNodes = () => {
+export const getModule = () => {
   const parsed = parseCode(mockModule);
+  const moduleId = uuid();
   console.log('parsed:', parsed);
   const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
@@ -86,6 +110,7 @@ export const getModuleNodes = () => {
 
       const frame = {
         id: func.id,
+        moduleId: newModuleId,
         data: {
           functionName: func.name,
           content: func.body,
@@ -114,6 +139,7 @@ export const getModuleNodes = () => {
         const key = 'func:' + call.name + ':out' + index;
 
         return {
+          moduleId: newModuleId,
           funcName: call.name,
           parentId: func.id + 'code',
           refType: 'functionCall',
@@ -131,6 +157,7 @@ export const getModuleNodes = () => {
       });
       // the main function handle
       const functionDefinitionHandle = {
+        moduleId: newModuleId,
         parentId: func.id + 'code',
         funcName: func.name,
         refType: 'functionDefinition',
@@ -153,6 +180,7 @@ export const getModuleNodes = () => {
       allHandles = allHandles.concat(functionHandles);
 
       const codeFrame = {
+        moduleId: newModuleId,
         id: func.id + 'code',
         data: {
           content: func.body,
@@ -189,6 +217,7 @@ export const getModuleNodes = () => {
 
   const moduleHandles = parsed.imports.map((imp, index) => {
     return {
+      moduleId: newModuleId,
       parentId: newModuleId,
       funcName: imp.name,
       refType: 'import',
@@ -209,6 +238,7 @@ export const getModuleNodes = () => {
 
   const moduleNode = {
     id: newModuleId,
+    moduleId: newModuleId,
     data: {
       exports: parsed.exports,
       imports: parsed.imports,
@@ -238,6 +268,7 @@ export const getModuleNodes = () => {
         node.specifiers[0]?.local.name || node.specifiers[0]?.imported.name;
     }
     return {
+      moduleId: newModuleId,
       id: name + ':in',
       key: name + ':in',
       funcName: name,
@@ -256,6 +287,7 @@ export const getModuleNodes = () => {
 
   const rootCode = {
     id: uuid(),
+    moduleId: newModuleId,
     data: {
       content: parsed.rootLevelCode.code,
       imports: parsed.imports,
@@ -281,9 +313,11 @@ export const getModuleNodes = () => {
   const edges = getEdges(allHandles);
 
   return {
+    id: moduleId,
     moduleNode,
     rootCode,
     children: sortedChildren,
     edges,
+    parsedAst: parsed,
   };
 };

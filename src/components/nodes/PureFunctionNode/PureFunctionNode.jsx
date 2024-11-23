@@ -27,23 +27,6 @@ export const PureFunctionNode = ({
 
   const text = data.content;
 
-  // const functionNodes = useMemo(() => findFunctions(text), [data.content]);
-
-  // const renderedHandles = functionNodes.map((node) => {
-  //   const label = node.expression.getText();
-  //   const lineNumber = node.expression.getStart();
-  //   return (
-  //     <Handle
-  //       key={label + ':' + lineNumber}
-  //       position="right"
-  //       type="source"
-  //       id={data.functionId + ':= ' + label + ':' + lineNumber}
-  //     >
-  //       <div style={handleTextStyle}>{label}</div>
-  //     </Handle>
-  //   );
-  // });
-
   const onChange = (value) => {
     console.log('onChange', value);
     onTextChanged(data.functionId, value);

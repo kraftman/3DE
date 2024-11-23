@@ -57,7 +57,7 @@ import {
 } from './utils';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
-import { getModuleNodes } from '../../utils/nodeUtils.js';
+import { getModule, findChildren, getRaw } from '../../utils/nodeUtils.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
@@ -77,6 +77,7 @@ export const Flow = () => {
   const [focusNode, setFocusNode] = useState(null);
   const [functions, setFunctions] = useState([]);
   const [draggingNode, setDraggingNode] = useState(null);
+  const [modules, setModules] = useState([]);
 
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -85,12 +86,8 @@ export const Flow = () => {
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
 
-    const {
-      moduleNode,
-      rootCode,
-      children,
-      edges: newEdges,
-    } = getModuleNodes();
+    const module = getModule();
+    const { moduleNode, rootCode, children, edges: newEdges } = module;
     setNodes((nodes) => {
       return nodes.concat(moduleNode).concat(rootCode).concat(children);
     });
@@ -98,19 +95,7 @@ export const Flow = () => {
     setEdges((edges) => {
       return edges.concat(newEdges);
     });
-
-    // define edges here
-
-    // const newEdge = {
-    //   id: 'meep',
-    //   source: newModuleId,
-    //   target: rootCode.id,
-    //   targetHandle: 'something:in',
-    //   sourceHandle: 'something:out',
-    // };
-    // setEdges((edges) => {
-    //   return edges.concat(newEdge);
-    // });
+    setModules((modules) => modules.concat(module));
   };
 
   useEffect(() => {
@@ -244,7 +229,7 @@ export const Flow = () => {
   };
 
   const onSettingsChanged = (newSettings) => {
-    setSettings(newSettings);
+    //setSettings(newSettings);
     // also update settings node
     setNodes((nodes) =>
       nodes.map((node) => {
@@ -344,6 +329,41 @@ export const Flow = () => {
     );
   };
 
+  const onCodeNodeTextChange = (nodeId, value) => {};
+
+  const toggleHideChildren = (nodeId) => {
+    console.log('hiding children with parent:', nodeId);
+    setNodes((nodes) => {
+      // find all nodes with a parentId of the node id
+      // then find their children recursively
+      const childIds = findChildren(nodes, nodeId);
+      const parent = nodes.find((node) => node.id === nodeId);
+      const myModules = modules.find((module) => module.id === parent.moduleId);
+      const children = childIds.map((childId) =>
+        nodes.find((node) => node.id === childId)
+      );
+      const newRaw = getRaw(myModules, parent, children);
+      console.log('newRaw:', newRaw);
+      const newNodes = nodes.map((node) => {
+        if (childIds.includes(node.id)) {
+          return {
+            ...node,
+            hidden: !parent.data.showRaw,
+          };
+        }
+        if (node.id === nodeId) {
+          node.data = {
+            ...node.data,
+            showRaw: !node.data.showRaw,
+            raw: newRaw,
+          };
+        }
+        return node;
+      });
+      return newNodes;
+    });
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -355,8 +375,12 @@ export const Flow = () => {
           {...props}
         />
       ),
-      code: (props) => <CodeNode onTextChange={onTextChange} {...props} />,
-      module: ModuleNode,
+      code: (props) => (
+        <CodeNode onTextChange={onCodeNodeTextChange} {...props} />
+      ),
+      module: (props) => (
+        <ModuleNode toggleHideChildren={toggleHideChildren} {...props} />
+      ),
       pureFunctionNode: (props) => (
         <PureFunctionNode
           functions={functions}
@@ -917,7 +941,6 @@ export const Flow = () => {
     // });
   };
 
-  console.log('==== edges', edges);
   return (
     <>
       <ReactFlow

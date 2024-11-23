@@ -88,12 +88,12 @@ export function exportDepth1(param1, param2) {
   }
   function depth2Dec () {
     console.log('also inside func depth2Dec')
-    function depth3Dec() {
-      console.log('third depth depth3Dec')
-    }
-    const depth3Anon = () => { 
-      console.log('third depth anon depth3Anon')
-    }
+    // function depth3Dec() {
+    //   console.log('third depth depth3Dec')
+    // }
+    // const depth3Anon = () => { 
+    //   console.log('third depth anon depth3Anon')
+    // }
   }
     depth2Anon()
     
