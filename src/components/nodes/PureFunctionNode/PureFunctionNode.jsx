@@ -28,7 +28,6 @@ export const PureFunctionNode = ({
   const text = data.content;
 
   const onChange = (value) => {
-    console.log('onChange', value);
     onTextChanged(data.functionId, value);
   };
 

@@ -353,7 +353,6 @@ export const getHandles = (nodeId, fullPath, code) => {
         zIndex: 1000,
       },
     };
-    console.log('loc', feature.loc);
     if (feature.type === 'import') {
       // @ts-expect-error bleh
       newHandle.importPath = path.resolve(path.dirname(fullPath), fileName);

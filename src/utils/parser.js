@@ -36,7 +36,6 @@ const createFunction = (path, name, parentId, depth) => {
   const contentSize = getEditorSize(body);
   //const subtreeCode = recast.print(node).code;
   const newAst = recast.parse(body);
-  console.log('newAst at parse:', recast.print(node).code);
   const funcInfo = {
     id: funcId,
     name,
@@ -46,6 +45,7 @@ const createFunction = (path, name, parentId, depth) => {
     body,
     nestedFunctions,
     node,
+    path,
     localAst: newAst,
     contentSize,
     frameSize: {
@@ -167,9 +167,8 @@ const getRootLevelCode = (ast) => {
       path.get('body').each((nodePath) => {
         const node = nodePath.node;
 
-        // Check if the node matches root-level conditions
+        // Check if the node matches root-level conditions, excluding imports
         const isRootLevelNode =
-          n.ImportDeclaration.check(node) ||
           ((n.ExportNamedDeclaration.check(node) ||
             n.ExportDefaultDeclaration.check(node)) &&
             !(
@@ -184,8 +183,8 @@ const getRootLevelCode = (ast) => {
                 !n.ArrowFunctionExpression.check(decl.init)
             ));
 
-        // Prune the node if it doesn't match
-        if (!isRootLevelNode) {
+        // Prune the node if it's an ImportDeclaration or doesn't match
+        if (n.ImportDeclaration.check(node) || !isRootLevelNode) {
           nodePath.prune();
         }
       });
@@ -196,7 +195,6 @@ const getRootLevelCode = (ast) => {
   });
 
   // Generate the modified code with preserved formatting
-  console.log('new ast:', ast);
   const combinedCode = recast.print(ast, { reuseWhitespace: true }).code;
 
   return {

@@ -139,18 +139,15 @@ export const Flow = () => {
             ...files,
             [fullPath]: { ...files[fullPath], savedData: fileData },
           };
-          console.log('set saved data');
           return newFiles;
         });
       } else if (e.ctrlKey && e.key === 'ArrowUp') {
         const nextLayer = Math.max(currentLayer - 1, 0);
-        console.log(currentLayer, nextLayer);
         setCurrentLayer(nextLayer);
       } else if (e.ctrlKey && e.key === 'ArrowDown') {
         const numLayers = Object.keys(layers).length;
         const nextLayer = Math.min(currentLayer + 1, numLayers - 1);
 
-        console.log(currentLayer, nextLayer);
         setCurrentLayer(nextLayer);
       } else if (e.ctrlKey && e.shiftKey && e.key === 'T') {
         setLayers((layers) => {
@@ -195,13 +192,9 @@ export const Flow = () => {
     setFlatFiles((files) => {
       const newFiles = { ...files };
       const fileData = newFiles[oldFullPath];
-      console.log('old flatfile data', fileData);
       delete newFiles[oldFullPath];
 
-      console.log('newFullPath', newFullPath);
       newFiles[newFullPath] = { ...fileData, data: newFileName };
-
-      console.log('new flatfile data', newFiles[newFullPath]);
 
       for (const [key, value] of Object.entries(files)) {
         if (value.children.includes(oldFullPath)) {
@@ -332,18 +325,19 @@ export const Flow = () => {
   const onCodeNodeTextChange = (nodeId, value) => {};
 
   const toggleHideChildren = (nodeId) => {
-    console.log('hiding children with parent:', nodeId);
+    let newRaw = '';
+    setModules((modules) => {
+      const myModule = modules.find((module) => module.id === nodeId);
+      newRaw = getRaw(myModule);
+      return modules;
+    });
     setNodes((nodes) => {
       // find all nodes with a parentId of the node id
       // then find their children recursively
       const childIds = findChildren(nodes, nodeId);
       const parent = nodes.find((node) => node.id === nodeId);
-      const myModules = modules.find((module) => module.id === parent.moduleId);
-      const children = childIds.map((childId) =>
-        nodes.find((node) => node.id === childId)
-      );
-      const newRaw = getRaw(myModules, parent, children);
-      console.log('newRaw:', newRaw);
+
+      //const newRaw = getRaw(myModule, parent, children);
       const newNodes = nodes.map((node) => {
         if (childIds.includes(node.id)) {
           return {
@@ -366,7 +360,6 @@ export const Flow = () => {
 
   const toggleHideEdges = (nodeId, hideEdges) => {
     setNodes((nodes) => {
-      console.log('nodes in toggleHideEdges:', nodes);
       const childIds = findChildren(nodes, nodeId);
 
       setEdges((edges) => {
@@ -440,7 +433,6 @@ export const Flow = () => {
     lines.forEach((line) => {
       maxWidth = Math.max(maxWidth, line.length);
     });
-    console.log('maxWidth:', maxWidth);
     return maxWidth;
   };
 
@@ -518,7 +510,6 @@ export const Flow = () => {
     );
 
     const currentDir = path.dirname(fromHandle.nodePath);
-    console.log('fromhandle', fromHandle);
     const newFileName =
       fromHandle.handleType === 'function'
         ? fromHandle.name
@@ -558,7 +549,6 @@ export const Flow = () => {
           ...files,
           [newFullPath]: newFile,
         };
-        console.log('newFiles:', newFiles);
         return newFiles;
       });
       setNodes((nodes) => nodes.concat(newNode));
@@ -604,10 +594,8 @@ export const Flow = () => {
               endLine: fromHandle.endLine,
             },
           ];
-          console.log('addig selection');
         }
         node.data = { ...node.data };
-        console.log('new node data', node);
         return node;
       });
       return nodes;
@@ -622,7 +610,6 @@ export const Flow = () => {
     // find the smallest node that the current node is inside of
 
     const parentNodes = intersections.filter((search) => {
-      console.log('search', search);
       return (
         node.positionAbsolute.x > search.positionAbsolute.x &&
         node.positionAbsolute.y > search.positionAbsolute.y &&
@@ -632,7 +619,6 @@ export const Flow = () => {
           search.positionAbsolute.y + search.height
       );
     });
-    console.log('found parent nodes', parentNodes);
     if (!parentNodes) {
       return null;
     }
@@ -724,7 +710,6 @@ export const Flow = () => {
       });
 
       setNodes((nodes) => {
-        console.log('parsedPaths', parsedPaths);
         const existingGroup = nodes.find(
           (node) =>
             node.type === 'group' &&
@@ -782,7 +767,6 @@ export const Flow = () => {
         const children = []; //createChildren(flatFiles, newNode);
 
         const newNodes = nodes.concat(newNode).concat(children);
-        console.log('newNodes', newNodes);
         return newNodes;
       });
     },
@@ -797,8 +781,6 @@ export const Flow = () => {
     const fileContents = fileInfo.fileData;
 
     setNodes((nodes) => {
-      console.log('parsedPaths', parsedPaths);
-
       let parentId = null;
 
       const nextNodeId = getNewNodeId();
@@ -827,7 +809,6 @@ export const Flow = () => {
       const children = []; //createChildren(flatFiles, newNode);
 
       const newNodes = nodes.concat(newNode).concat(children);
-      console.log('newNodes', newNodes);
       return newNodes;
     });
   };
@@ -911,7 +892,6 @@ export const Flow = () => {
 
   const updateParentSize = (nodes, node) => {
     const parent = nodes.find((search) => search.id === node.parentId);
-    console.log('parent before:', parent);
     const nx = node.positionAbsolute.x;
     const ny = node.positionAbsolute.y;
     const nw = node.width;
@@ -924,7 +904,6 @@ export const Flow = () => {
 
     if (nx < px + 50) {
       const diff = px + 50 - nx;
-      console.log('diff:', diff);
       parent.position.x = px - diff;
       parent.width = pw + diff;
       parent.style.width = `${pw + diff}px`;
@@ -949,7 +928,6 @@ export const Flow = () => {
       parent.style.height = `${ph + diff}px`;
     }
 
-    console.log('parent after:', parent);
     if (parent.parentId) {
       updateParentSize(nodes, parent);
     }
@@ -965,8 +943,6 @@ export const Flow = () => {
     //   return newNodes;
     // });
   };
-
-  console.log('nodes:', nodes);
 
   return (
     <>

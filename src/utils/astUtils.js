@@ -19,7 +19,6 @@ export function findCallExpressions(ast) {
       }
 
       if (!ignoreList.includes(functionName)) {
-        console.log('functionName in callexp', functionName);
         callExpressions.push({ node: path.node, name: functionName });
       }
 

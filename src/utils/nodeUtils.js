@@ -24,14 +24,11 @@ export const getRaw = (module, node, children) => {
 
   const codeStrings = [];
 
-  children.forEach((child) => {
-    const ast = child.data?.functionInfo?.localAst;
-    if (ast) {
-      //console.log('ast:', ast.program.body);
-      console.log('ast:', recast.print(ast).code);
-      codeStrings.push(...ast.program.body);
-    }
+  module.parsedAst.imports.forEach((imp) => {
+    console.log('imp:', recast.print(imp.node).code);
+    codeStrings.push(recast.print(imp.node).code);
   });
+  console.log('codeStrings:', codeStrings);
 
   const mergedAst = {
     type: 'File',
@@ -42,8 +39,9 @@ export const getRaw = (module, node, children) => {
     },
   };
 
-  const raw = recast.print(mergedAst).code;
-  console.log('raw:', raw);
+  //const raw = recast.print(mergedAst).code;
+  //console.log('raw:', raw);
+  return codeStrings.join('\n');
 };
 
 const getEdges = (handles) => {
@@ -77,8 +75,6 @@ const getEdges = (handles) => {
 
 export const getModule = () => {
   const parsed = parseCode(mockModule);
-  const moduleId = uuid();
-  console.log('parsed:', parsed);
   const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
   }, 0);
@@ -331,7 +327,7 @@ export const getModule = () => {
   const edges = getEdges(allHandles);
 
   return {
-    id: moduleId,
+    id: newModuleId,
     moduleNode,
     rootCode,
     children: sortedChildren,

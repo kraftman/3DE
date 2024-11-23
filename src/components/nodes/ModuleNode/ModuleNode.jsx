@@ -77,8 +77,6 @@ export const ModuleNode = (props) => {
     props.toggleHideChildren(props.id);
   };
 
-  console.log('data', data.showRaw, data.raw);
-
   return (
     <ThemeProvider theme={darkTheme}>
       <NodeResizer
