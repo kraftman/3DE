@@ -4,11 +4,8 @@ import React, {
   useMemo,
   useCallback,
   useRef,
-  useContext,
 } from 'react';
 import ReactFlow, {
-  useNodesState,
-  useEdgesState,
   MiniMap,
   Panel,
   Controls,
@@ -17,7 +14,6 @@ import ReactFlow, {
   useUpdateNodeInternals,
   applyEdgeChanges,
   applyNodeChanges,
-  getNodesBounds,
 } from 'reactflow';
 
 import Button from '@mui/material/Button';
@@ -51,13 +47,7 @@ import {
 
 import { SearchBar } from '../../components/SearchBar';
 
-import {
-  getHandles,
-  removeTextChunk,
-  insertTextChunk,
-  analyzeSourceFile,
-  getEditorSize,
-} from '../../components/editorUtils';
+import { removeTextChunk, insertTextChunk } from '../../components/editorUtils';
 
 import {
   createSelectionHandle,
@@ -95,9 +85,18 @@ export const Flow = () => {
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
 
-    const { moduleNode, rootCode, children } = getModuleNodes();
+    const {
+      moduleNode,
+      rootCode,
+      children,
+      edges: newEdges,
+    } = getModuleNodes();
     setNodes((nodes) => {
       return nodes.concat(moduleNode).concat(rootCode).concat(children);
+    });
+
+    setEdges((edges) => {
+      return edges.concat(newEdges);
     });
 
     // define edges here

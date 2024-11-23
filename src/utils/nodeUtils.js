@@ -6,6 +6,35 @@ import { parseCode } from './parser';
 
 import { getEditorSize } from './codeUtils.js';
 
+const getEdges = (handles) => {
+  // loop through all the handles and create edges between them
+  // how to avoid duplicates when checking each side?
+  const callHandles = handles.filter(
+    (handle) => handle.refType === 'functionCall'
+  );
+  const edges = [];
+  callHandles.forEach((handle) => {
+    const targetHandles = handles.filter(
+      (h) =>
+        h.funcName === handle.funcName &&
+        (h.refType === 'functionDefinition' || h.refType === 'import')
+    );
+    targetHandles.forEach((target) => {
+      if (target.parentId !== handle.id) {
+        const newEdge = {
+          id: handle.id + target.id,
+          source: handle.parentId,
+          sourceHandle: handle.id,
+          target: target.parentId,
+          targetHandle: target.id,
+        };
+        edges.push(newEdge);
+      }
+    });
+  });
+  return edges;
+};
+
 export const getModuleNodes = () => {
   const parsed = parseCode(mockModule);
   console.log('parsed:', parsed);
@@ -16,13 +45,12 @@ export const getModuleNodes = () => {
   const newModuleId = uuid();
 
   const children = [];
+  let allHandles = [];
 
   let moduleWidth = 0;
   let moduleHeight = 0;
 
   for (let i = maxDepth; i >= 0; i--) {
-    console.log('depth:', i);
-
     const functionsAtDepth = parsed.flatFunctions.filter(
       (func) => func.depth === i
     );
@@ -76,7 +104,7 @@ export const getModuleNodes = () => {
         },
       };
 
-      const handles = [];
+      let handles = [];
 
       const functionCalls = findCallExpressions(func.localAst);
 
@@ -86,6 +114,9 @@ export const getModuleNodes = () => {
         const key = 'func:' + call.name + ':out' + index;
 
         return {
+          funcName: call.name,
+          parentId: func.id + 'code',
+          refType: 'functionCall',
           id: key,
           key: key,
           type: 'source',
@@ -98,8 +129,28 @@ export const getModuleNodes = () => {
           },
         };
       });
-      handles.concat(functionHandles);
-      console.log('==== func', func);
+      // the main function handle
+      const functionDefinitionHandle = {
+        parentId: func.id + 'code',
+        funcName: func.name,
+        refType: 'functionDefinition',
+        id: func.name + ':func',
+        key: func.name + ':func',
+        type: 'source',
+        position: 'left',
+        style: {
+          top: -10,
+          left: -20,
+        },
+        data: {
+          name: '',
+        },
+      };
+      handles.push(functionDefinitionHandle);
+      allHandles.push(functionDefinitionHandle);
+
+      handles = handles.concat(functionHandles);
+      allHandles = allHandles.concat(functionHandles);
 
       const codeFrame = {
         id: func.id + 'code',
@@ -125,8 +176,6 @@ export const getModuleNodes = () => {
       children.push(frame);
 
       currentHeight += height + 50;
-
-      console.log('pushed child:', children.length);
     });
     if (i === 0) {
       moduleHeight =
@@ -140,19 +189,23 @@ export const getModuleNodes = () => {
 
   const moduleHandles = parsed.imports.map((imp, index) => {
     return {
+      parentId: newModuleId,
+      funcName: imp.name,
+      refType: 'import',
       id: imp.name + ':out',
       key: imp.name + ':out',
       type: 'source',
       position: 'right',
       style: {
         top: 100 + 30 * index,
-        right: -100,
+        right: -50,
       },
       data: {
         name: imp.name,
       },
     };
   });
+  allHandles = allHandles.concat(moduleHandles);
 
   const moduleNode = {
     id: newModuleId,
@@ -187,6 +240,9 @@ export const getModuleNodes = () => {
     return {
       id: name + ':in',
       key: name + ':in',
+      funcName: name,
+      parentId: newModuleId,
+      refType: 'import',
       type: 'source',
       position: 'left',
       style: {
@@ -222,9 +278,12 @@ export const getModuleNodes = () => {
 
   const sortedChildren = children.reverse();
 
+  const edges = getEdges(allHandles);
+
   return {
     moduleNode,
     rootCode,
     children: sortedChildren,
+    edges,
   };
 };

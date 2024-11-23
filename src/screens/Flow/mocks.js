@@ -95,7 +95,10 @@ export function exportDepth1(param1, param2) {
       console.log('third depth anon depth3Anon')
     }
   }
+    depth2Anon()
+    
   console.log('doing something else in exportDepth1');
+  something()
 }
 
 const b = a + 20;

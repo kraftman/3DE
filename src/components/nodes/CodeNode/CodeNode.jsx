@@ -43,7 +43,11 @@ export const CodeNode = ({ id, data, onTextChange }) => {
         id={handle.id}
         style={{ ...handle.style }}
       >
-        <div style={{ color: 'white' }}>{handle.data.name}</div>
+        <div
+          style={{ color: 'white', pointerEvents: 'none', fontSize: '10px' }}
+        >
+          {handle.data.name}
+        </div>
       </Handle>
     );
   });
@@ -52,19 +56,7 @@ export const CodeNode = ({ id, data, onTextChange }) => {
     <>
       <div style={{ ...codeNodeStyle }}>
         {newHandles}
-        <Handle
-          key={data.functionName + ':in'}
-          type="source"
-          position={'left'}
-          id={data.functionName + ':in'}
-          style={{
-            top: 10,
-            left: -10,
-            color: 'blue',
-          }}
-        >
-          <div style={{ color: 'white' }}>{data.functionName}</div>
-        </Handle>
+
         <div className="editor-container">
           <Editor
             className="editor nodrag"
