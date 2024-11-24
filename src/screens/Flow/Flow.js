@@ -57,7 +57,11 @@ import {
 } from './utils';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
-import { getModule, findChildren, getRaw } from '../../utils/nodeUtils.js';
+import { getModuleNodes, findChildren, getRaw } from '../../utils/nodeUtils.js';
+
+import { parseCode } from '../../utils/parser';
+
+import { mockModule } from './mocks.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
@@ -83,13 +87,27 @@ export const Flow = () => {
 
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
+  const getAnotherNode = (newModule) => {
+    const moduleNodes = getModuleNodes(newModule);
+    console.log('moduleNodes:', moduleNodes);
+    const nodes = [];
+
+    const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
+    return nodes.concat(moduleNode).concat(rootCode).concat(children);
+  };
+
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
-
-    const module = getModule();
-    const { moduleNode, rootCode, children, edges: newEdges } = module;
+    const newModule = parseCode(mockModule);
+    const moduleNodes = getModuleNodes(newModule);
+    const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
+    const moreNodes = getAnotherNode(newModule);
     setNodes((nodes) => {
-      return nodes.concat(moduleNode).concat(rootCode).concat(children);
+      return nodes
+        .concat(moduleNode)
+        .concat(rootCode)
+        .concat(children)
+        .concat(moreNodes);
     });
 
     setEdges((edges) => {

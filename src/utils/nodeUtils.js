@@ -7,6 +7,7 @@ import * as recast from 'recast';
 import { parseCode } from './parser';
 
 import { getEditorSize } from './codeUtils.js';
+import * as murmur from 'murmurhash-js';
 
 export const findChildren = (nodes, parentId) => {
   //rucursively find children from nodes and add to a flat array of children
@@ -73,8 +74,7 @@ const getEdges = (handles) => {
   return edges;
 };
 
-export const getModule = () => {
-  const parsed = parseCode(mockModule);
+export const getModuleNodes = (parsed) => {
   const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
   }, 0);

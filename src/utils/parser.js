@@ -3,6 +3,7 @@ const { namedTypes: n, visit } = require('ast-types');
 const babelParser = require('@babel/parser');
 const { v4: uuid } = require('uuid');
 import { getEditorSize } from '../components/editorUtils';
+import * as murmur from 'murmurhash-js';
 
 const extractNonFunctionStatements = (functionNode) => {
   const nonFunctionNodes = functionNode.body.body.filter(
@@ -24,14 +25,14 @@ const extractNonFunctionStatements = (functionNode) => {
   return extractedCode;
 };
 
-const createFunction = (path, name, parentId, depth) => {
+const createFunction = (path, name, parentId, depth, type) => {
   const node = path.node;
   const parameters = node.params.map(
     (param) => recast.print(param, { reuseWhitespace: true }).code
   );
   const body = extractNonFunctionStatements(node);
 
-  const funcId = uuid();
+  const funcId = murmur.murmur3(name + parentId + body);
   const nestedFunctions = getFunctions(node.body, funcId, depth + 1);
   const contentSize = getEditorSize(body);
   //const subtreeCode = recast.print(node).code;
@@ -40,6 +41,7 @@ const createFunction = (path, name, parentId, depth) => {
     id: funcId,
     name,
     parentId,
+    type,
     parameters,
     depth,
     body,
