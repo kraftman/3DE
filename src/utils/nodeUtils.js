@@ -203,6 +203,7 @@ export const getModuleNodes = (parsed) => {
         (node) =>
           node.parentId === frameNode.id && node.type === 'pureFunctionNode'
       );
+      console.log('localChildren:', localChildren);
       // get widest child of this specific function
       const childWidth = localChildren.reduce((acc, child) => {
         return Math.max(acc, child.frameSize.width);
@@ -226,26 +227,19 @@ export const getModuleNodes = (parsed) => {
       const parentNode = nodes.find(
         (node) => node.functionId === func.parentId
       );
-
-      frameNode = {
-        ...frameNode,
-        data: {
-          ...frameNode.data,
-          // handles: handles,
-        },
-        parentId: parentNode ? parentNode.id : newModuleId,
-        extent: 'parent',
-        position: {
-          x: parentFunction ? parentFunction.contentSize.width : 20,
-          y:
-            30 +
-            currentHeight +
-            (parentFunction ? parentFunction.contentSize.height : 20),
-        },
-        style: {
-          width: `${frameWidth + 20}px`,
-          height: `${height + 30}px`,
-        },
+      //console.log('parentNode:', parentNode);
+      frameNode.data.handles = [];
+      frameNode.parentId = parentNode ? parentNode.id : newModuleId;
+      frameNode.position = {
+        x: parentFunction ? parentFunction.contentSize.width : 20,
+        y:
+          30 +
+          currentHeight +
+          (parentFunction ? parentFunction.contentSize.height : 20),
+      };
+      frameNode.style = {
+        width: `${frameWidth + 20}px`,
+        height: `${height + 30}px`,
       };
 
       // let handles = createHandles();
@@ -253,13 +247,7 @@ export const getModuleNodes = (parsed) => {
       let codeFrame = nodes.find(
         (node) => node.functionId === func.id && node.type === 'code'
       );
-      codeFrame = {
-        ...codeFrame,
-        data: {
-          ...codeFrame.data,
-          // handles,
-        },
-      };
+      codeFrame.handles = [];
 
       children.push(codeFrame);
       children.push(frameNode);
