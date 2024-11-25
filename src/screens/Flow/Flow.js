@@ -342,7 +342,32 @@ export const Flow = () => {
     );
   };
 
-  const onCodeNodeTextChange = (nodeId, value) => {};
+  const onCodeNodeTextChange = (moduleId, functionId, value) => {
+    setModules((modules) => {
+      return modules.map((module) => {
+        if (module.id === moduleId) {
+          module.functions = module.functions.map((func) => {
+            if (func.id === functionId) {
+              func.data.content = value;
+            }
+            return func;
+          });
+        }
+        return module;
+      });
+    });
+
+    setNodes((nodes) => {
+      console.log('nodes:', nodes);
+      return nodes.map((node) => {
+        if (node.data.functionId === functionId && node.type === 'code') {
+          console.log('found node:', node);
+          node.data = { ...node.data, content: value };
+        }
+        return node;
+      });
+    });
+  };
 
   const toggleHideChildren = (nodeId) => {
     let newRaw = '';

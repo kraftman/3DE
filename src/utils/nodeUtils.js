@@ -135,30 +135,27 @@ export const getModuleNodes = (parsed) => {
   parsed.flatFunctions.forEach((func) => {
     const frameNode = {
       id: uuid(),
-      depth: func.depth,
-      functionId: func.id,
-      moduleId: newModuleId,
       type: 'pureFunctionNode',
-      frameSize: { ...func.contentSize },
       data: {
-        functionInfo: func,
         functionName: func.name,
         content: func.body,
+        depth: func.depth,
+        functionId: func.id,
+        moduleId: newModuleId,
+        frameSize: { ...func.contentSize },
       },
     };
     const codeNode = {
       id: frameNode.id + 'code',
-      functionId: func.id,
-      moduleId: newModuleId,
-      parentId: frameNode.id,
       extent: 'parent',
-
       type: 'code',
+      parentId: frameNode.id,
       data: {
+        depth: func.depth,
         content: func.body,
-        funcInfo: func,
+        functionId: func.id,
+        moduleId: newModuleId,
       },
-
       position: {
         x: 10,
         y: 30,
@@ -182,8 +179,8 @@ export const getModuleNodes = (parsed) => {
     const functionsAtDepth = parsed.flatFunctions.filter(
       (func) => func.depth === i
     );
-    const nodesAtDepth = nodes.filter((node) =>
-      node.depth === i ? node : null
+    const nodesAtDepth = nodes.filter(
+      (node) => node.data.depth === 1 && node.type === 'pureFunctionNode'
     );
     let currentHeight = 30;
     // increase width by the widest child at this depth
@@ -191,28 +188,30 @@ export const getModuleNodes = (parsed) => {
       moduleWidth +
       30 +
       nodesAtDepth.reduce((acc, node) => {
-        return Math.max(acc, node.frameSize.width);
+        console.log('child node:', node);
+        return Math.max(acc, node.data.frameSize.width);
       }, 0);
 
     functionsAtDepth.forEach((func) => {
       let frameNode = nodes.find(
         (node) =>
-          node.functionId === func.id && node.type === 'pureFunctionNode'
+          node.data.functionId === func.id && node.type === 'pureFunctionNode'
       );
       const localChildren = nodes.filter(
         (node) =>
-          node.parentId === frameNode.id && node.type === 'pureFunctionNode'
+          node.data.parentId === frameNode.id &&
+          node.type === 'pureFunctionNode'
       );
       console.log('localChildren:', localChildren);
       // get widest child of this specific function
       const childWidth = localChildren.reduce((acc, child) => {
-        return Math.max(acc, child.frameSize.width);
+        return Math.max(acc, child.data.frameSize.width);
       }, 0);
 
       // accumulate heights of children of this function
       const height = localChildren.reduce((acc, child) => {
-        return Math.max(acc, acc + child.frameSize.height);
-      }, frameNode.frameSize.height);
+        return Math.max(acc, acc + child.data.frameSize.height);
+      }, frameNode.data.frameSize.height);
       // update the frameSize to include the children, for use in the parent
 
       const parentFunction = parsed.flatFunctions.find(
@@ -222,12 +221,18 @@ export const getModuleNodes = (parsed) => {
         localChildren.length > 0
           ? func.contentSize.width + childWidth
           : func.contentSize.width;
-      frameNode.frameSize = { width: frameWidth + 30, height: height + 50 };
+      frameNode.data.frameSize = {
+        width: frameWidth + 30,
+        height: height + 50,
+      };
 
       const parentNode = nodes.find(
-        (node) => node.functionId === func.parentId
+        (node) => node.data.functionId === func.parentId
       );
-      //console.log('parentNode:', parentNode);
+      if (!parentNode) {
+        console.log('usin module id as parent id:', newModuleId);
+      }
+      console.log('parentNode:', parentNode);
       frameNode.data.handles = [];
       frameNode.parentId = parentNode ? parentNode.id : newModuleId;
       frameNode.position = {
@@ -245,7 +250,7 @@ export const getModuleNodes = (parsed) => {
       // let handles = createHandles();
 
       let codeFrame = nodes.find(
-        (node) => node.functionId === func.id && node.type === 'code'
+        (node) => node.data.functionId === func.id && node.type === 'code'
       );
       codeFrame.handles = [];
 
@@ -259,7 +264,7 @@ export const getModuleNodes = (parsed) => {
         moduleHeight +
         50 +
         nodesAtDepth.reduce((acc, node) => {
-          return Math.max(acc, acc + node.frameSize.height);
+          return Math.max(acc, acc + node.data.frameSize.height);
         }, 0);
     }
   }
@@ -336,13 +341,12 @@ export const getModuleNodes = (parsed) => {
 
   const rootCode = {
     id: uuid(),
-    moduleId: newModuleId,
     data: {
       content: parsed.rootLevelCode.code,
       imports: parsed.imports,
       exports: parsed.exports,
-      codeNode: parsed.rootLevelCode.node,
       handles: importHandles,
+      moduleId: newModuleId,
     },
     type: 'code',
     parentId: newModuleId,

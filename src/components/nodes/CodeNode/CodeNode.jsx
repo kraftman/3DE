@@ -19,7 +19,7 @@ const codeNodeStyle = {
   boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
 };
 
-export const CodeNode = ({ id, data, onTextChange }) => {
+export const CodeNode = ({ id, functionId, moduleId, data, onTextChange }) => {
   const editorRef = useRef(null);
   const text = data.content || 'test string';
 
@@ -30,7 +30,7 @@ export const CodeNode = ({ id, data, onTextChange }) => {
   }, 1);
 
   const onChange = (newText) => {
-    onTextChange(id, newText);
+    onTextChange(data.moduleId, data.functionId, newText);
     //debouncedOnChange(newText);
   };
 
