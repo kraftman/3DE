@@ -135,9 +135,11 @@ export const getModuleNodes = (parsed) => {
   parsed.flatFunctions.forEach((func) => {
     const frameNode = {
       id: uuid(),
+      depth: func.depth,
       functionId: func.id,
       moduleId: newModuleId,
       type: 'pureFunctionNode',
+      frameSize: { ...func.contentSize },
       data: {
         functionInfo: func,
         functionName: func.name,
@@ -180,18 +182,26 @@ export const getModuleNodes = (parsed) => {
     const functionsAtDepth = parsed.flatFunctions.filter(
       (func) => func.depth === i
     );
+    const nodesAtDepth = nodes.filter((node) =>
+      node.depth === i ? node : null
+    );
     let currentHeight = 30;
     // increase width by the widest child at this depth
     moduleWidth =
       moduleWidth +
       30 +
-      functionsAtDepth.reduce((acc, func) => {
-        return Math.max(acc, func.frameSize.width);
+      nodesAtDepth.reduce((acc, node) => {
+        return Math.max(acc, node.frameSize.width);
       }, 0);
 
     functionsAtDepth.forEach((func) => {
-      const localChildren = parsed.flatFunctions.filter(
-        (child) => child.parentId === func.id
+      let frameNode = nodes.find(
+        (node) =>
+          node.functionId === func.id && node.type === 'pureFunctionNode'
+      );
+      const localChildren = nodes.filter(
+        (node) =>
+          node.parentId === frameNode.id && node.type === 'pureFunctionNode'
       );
       // get widest child of this specific function
       const childWidth = localChildren.reduce((acc, child) => {
@@ -201,7 +211,7 @@ export const getModuleNodes = (parsed) => {
       // accumulate heights of children of this function
       const height = localChildren.reduce((acc, child) => {
         return Math.max(acc, acc + child.frameSize.height);
-      }, func.frameSize.height);
+      }, frameNode.frameSize.height);
       // update the frameSize to include the children, for use in the parent
 
       const parentFunction = parsed.flatFunctions.find(
@@ -211,12 +221,8 @@ export const getModuleNodes = (parsed) => {
         localChildren.length > 0
           ? func.contentSize.width + childWidth
           : func.contentSize.width;
-      func.frameSize = { width: frameWidth + 30, height: height + 50 };
+      frameNode.frameSize = { width: frameWidth + 30, height: height + 50 };
 
-      let frameNode = nodes.find(
-        (node) =>
-          node.functionId === func.id && node.type === 'pureFunctionNode'
-      );
       const parentNode = nodes.find(
         (node) => node.functionId === func.parentId
       );
@@ -264,8 +270,8 @@ export const getModuleNodes = (parsed) => {
       moduleHeight =
         moduleHeight +
         50 +
-        functionsAtDepth.reduce((acc, func) => {
-          return Math.max(acc, acc + func.frameSize.height);
+        nodesAtDepth.reduce((acc, node) => {
+          return Math.max(acc, acc + node.frameSize.height);
         }, 0);
     }
   }
