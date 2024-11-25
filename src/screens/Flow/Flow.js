@@ -358,7 +358,6 @@ export const Flow = () => {
     });
 
     setNodes((nodes) => {
-      console.log('nodes:', nodes);
       return nodes.map((node) => {
         if (node.data.functionId === functionId && node.type === 'code') {
           console.log('found node:', node);

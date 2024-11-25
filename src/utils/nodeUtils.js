@@ -180,7 +180,7 @@ export const getModuleNodes = (parsed) => {
       (func) => func.depth === i
     );
     const nodesAtDepth = nodes.filter(
-      (node) => node.data.depth === 1 && node.type === 'pureFunctionNode'
+      (node) => node.data.depth === i && node.type === 'pureFunctionNode'
     );
     let currentHeight = 30;
     // increase width by the widest child at this depth
@@ -188,7 +188,6 @@ export const getModuleNodes = (parsed) => {
       moduleWidth +
       30 +
       nodesAtDepth.reduce((acc, node) => {
-        console.log('child node:', node);
         return Math.max(acc, node.data.frameSize.width);
       }, 0);
 
@@ -199,10 +198,8 @@ export const getModuleNodes = (parsed) => {
       );
       const localChildren = nodes.filter(
         (node) =>
-          node.data.parentId === frameNode.id &&
-          node.type === 'pureFunctionNode'
+          node.parentId === frameNode.id && node.type === 'pureFunctionNode'
       );
-      console.log('localChildren:', localChildren);
       // get widest child of this specific function
       const childWidth = localChildren.reduce((acc, child) => {
         return Math.max(acc, child.data.frameSize.width);
@@ -214,9 +211,6 @@ export const getModuleNodes = (parsed) => {
       }, frameNode.data.frameSize.height);
       // update the frameSize to include the children, for use in the parent
 
-      const parentFunction = parsed.flatFunctions.find(
-        (parent) => parent.id === func.parentId
-      );
       const frameWidth =
         localChildren.length > 0
           ? func.contentSize.width + childWidth
@@ -229,18 +223,14 @@ export const getModuleNodes = (parsed) => {
       const parentNode = nodes.find(
         (node) => node.data.functionId === func.parentId
       );
-      if (!parentNode) {
-        console.log('usin module id as parent id:', newModuleId);
-      }
-      console.log('parentNode:', parentNode);
       frameNode.data.handles = [];
       frameNode.parentId = parentNode ? parentNode.id : newModuleId;
       frameNode.position = {
-        x: parentFunction ? parentFunction.contentSize.width : 20,
+        x: parentNode ? parentNode.data.frameSize.width : 20,
         y:
           30 +
           currentHeight +
-          (parentFunction ? parentFunction.contentSize.height : 20),
+          (parentNode ? parentNode.data.frameSize.height : 20),
       };
       frameNode.style = {
         width: `${frameWidth + 20}px`,
