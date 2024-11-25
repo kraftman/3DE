@@ -102,12 +102,14 @@ export const Flow = () => {
     const moduleNodes = getModuleNodes(newModule);
     const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
     const moreNodes = getAnotherNode(newModule);
+
+    const allNodes = []
+      .concat(moduleNode)
+      .concat(rootCode)
+      .concat(children)
+      .concat(moreNodes);
     setNodes((nodes) => {
-      return nodes
-        .concat(moduleNode)
-        .concat(rootCode)
-        .concat(children)
-        .concat(moreNodes);
+      return nodes.concat(allNodes);
     });
 
     setEdges((edges) => {
