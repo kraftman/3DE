@@ -69,6 +69,9 @@ import { loadSession, saveSession } from '../../electronHelpers.js';
 
 import { getNodesForFile } from '../../utils/getNodesForFile.js';
 
+import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
+import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
+
 export const Flow = () => {
   const {
     setLayers,
@@ -437,6 +440,8 @@ export const Flow = () => {
           {...props}
         />
       ),
+      text: (props) => <TextNode {...props} />,
+      markdown: (props) => <MarkdownNode {...props} />,
       code: (props) => (
         <CodeNode onTextChange={onCodeNodeTextChange} {...props} />
       ),

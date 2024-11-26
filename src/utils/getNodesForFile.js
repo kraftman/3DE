@@ -31,13 +31,53 @@ const createImageNode = (fullPath, newPos) => {
   ];
 };
 
+const createTextNode = (fullPath, fileContents, newPos) => {
+  return [
+    {
+      id: uuid(),
+      type: 'text',
+      data: {
+        fullPath: fullPath,
+        content: fileContents,
+      },
+      position: newPos,
+      style: {
+        width: '300px',
+        height: '300px',
+      },
+    },
+  ];
+};
+
+const createMarkdownNode = (fullPath, fileContents, newPos) => {
+  return [
+    {
+      id: uuid(),
+      type: 'markdown',
+      data: {
+        fullPath: fullPath,
+        content: fileContents,
+      },
+      position: newPos,
+      style: {
+        width: '300px',
+        height: '300px',
+      },
+    },
+  ];
+};
+
 export const getNodesForFile = (fullPath, fileContents, newPos) => {
   const extension = fullPath.split('.').pop();
+  console.log('extension', extension);
   if (codeExtensions.includes(extension)) {
     return createCodeNodes(fullPath, fileContents, newPos);
   }
   if (imageExtensions.includes(extension)) {
     return createImageNode(fullPath, newPos);
   }
-  return [];
+  if (extension === 'md') {
+    return createMarkdownNode(fullPath, fileContents, newPos);
+  }
+  return createTextNode(fullPath, fileContents, newPos);
 };
