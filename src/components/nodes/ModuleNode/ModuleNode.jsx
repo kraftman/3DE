@@ -14,6 +14,8 @@ import { useState } from 'react';
 import { IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import PolylineIcon from '@mui/icons-material/Polyline';
 
+import { useFileSystem } from '../../../contexts/FileSystemContext';
+
 import { TopBar } from './TopBar';
 
 loader.config({ monaco });
@@ -54,6 +56,7 @@ export const ModuleNode = (props) => {
   const data = props.data;
 
   const [settings, setSettings] = useState([]);
+  const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
 
   // Toggle button state
   const handleToggle = (event, newSettings) => {
@@ -83,6 +86,10 @@ export const ModuleNode = (props) => {
     props.toggleHideChildren(props.data.moduleId);
   };
 
+  const openChildren = () => {
+    props.openChildren(flatFiles, props.data.moduleId);
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <div
@@ -102,6 +109,7 @@ export const ModuleNode = (props) => {
           toggleHidden={toggleHidden}
           settings={settings}
           handleToggle={handleToggle}
+          openChildren={openChildren}
         />
         {data.showRaw && (
           <div className="editor-container">

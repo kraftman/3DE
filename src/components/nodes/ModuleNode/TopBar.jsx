@@ -5,7 +5,13 @@ import CommitIcon from '@mui/icons-material/Commit';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import PolylineIcon from '@mui/icons-material/Polyline';
 
-export const TopBar = ({ showRaw, toggleHidden, settings, handleToggle }) => {
+export const TopBar = ({
+  showRaw,
+  toggleHidden,
+  settings,
+  handleToggle,
+  openChildren,
+}) => {
   return (
     <div>
       <ToggleButtonGroup
@@ -35,7 +41,7 @@ export const TopBar = ({ showRaw, toggleHidden, settings, handleToggle }) => {
       </ToggleButtonGroup>
       <ToggleButtonGroup
         // value={settings}
-        // onChange={handleToggle}
+        onChange={openChildren}
         size="small"
         aria-label="text alignment"
       >

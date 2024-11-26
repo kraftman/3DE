@@ -72,6 +72,8 @@ import { getNodesForFile } from '../../utils/getNodesForFile.js';
 import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
 import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
 
+import { getChildNodes } from '../../utils/getChildNodes.js';
+
 export const Flow = () => {
   const {
     setLayers,
@@ -100,7 +102,8 @@ export const Flow = () => {
       const newModule = parseCode(mockModule);
       const moduleNodes = getModuleNodes(newModule);
       const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
-
+      moduleNode.data.fullPath =
+        '/home/chris/marvel-app/src/app/character/[id]/page.tsx';
       const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
       setNodes((nodes) => {
         return nodes.concat(allNodes);
@@ -429,6 +432,15 @@ export const Flow = () => {
     });
   };
 
+  const openChildren = (localFlatFiles, moduleId) => {
+    // later need to make sure the children arent already open
+    setNodes((nodes) => {
+      const newNodes = getChildNodes(nodes, moduleId, localFlatFiles);
+      console.log('newNodes', newNodes);
+      return newNodes;
+    });
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -450,6 +462,7 @@ export const Flow = () => {
           toggleHideChildren={toggleHideChildren}
           toggleHideEdges={toggleHideEdges}
           onClose={onModuleClose}
+          openChildren={openChildren}
           {...props}
         />
       ),

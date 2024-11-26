@@ -1,14 +1,15 @@
-const codeExtensions = ['js', 'jsx', 'ts', 'tsx', 'json'];
+const codeExtensions = ['js', 'jsx', 'ts', 'tsx'];
 const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg'];
 import { parseCode } from './parser';
 import { getModuleNodes } from './nodeUtils';
 import { v4 as uuid } from 'uuid';
 
-const createCodeNodes = (fileName, fileContents, newPos) => {
+const createCodeNodes = (fullPath, fileContents, newPos) => {
   const module = parseCode(fileContents);
   const moduleNodes = getModuleNodes(module);
   const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
   moduleNode.position = newPos;
+  moduleNode.data.fullPath = fullPath;
 
   const newNodes = [].concat(moduleNode).concat(rootCode).concat(children);
   return newNodes;
