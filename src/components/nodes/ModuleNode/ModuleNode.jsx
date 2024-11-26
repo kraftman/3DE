@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { NodeResizer, Handle } from 'reactflow';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { Pip } from '../../Pip';
 
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
@@ -79,16 +80,28 @@ export const ModuleNode = (props) => {
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <NodeResizer
-        minWidth={300}
-        minHeight={300}
-        style={{ background: 'none' }}
-      />
-
       <div
         className="text-updater-node"
         style={{ background: '#121212', padding: '16px', borderRadius: '8px' }}
       >
+        <div className="pip-container">
+          {/* <Pip
+            targetTooltip="saved-tooltip"
+            tooltipContent={isSaved ? 'Saved' : 'Unsaved changes'}
+            status={isSaved ? 'pass' : 'warn'}
+          /> */}
+
+          <Pip
+            onClick={() => props.onClose(data.moduleId)}
+            targetTooltip="saved-tooltip"
+            tooltipContent={'close'}
+            status="error"
+          />
+
+          {/* <Pip status="warn" />
+          <Pip status="error" />
+          <Pip status="pass" /> */}
+        </div>
         <div>
           <button onClick={toggleHidden}>Toggle Raw</button>
           <ToggleButtonGroup

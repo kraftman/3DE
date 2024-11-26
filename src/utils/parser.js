@@ -1,9 +1,9 @@
 const recast = require('recast');
 const { namedTypes: n, visit } = require('ast-types');
-const babelParser = require('@babel/parser');
-const { v4: uuid } = require('uuid');
 import { getEditorSize } from '../components/editorUtils';
 import * as murmur from 'murmurhash-js';
+
+import { parseWithRecast } from './parseWithRecast';
 
 const extractNonFunctionStatements = (functionNode) => {
   const nonFunctionNodes = functionNode.body.body.filter(
@@ -36,7 +36,7 @@ const createFunction = (path, name, parentId, depth, type) => {
   const nestedFunctions = getFunctions(node.body, funcId, depth + 1);
   const contentSize = getEditorSize(body);
   //const subtreeCode = recast.print(node).code;
-  const newAst = recast.parse(body);
+  //const newAst = parseWithRecast(body);
   const funcInfo = {
     id: funcId,
     name,
@@ -48,7 +48,7 @@ const createFunction = (path, name, parentId, depth, type) => {
     nestedFunctions,
     node,
     path,
-    localAst: newAst,
+    //localAst: newAst,
     contentSize,
     frameSize: {
       ...contentSize,
@@ -231,7 +231,7 @@ const getRootLevelCode = (ast) => {
 
         // Prune the node if it's an ImportDeclaration or doesn't match
         if (n.ImportDeclaration.check(node) || !isRootLevelNode) {
-          console.log('pruning node:', recast.print(node).code);
+          //console.log('pruning node:', recast.print(node).code);
           nodePath.prune();
         }
       });
@@ -263,15 +263,7 @@ const flattenFunctions = (functions) => {
 export const parseCode = (code) => {
   let ast = null;
   try {
-    ast = recast.parse(code, {
-      parser: {
-        parse: (source) =>
-          babelParser.parse(source, {
-            sourceType: 'module',
-            plugins: ['typescript', 'jsx'], // Add plugins as needed
-          }),
-      },
-    });
+    ast = parseWithRecast(code);
   } catch (e) {
     console.log('error parsing code:', e);
     return {
@@ -281,14 +273,8 @@ export const parseCode = (code) => {
       rootLevelCode: null,
     };
   }
-
-  const printedCode = recast.print(ast, { reuseWhitespace: true }).code;
-  const visibleCode = printedCode
-    .replace(/ /g, '␣') // Spaces as '␣'
-    .replace(/\t/g, '⇥') // Tabs as '⇥'
-    .replace(/\n/g, '↵\n'); // Newlines as '↵'
-
-  //console.log('=====', visibleCode);
+  console.log('parsed ast:', ast);
+  console.log('printe d:', recast.print(ast).code);
 
   const imports = getImports(ast);
   const myExports = getExports(ast);

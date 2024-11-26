@@ -91,19 +91,23 @@ export const Flow = () => {
 
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
-    const newModule = parseCode(mockModule);
-    const moduleNodes = getModuleNodes(newModule);
-    const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
+    try {
+      const newModule = parseCode(mockModule);
+      const moduleNodes = getModuleNodes(newModule);
+      const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
 
-    const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
-    setNodes((nodes) => {
-      return nodes.concat(allNodes);
-    });
+      const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
+      setNodes((nodes) => {
+        return nodes.concat(allNodes);
+      });
 
-    setEdges((edges) => {
-      return edges.concat(newEdges);
-    });
-    setModules((modules) => modules.concat(module));
+      setEdges((edges) => {
+        return edges.concat(newEdges);
+      });
+      setModules((modules) => modules.concat(module));
+    } catch (e) {
+      console.error('error parsing module:', e);
+    }
   };
 
   useEffect(() => {
@@ -112,6 +116,7 @@ export const Flow = () => {
     };
     loadSessions();
     loadModules();
+    onFolderSelected('/home/chris/marvel-app');
   }, []);
 
   const onNodeClick = (event, node) => {
@@ -410,6 +415,15 @@ export const Flow = () => {
     });
   };
 
+  const onModuleClose = (moduleId) => {
+    setNodes((nodes) => {
+      const nonModuleNodes = nodes.filter(
+        (node) => node.data.moduleId !== moduleId
+      );
+      return nonModuleNodes;
+    });
+  };
+
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -428,6 +442,7 @@ export const Flow = () => {
         <ModuleNode
           toggleHideChildren={toggleHideChildren}
           toggleHideEdges={toggleHideEdges}
+          onClose={onModuleClose}
           {...props}
         />
       ),

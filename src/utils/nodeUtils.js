@@ -4,10 +4,9 @@ import { findCallExpressions } from './astUtils.js';
 
 import * as recast from 'recast';
 
-import { parseCode } from './parser';
+import { parseWithRecast } from './parseWithRecast';
 
 import { getEditorSize } from './codeUtils.js';
-import * as murmur from 'murmurhash-js';
 
 export const findChildren = (nodes, parentId) => {
   //rucursively find children from nodes and add to a flat array of children
@@ -77,7 +76,7 @@ export const getRaw = (moduleId, moduleNodes) => {
   codeStrings.push(rootCode.data.content);
 
   const code = codeStrings.join('\n');
-  const newAst = recast.parse(code);
+  const newAst = parseWithRecast(code);
 
   //return codeStrings.join('\n');
   return recast.prettyPrint(newAst).code;

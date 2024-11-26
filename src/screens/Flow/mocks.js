@@ -58,6 +58,28 @@ const privateFunction = () => {
 `;
 
 export const mockModule = `
+import { Container } from '@mui/material';
+import { getCharacterById } from '../../actions/characterActions';
+import { CharacterDetail } from '../../../components/CharacterDetail';
+
+const Page = async ({ params }) => {
+  const { id } = params;
+
+  const character = await getCharacterById(id);
+
+  return (
+    <Container>
+      <CharacterDetail character={character} />
+    </Container>
+  );
+};
+
+export default Page;
+
+
+`;
+
+export const mockModuleold = `
 import { something
  } from './module';
       import DefaultExport from './module2.js';
@@ -81,7 +103,8 @@ function decFunc2Depth1() {
   console.log(
   'doing something decFunc2Depth1');
         return 'testreturn'
-  anonDepth1()
+  anonDepth1()  
+  return 'test return'
 }
 
 export function exportDepth1(param1, param2) {
