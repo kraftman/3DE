@@ -280,6 +280,10 @@ export const getModuleNodes = (parsed) => {
   });
   allHandles = allHandles.concat(moduleHandles);
 
+  const baseSize = getEditorSize(parsed.rootLevelCode.code);
+  moduleWidth = Math.max(moduleWidth, baseSize.width);
+  moduleHeight = Math.max(moduleHeight, baseSize.height);
+
   const moduleNode = {
     id: newModuleId,
     moduleId: newModuleId,

@@ -73,8 +73,17 @@ function getFunctions(node, parentId = null, depth = 0) {
 
     visitFunctionExpression(path) {
       const { node } = path;
-      let name = '<anonymous>';
 
+      // Check if this function is an argument of a CallExpression
+      if (
+        path.parentPath &&
+        n.CallExpression.check(path.parentPath.node) &&
+        path.parentPath.node.arguments.includes(node)
+      ) {
+        return false; // Ignore this function
+      }
+
+      let name = '<anonymous>';
       if (path.parentPath && n.VariableDeclarator.check(path.parentPath.node)) {
         name = path.parentPath.node.id.name;
       } else if (path.parentPath && n.Property.check(path.parentPath.node)) {
@@ -83,16 +92,23 @@ function getFunctions(node, parentId = null, depth = 0) {
 
       const funcInfo = createFunction(path, name, parentId, depth);
       functionList.push(funcInfo);
-      functionList.push(funcInfo);
 
       return false;
     },
 
     visitArrowFunctionExpression(path) {
       const { node } = path;
-      let name = '<anonymous>';
 
-      // Arrow functions are usually assigned to variables or properties
+      // Check if this function is an argument of a CallExpression
+      if (
+        path.parentPath &&
+        n.CallExpression.check(path.parentPath.node) &&
+        path.parentPath.node.arguments.includes(node)
+      ) {
+        return false; // Ignore this function
+      }
+
+      let name = '<anonymous>';
       if (path.parentPath && n.VariableDeclarator.check(path.parentPath.node)) {
         name = path.parentPath.node.id.name;
       } else if (path.parentPath && n.Property.check(path.parentPath.node)) {
@@ -168,25 +184,30 @@ const getRootLevelCode = (ast) => {
       // Traverse through the body of the program
       path.get('body').each((nodePath) => {
         const node = nodePath.node;
+        console.log('checking node:', nodePath);
 
         // Check if the node matches root-level conditions, excluding imports
         const isRootLevelNode =
-          ((n.ExportNamedDeclaration.check(node) ||
-            n.ExportDefaultDeclaration.check(node)) &&
-            !(
-              n.FunctionDeclaration.check(node.declaration) ||
-              n.FunctionExpression.check(node.declaration)
-            )) ||
-          (n.VariableDeclaration.check(node) &&
-            node.kind === 'const' &&
-            node.declarations.every(
-              (decl) =>
-                !n.FunctionExpression.check(decl.init) &&
-                !n.ArrowFunctionExpression.check(decl.init)
-            ));
+          // Exclude ImportDeclaration and FunctionDeclaration nodes
+          !n.ImportDeclaration.check(node) &&
+          !n.FunctionDeclaration.check(node) &&
+          !(
+            n.VariableDeclaration.check(node) &&
+            node.declarations.some(
+              (declaration) =>
+                n.FunctionExpression.check(declaration.init) ||
+                n.ArrowFunctionExpression.check(declaration.init)
+            )
+          ) &&
+          // Exclude ExportNamedDeclarations containing FunctionDeclarations
+          !(
+            n.ExportNamedDeclaration.check(node) &&
+            n.FunctionDeclaration.check(node.declaration)
+          );
 
         // Prune the node if it's an ImportDeclaration or doesn't match
         if (n.ImportDeclaration.check(node) || !isRootLevelNode) {
+          console.log('pruning node:', recast.print(node).code);
           nodePath.prune();
         }
       });
@@ -230,10 +251,10 @@ export const parseCode = (code) => {
   } catch (e) {
     console.log('error parsing code:', e);
     return {
-      imports,
-      exports,
-      functions,
-      rootLevelCode,
+      imports: [],
+      exports: [],
+      functions: [],
+      rootLevelCode: null,
     };
   }
 

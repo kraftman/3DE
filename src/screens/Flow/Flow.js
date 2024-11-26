@@ -87,27 +87,13 @@ export const Flow = () => {
 
   const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
 
-  const getAnotherNode = (newModule) => {
-    const moduleNodes = getModuleNodes(newModule);
-    console.log('moduleNodes:', moduleNodes);
-    const nodes = [];
-
-    const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
-    return nodes.concat(moduleNode).concat(rootCode).concat(children);
-  };
-
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
     const newModule = parseCode(mockModule);
     const moduleNodes = getModuleNodes(newModule);
     const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
-    const moreNodes = getAnotherNode(newModule);
 
-    const allNodes = []
-      .concat(moduleNode)
-      .concat(rootCode)
-      .concat(children)
-      .concat(moreNodes);
+    const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
     setNodes((nodes) => {
       return nodes.concat(allNodes);
     });
@@ -744,6 +730,7 @@ export const Flow = () => {
     async (event) => {
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
+      console.log('onFileSelected', fullPath);
       const relativePath = path.relative(rootPath, fullPath);
       const parsedPaths = relativePath.split(path.sep);
       const fileInfo = flatFiles[fullPath];
@@ -762,55 +749,16 @@ export const Flow = () => {
         );
         let parentId = null;
         const lines = fileContents.split('\n');
-        // if (!existingGroup) {
-        //   // create a new group node
-        //   // recursively create group nodes for each folder in the path
-        //   // create a new editor node for the file
-        //   const newColor = stringToDarkTransparentColor(relativePath);
-        //   const newGroupNode = {
-        //     id: getNewNodeId(),
-        //     data: {
-        //       folder: parsedPaths[0],
-        //       label: parsedPaths[0],
-        //     },
-        //     type: 'group',
-        //     position: newPos,
-        //     style: {
-        //       background: newColor,
-        //       width: '600px',
-        //       height: `${editorHeight + 50}px`,
-        //     },
-        //   };
-        //   nodes = nodes.concat(newGroupNode);
-        //   parentId = newGroupNode.id;
-        // }
 
-        const nextNodeId = getNewNodeId();
+        console.log('parsing file contents', fileContents);
+        const module = parseCode(fileContents);
+        const moduleNodes = getModuleNodes(module);
+        const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
 
-        const isImage = /\.(gif|jpe?g|tiff?|png|webp|bmp|svg)$/i.test(fileName);
-
-        const newNode = {
-          id: nextNodeId,
-          data: {
-            fullPath,
-            fileName,
-            handles: [],
-          },
-          type: isImage ? 'image' : 'editor',
-          position: {
-            x: parentId ? 10 : newPos.x,
-            y: parentId ? 10 : newPos.y,
-          },
-          style: {
-            width: '500px',
-            height: '500px',
-          },
-          parentId,
-        };
-
-        const children = []; //createChildren(flatFiles, newNode);
-
-        const newNodes = nodes.concat(newNode).concat(children);
+        const newNodes = nodes
+          .concat(moduleNode)
+          .concat(rootCode)
+          .concat(children);
         return newNodes;
       });
     },
