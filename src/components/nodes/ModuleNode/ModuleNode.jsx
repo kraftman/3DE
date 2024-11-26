@@ -6,10 +6,15 @@ import { Pip } from '../../Pip';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+import CodeIcon from '@mui/icons-material/Code';
+import CommitIcon from '@mui/icons-material/Commit';
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
 
 import { useState } from 'react';
 import { IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import PolylineIcon from '@mui/icons-material/Polyline';
+
+import { TopBar } from './TopBar';
 
 loader.config({ monaco });
 
@@ -85,36 +90,19 @@ export const ModuleNode = (props) => {
         style={{ background: '#121212', padding: '16px', borderRadius: '8px' }}
       >
         <div className="pip-container">
-          {/* <Pip
-            targetTooltip="saved-tooltip"
-            tooltipContent={isSaved ? 'Saved' : 'Unsaved changes'}
-            status={isSaved ? 'pass' : 'warn'}
-          /> */}
-
           <Pip
             onClick={() => props.onClose(data.moduleId)}
             targetTooltip="saved-tooltip"
             tooltipContent={'close'}
             status="error"
           />
-
-          {/* <Pip status="warn" />
-          <Pip status="error" />
-          <Pip status="pass" /> */}
         </div>
-        <div>
-          <button onClick={toggleHidden}>Toggle Raw</button>
-          <ToggleButtonGroup
-            value={settings}
-            onChange={handleToggle}
-            size="small"
-            aria-label="text alignment"
-          >
-            <ToggleButton value="showEdges" aria-label="justified">
-              <PolylineIcon />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </div>
+        <TopBar
+          showRaw={data.showRaw}
+          toggleHidden={toggleHidden}
+          settings={settings}
+          handleToggle={handleToggle}
+        />
         {data.showRaw && (
           <div className="editor-container">
             <Editor

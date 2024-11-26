@@ -67,6 +67,8 @@ const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 import { loadSession, saveSession } from '../../electronHelpers.js';
 
+import { getNodesForFile } from '../../utils/getNodesForFile.js';
+
 export const Flow = () => {
   const {
     setLayers,
@@ -747,37 +749,20 @@ export const Flow = () => {
     async (event) => {
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
-      console.log('onFileSelected', fullPath);
       const relativePath = path.relative(rootPath, fullPath);
       const parsedPaths = relativePath.split(path.sep);
       const fileInfo = flatFiles[fullPath];
+      console.log('fileInfo', fileInfo);
+      console.log('parsedPaths', parsedPaths);
       const fileContents = fileInfo.fileData;
       const newPos = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      setNodes((nodes) => {
-        const existingGroup = nodes.find(
-          (node) =>
-            node.type === 'group' &&
-            node.data.folder === parsedPaths[0] &&
-            !node.parentId
-        );
-        let parentId = null;
-        const lines = fileContents.split('\n');
-
-        console.log('parsing file contents', fileContents);
-        const module = parseCode(fileContents);
-        const moduleNodes = getModuleNodes(module);
-        const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
-
-        const newNodes = nodes
-          .concat(moduleNode)
-          .concat(rootCode)
-          .concat(children);
-        return newNodes;
-      });
+      const newNodes = getNodesForFile(fullPath, fileContents, newPos);
+      console.log('newNodes', newNodes);
+      setNodes((nodes) => nodes.concat(newNodes));
     },
     [screenToFlowPosition, rootPath, flatFiles]
   );

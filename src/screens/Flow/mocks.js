@@ -68,7 +68,7 @@ const Page = async ({ params }) => {
   const character = await getCharacterById(id);
 
   return (
-    <Container>
+    <Container> 
       <CharacterDetail character={character} />
     </Container>
   );
