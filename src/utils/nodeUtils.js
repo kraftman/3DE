@@ -20,29 +20,67 @@ export const findChildren = (nodes, parentId) => {
   return children;
 };
 
-export const getRaw = (module, node, children) => {
+function generateFunctionSignature(functionName, functionType, functionArgs) {
+  const args = functionArgs.join(', ');
+
+  switch (functionType) {
+    case 'functionExpression':
+      return `const ${functionName} = function(${args}) { `;
+
+    case 'functionDeclaration':
+      return `function ${functionName}(${args}) { `;
+
+    case 'arrowFunctionExpression':
+      return `const ${functionName} = (${args}) => { `;
+
+    default:
+      throw new Error(`Unknown function type: ${functionType}`);
+  }
+}
+
+const getFunctionContent = (codeStrings, nodes, parentId) => {
+  const codeNodes = nodes.filter(
+    (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
+  );
+  codeNodes.forEach((codeNode) => {
+    const { functionName, functionType, functionArgs } = codeNode.data;
+    const signature = generateFunctionSignature(
+      functionName,
+      functionType,
+      functionArgs
+    );
+    codeStrings.push(signature);
+    codeStrings.push(codeNode.data.content);
+    getFunctionContent(codeStrings, nodes, codeNode.id);
+    codeStrings.push('}');
+  });
+};
+
+export const getRaw = (moduleId, moduleNodes) => {
   // need to decide if this should be raw or asts
 
   const codeStrings = [];
 
-  module.parsedAst.imports.forEach((imp) => {
-    console.log('imp:', recast.print(imp.node).code);
+  const moduleNode = moduleNodes.find(
+    (node) => node.id === moduleId && node.type === 'module'
+  );
+
+  moduleNode.data.imports.forEach((imp) => {
     codeStrings.push(recast.print(imp.node).code);
   });
-  console.log('codeStrings:', codeStrings);
 
-  const mergedAst = {
-    type: 'File',
-    program: {
-      type: 'Program',
-      body: [],
-      sourceType: 'module', // Adjust sourceType as needed
-    },
-  };
+  getFunctionContent(codeStrings, moduleNodes, moduleId);
 
-  //const raw = recast.print(mergedAst).code;
-  //console.log('raw:', raw);
-  return codeStrings.join('\n');
+  const rootCode = moduleNodes.find(
+    (node) => node.type === 'code' && node.parentId === moduleId
+  );
+  codeStrings.push(rootCode.data.content);
+
+  const code = codeStrings.join('\n');
+  const newAst = recast.parse(code);
+
+  //return codeStrings.join('\n');
+  return recast.prettyPrint(newAst).code;
 };
 
 const getEdges = (handles) => {
@@ -138,6 +176,8 @@ export const getModuleNodes = (parsed) => {
       type: 'pureFunctionNode',
       data: {
         functionName: func.name,
+        functionType: func.type,
+        functionArgs: func.parameters,
         content: func.body,
         depth: func.depth,
         functionId: func.id,
@@ -182,7 +222,7 @@ export const getModuleNodes = (parsed) => {
     const nodesAtDepth = nodes.filter(
       (node) => node.data.depth === i && node.type === 'pureFunctionNode'
     );
-    let currentHeight = 30;
+    let currentHeight = 50;
     // increase width by the widest child at this depth
     moduleWidth =
       moduleWidth +
@@ -286,11 +326,11 @@ export const getModuleNodes = (parsed) => {
 
   const moduleNode = {
     id: newModuleId,
-    moduleId: newModuleId,
     data: {
       exports: parsed.exports,
       imports: parsed.imports,
       handles: moduleHandles,
+      moduleId: newModuleId,
     },
     type: 'module',
     position: {
@@ -347,7 +387,7 @@ export const getModuleNodes = (parsed) => {
     extent: 'parent',
     position: {
       x: 10,
-      y: 30,
+      y: 50,
     },
     style: {
       width: `${rootSize.width}px`,

@@ -74,7 +74,7 @@ export const ModuleNode = (props) => {
   });
 
   const toggleHidden = () => {
-    props.toggleHideChildren(props.id);
+    props.toggleHideChildren(props.data.moduleId);
   };
 
   return (
@@ -102,7 +102,7 @@ export const ModuleNode = (props) => {
             </ToggleButton>
           </ToggleButtonGroup>
         </div>
-        {!data.showRaw && (
+        {data.showRaw && (
           <div className="editor-container">
             <Editor
               className="editor nodrag"

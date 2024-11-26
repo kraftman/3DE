@@ -65,6 +65,8 @@ import { mockModule } from './mocks.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
+import { loadSession, saveSession } from '../../electronHelpers.js';
+
 export const Flow = () => {
   const {
     setLayers,
@@ -354,28 +356,28 @@ export const Flow = () => {
     });
   };
 
-  const toggleHideChildren = (nodeId) => {
-    let newRaw = '';
-    setModules((modules) => {
-      const myModule = modules.find((module) => module.id === nodeId);
-      newRaw = getRaw(myModule);
-      return modules;
-    });
+  const toggleHideChildren = (moduleId) => {
+    console.log('looking for nodes with module id:', moduleId);
     setNodes((nodes) => {
-      // find all nodes with a parentId of the node id
-      // then find their children recursively
-      const childIds = findChildren(nodes, nodeId);
-      const parent = nodes.find((node) => node.id === nodeId);
+      const moduleNodes = nodes.filter(
+        (node) => node.data.moduleId === moduleId
+      );
+      console.log('found module nodes:', moduleNodes);
+      const moduleNodeIds = moduleNodes.map((node) => node.id);
 
-      //const newRaw = getRaw(myModule, parent, children);
+      const moduleNode = moduleNodes.find(
+        (node) => node.type === 'module' && node.id === moduleId
+      );
+
+      const newRaw = getRaw(moduleId, moduleNodes);
       const newNodes = nodes.map((node) => {
-        if (childIds.includes(node.id)) {
+        if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
           return {
             ...node,
-            hidden: !parent.data.showRaw,
+            hidden: moduleNode.data.showRaw,
           };
         }
-        if (node.id === nodeId) {
+        if (node.type === 'module' && node.id === moduleId) {
           node.data = {
             ...node.data,
             showRaw: !node.data.showRaw,

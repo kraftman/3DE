@@ -65,7 +65,13 @@ function getFunctions(node, parentId = null, depth = 0) {
       const { node } = path;
       const name = node.id ? node.id.name : '<anonymous>';
 
-      const funcInfo = createFunction(path, name, parentId, depth);
+      const funcInfo = createFunction(
+        path,
+        name,
+        parentId,
+        depth,
+        'functionDeclaration'
+      );
       functionList.push(funcInfo);
 
       return false;
@@ -90,7 +96,13 @@ function getFunctions(node, parentId = null, depth = 0) {
         name = path.parentPath.node.key.name;
       }
 
-      const funcInfo = createFunction(path, name, parentId, depth);
+      const funcInfo = createFunction(
+        path,
+        name,
+        parentId,
+        depth,
+        'functionExpression'
+      );
       functionList.push(funcInfo);
 
       return false;
@@ -115,7 +127,13 @@ function getFunctions(node, parentId = null, depth = 0) {
         name = path.parentPath.node.key.name;
       }
 
-      const funcInfo = createFunction(path, name, parentId, depth);
+      const funcInfo = createFunction(
+        path,
+        name,
+        parentId,
+        depth,
+        'arrowFunctionExpression'
+      );
       functionList.push(funcInfo);
 
       return false;
@@ -202,7 +220,13 @@ const getRootLevelCode = (ast) => {
           // Exclude ExportNamedDeclarations containing FunctionDeclarations
           !(
             n.ExportNamedDeclaration.check(node) &&
-            n.FunctionDeclaration.check(node.declaration)
+            (n.FunctionDeclaration.check(node.declaration) || // Handles `export function`
+              (n.VariableDeclaration.check(node.declaration) && // Handles `export const`
+                node.declaration.declarations.some(
+                  (declaration) =>
+                    n.FunctionExpression.check(declaration.init) ||
+                    n.ArrowFunctionExpression.check(declaration.init)
+                )))
           );
 
         // Prune the node if it's an ImportDeclaration or doesn't match
