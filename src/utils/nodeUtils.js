@@ -172,6 +172,31 @@ const getEdges = (handles) => {
 //   allHandles = allHandles.concat(functionHandles);
 // };
 
+export const getImportHandles = (imports, moduleId) => {
+  return imports.map((imp, index) => {
+    return {
+      moduleId: moduleId,
+      parentId: moduleId,
+      funcName: imp.name,
+      refType: 'import',
+      id: moduleId + '-' + imp.name + ':out',
+      key: imp.name + ':out',
+      type: 'source',
+      position: 'right',
+      style: {
+        top: 100 + 30 * index,
+        right: 0,
+        borderColor: imp.importType === 'local' ? 'blue' : 'green',
+      },
+      data: {
+        name: imp.name,
+        fullPath: imp.fullPath,
+        importType: imp.importType,
+      },
+    };
+  });
+};
+
 export const getModuleNodes = (parsed, fullPath) => {
   const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
@@ -310,7 +335,7 @@ export const getModuleNodes = (parsed, fullPath) => {
         }, 0);
     }
   }
-
+  console.log('parsed imports:', parsed.imports);
   const imports = parsed.imports.map((imp) => {
     const impPath = imp.moduleSpecifier;
     const isLocal = impPath.startsWith('.') || impPath.startsWith('/');
@@ -323,29 +348,7 @@ export const getModuleNodes = (parsed, fullPath) => {
     };
   });
 
-  const moduleHandles = imports.map((imp, index) => {
-    console.log('making handle for import:', imp.name);
-    return {
-      moduleId: newModuleId,
-      parentId: newModuleId,
-      funcName: imp.name,
-      refType: 'import',
-      id: newModuleId + '-' + imp.name + ':out',
-      key: imp.name + ':out',
-      type: 'source',
-      position: 'right',
-      style: {
-        top: 100 + 30 * index,
-        right: 0,
-        borderColor: imp.importType === 'local' ? 'blue' : 'green',
-      },
-      data: {
-        name: imp.name,
-        fullPath: imp.fullPath,
-        importType: imp.importType,
-      },
-    };
-  });
+  const moduleHandles = getImportHandles(imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
 
   const baseSize = getEditorSize(parsed.rootLevelCode.code);

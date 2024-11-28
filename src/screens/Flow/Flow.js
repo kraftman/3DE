@@ -67,6 +67,7 @@ import {
   findChildren,
   getRaw,
   getFunctionContent,
+  getImportHandles,
 } from '../../utils/nodeUtils.js';
 
 import { parseCode } from '../../utils/parser';
@@ -591,6 +592,10 @@ export const Flow = () => {
     );
   };
 
+  const stripExt = (filename) => {
+    return filename.replace(/\.[^/.]+$/, '');
+  };
+
   const handleFunctionDrag = (functionNode) => {
     const parentModule = nodes.find(
       (node) => node.id === functionNode.data.moduleId
@@ -653,8 +658,37 @@ export const Flow = () => {
         newPosition,
         functionNode.data.moduleId
       );
+      nodes = nodes.filter((node) => node.id !== functionNode.id);
+      nodes = nodes.map((node) => {
+        if (node.id === functionNode.data.moduleId) {
+          const newImport = {
+            name: functionName,
+            imported: functionName,
+            moduleSpecifier: './' + functionName,
+            type: 'local',
+            fullPath: stripExt(newPath),
+          };
+          console.log('newImport', newImport);
+          const newHandles = getImportHandles(
+            node.data.imports.concat(newImport),
+            node.id
+          );
+          console.log('newHandles', newHandles);
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              imports: node.data.imports.concat(newImport),
+              handles: newHandles,
+            },
+          };
+        }
+        return node;
+      });
       return nodes.concat(newNodes);
     });
+    updateNodeInternals(functionNode.data.mockModuleId);
 
     // remove the function from its parent module
     // create a new file using the function name in the directory of the parent
