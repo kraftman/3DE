@@ -21,34 +21,43 @@ export const findChildren = (nodes, parentId) => {
   return children;
 };
 
-function generateFunctionSignature(functionName, functionType, functionArgs) {
+export function generateFunctionSignature(
+  functionName,
+  functionType,
+  functionArgs,
+  functionAsync = false // default to false for backward compatibility
+) {
   const args = functionArgs.join(', ');
+  const asyncKeyword = functionAsync ? 'async ' : '';
 
   switch (functionType) {
     case 'functionExpression':
-      return `const ${functionName} = function(${args}) { `;
+      return `const ${functionName} = ${asyncKeyword}function(${args}) { `;
 
     case 'functionDeclaration':
-      return `function ${functionName}(${args}) { `;
+      return `${asyncKeyword}function ${functionName}(${args}) { `;
 
     case 'arrowFunctionExpression':
-      return `const ${functionName} = (${args}) => { `;
+      return `const ${functionName} = ${asyncKeyword}(${args}) => { `;
 
     default:
       throw new Error(`Unknown function type: ${functionType}`);
   }
 }
 
-const getFunctionContent = (codeStrings, nodes, parentId) => {
+export const getFunctionContent = (codeStrings, nodes, parentId) => {
   const codeNodes = nodes.filter(
     (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
   );
+  console.log('found nodes:', codeNodes);
   codeNodes.forEach((codeNode) => {
-    const { functionName, functionType, functionArgs } = codeNode.data;
+    const { functionName, functionType, functionArgs, functionAsync } =
+      codeNode.data;
     const signature = generateFunctionSignature(
       functionName,
       functionType,
-      functionArgs
+      functionArgs,
+      functionAsync
     );
     codeStrings.push(signature);
     codeStrings.push(codeNode.data.content);
@@ -175,10 +184,12 @@ export const getModuleNodes = (parsed, fullPath) => {
     const frameNode = {
       id: uuid(),
       type: 'pureFunctionNode',
+      extent: 'parent',
       data: {
         functionName: func.name,
         functionType: func.type,
         functionArgs: func.parameters,
+        functionAsync: func.async,
         content: func.body,
         depth: func.depth,
         functionId: func.id,

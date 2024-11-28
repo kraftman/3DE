@@ -47,6 +47,7 @@ const createFunction = (path, name, parentId, depth, type) => {
     body,
     nestedFunctions,
     node,
+    async: node.async,
     path,
     //localAst: newAst,
     contentSize,

@@ -62,7 +62,12 @@ import {
 } from './utils';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
-import { getModuleNodes, findChildren, getRaw } from '../../utils/nodeUtils.js';
+import {
+  getModuleNodes,
+  findChildren,
+  getRaw,
+  getFunctionContent,
+} from '../../utils/nodeUtils.js';
 
 import { parseCode } from '../../utils/parser';
 
@@ -215,41 +220,6 @@ export const Flow = () => {
   const connectingHandleId = useRef(null);
   const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
-  const onFileNameChange = (nodeId, oldFullPath, newFileName) => {
-    const newFullPath = path.join(path.dirname(oldFullPath), newFileName);
-
-    setFlatFiles((files) => {
-      const newFiles = { ...files };
-      const fileData = newFiles[oldFullPath];
-      delete newFiles[oldFullPath];
-
-      newFiles[newFullPath] = { ...fileData, data: newFileName };
-
-      for (const [key, value] of Object.entries(files)) {
-        if (value.children.includes(oldFullPath)) {
-          value.children = value.children.map((child) =>
-            child === oldFullPath ? newFullPath : child
-          );
-        }
-      }
-
-      return newFiles;
-    });
-
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.id === nodeId) {
-          node.data = {
-            ...node.data,
-            fileName: newFileName,
-            fullPath: newFullPath,
-          };
-        }
-        return node;
-      })
-    );
-  };
-
   const onSettingsChanged = (newSettings) => {
     //setSettings(newSettings);
     // also update settings node
@@ -261,54 +231,6 @@ export const Flow = () => {
         return node;
       })
     );
-  };
-
-  const onSelectionChange = (nodeId, selection) => {
-    if (!selection) {
-      // setNodes((nodes) =>
-      //   nodes.map((node) => {
-      //     if (node.id === nodeId) {
-      //       const newHandles = node.data.handles.filter(
-      //         (handle) => handle.handleType !== 'selection'
-      //       );
-      //       node.data = { ...node.data, handles: newHandles };
-      //     }
-      //     return node;
-      //   })
-      // );
-      return;
-    }
-
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.id === nodeId) {
-          const newHandles = node.data.handles.filter(
-            (handle) => handle.handleType !== 'selection'
-          );
-
-          // const newSelection = {
-          //   start: from,
-          //   end: endLine,
-          // };
-
-          newHandles.push(createSelectionHandle(node, selection));
-          node.data = { ...node.data, handles: newHandles };
-          // if (node.data.selections) {
-          //   node.data.selections.push(newSelection);
-          // } else {
-          //   node.data.selections = [newSelection];
-          // }
-        }
-        return node;
-      })
-    );
-  };
-
-  const onClose = (nodeId) => {
-    setEdges((edges) =>
-      edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
-    );
-    setNodes((nodes) => nodes.filter((node) => node.id !== nodeId));
   };
 
   const onFunctionTextChanged = (functionId, content) => {
@@ -377,8 +299,9 @@ export const Flow = () => {
     });
   };
 
-  const toggleHideChildren = (moduleId) => {
-    console.log('looking for nodes with module id:', moduleId);
+  const toggleHideImmediateChildren = (moduleId) => {
+    // TODO: rename, just hides the immediate children of the module
+    // not other modules
     setNodes((nodes) => {
       const moduleNodes = nodes.filter(
         (node) => node.data.moduleId === moduleId
@@ -521,15 +444,6 @@ export const Flow = () => {
   };
   const nodeTypes = useMemo(
     () => ({
-      editor: (props) => (
-        <EditorNode
-          onTextChange={onTextChange}
-          onFileNameChange={onFileNameChange}
-          onSelectionChange={onSelectionChange}
-          onClose={onClose}
-          {...props}
-        />
-      ),
       text: (props) => <TextNode {...props} />,
       markdown: (props) => <MarkdownNode {...props} />,
       code: (props) => (
@@ -537,7 +451,7 @@ export const Flow = () => {
       ),
       module: (props) => (
         <ModuleNode
-          toggleHideChildren={toggleHideChildren}
+          toggleHideChildren={toggleHideImmediateChildren}
           toggleHideEdges={toggleHideEdges}
           onClose={onModuleClose}
           toggleChildren={toggleChildren}
@@ -639,116 +553,6 @@ export const Flow = () => {
     return safeFilename;
   };
 
-  const handleFunctionDrag = (fromNode, fromHandle, event) => {
-    const targetIsPane = event.target.classList.contains('react-flow__pane');
-    const groupNodeElement = event.target.closest('.react-flow__node-group');
-
-    const currentText = flatFiles[fromNode.data.fullPath].fileData;
-    const startLine = fromHandle?.loc?.start.line || fromHandle.startLine;
-    const endLine = fromHandle?.loc?.end.line || fromHandle.endLine;
-    const startColumn = fromHandle.startColumn || undefined;
-    const endColumn = fromHandle.endColumn || undefined;
-    const { updatedText, extractedChunk } = removeTextChunk(
-      currentText,
-      startLine,
-      endLine,
-      startColumn,
-      endColumn
-    );
-
-    const currentDir = path.dirname(fromHandle.nodePath);
-    const newFileName =
-      fromHandle.handleType === 'function'
-        ? fromHandle.name
-        : makeSafeFilename(extractedChunk);
-    const newFullPath = path.join(currentDir, `${newFileName}.js`);
-
-    if (targetIsPane) {
-      const newNode = {
-        id: (nodes.length + 1).toString(),
-        data: {
-          fileName: `${newFileName}.js`,
-          fullPath: newFullPath,
-          value: extractedChunk,
-          handles: [],
-        },
-        type: 'editor',
-        position: screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        }),
-        style: {
-          width: '500px',
-          height: '500px',
-        },
-      };
-
-      const newFile = {
-        index: newFullPath,
-        children: [],
-        data: `${newFileName}.js`,
-        fileData: extractedChunk,
-        isFolder: false,
-      };
-
-      setFlatFiles((files) => {
-        const newFiles = {
-          ...files,
-          [newFullPath]: newFile,
-        };
-        return newFiles;
-      });
-      setNodes((nodes) => nodes.concat(newNode));
-    } else if (!groupNodeElement && !targetIsPane) {
-      //it landed on a real node
-      const editorNodeElement = event.target.closest(
-        '.react-flow__node-editor'
-      );
-      const targetNodeId = editorNodeElement.getAttribute('data-id');
-      const targetNode = nodes.find((node) => node.id === targetNodeId);
-      const position = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-      const line = Math.floor((position.y - targetNode.position.y) / 16);
-
-      const newText = insertTextChunk(
-        flatFiles[targetNode.data.fullPath].fileData,
-        extractedChunk,
-        line
-      );
-      onTextChange(targetNode.id, newText);
-    }
-
-    onTextChange(fromNode.id, updatedText);
-  };
-
-  const handleSelectionDrag = (fromNode, fromHandle, event) => {
-    const newPos = screenToFlowPosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
-    // create a new Partial node - can it be an editor
-    setNodes((nodes) => {
-      nodes.map((node) => {
-        if (node.id === fromNode.id) {
-          // add a new selection
-          node.data.selections = node.data.selections || [];
-          node.data.selections = [
-            ...node.data.selections,
-            {
-              startLine: fromHandle.startLine,
-              endLine: fromHandle.endLine,
-            },
-          ];
-        }
-        node.data = { ...node.data };
-        return node;
-      });
-      return nodes;
-    });
-    updateNodeInternals(fromNode.id);
-  };
   const onConnectEnd = () => {};
 
   const onConnect = () => {};
@@ -778,7 +582,91 @@ export const Flow = () => {
     return sorted[0];
   };
 
+  const functionIsOutsideParent = (parent, functionNode) => {
+    return (
+      functionNode.position.x > parent.data.width ||
+      functionNode.position.y > parent.data.height ||
+      functionNode.position.x + functionNode.data.width < 0 ||
+      functionNode.position.y + functionNode.data.height < 0
+    );
+  };
+
+  const handleFunctionDrag = (functionNode) => {
+    const parentModule = nodes.find(
+      (node) => node.id === functionNode.data.moduleId
+    );
+    console.log(
+      'checking if function is in parent',
+      parentModule,
+      functionNode
+    );
+    const isOutside = functionIsOutsideParent(parentModule, functionNode);
+
+    if (!isOutside) {
+      console.log('still in module, skipping');
+      setNodes((nodes) => {
+        const newNodes = nodes.map((search) => {
+          if (search.id === functionNode.id) {
+            search.extent = 'parent';
+          }
+          return search;
+        });
+        return newNodes;
+      });
+      return;
+    }
+
+    const { functionName, functionType, functionArgs } = functionNode.data;
+    console.log('functioninfo', functionNode.data);
+    console.log('all nodes', nodes);
+    const lines = [];
+    getFunctionContent(lines, nodes, functionNode.parentId);
+    const finalContent = lines.join('\n');
+    console.log('final content:', finalContent);
+
+    const parentPath = parentModule.data.fullPath;
+    const parentDir = path.dirname(parentPath);
+    const newPath = path.join(parentDir, functionName + '.js');
+
+    setFlatFiles((files) => {
+      const newFiles = {
+        ...files,
+        [newPath]: {
+          index: newPath,
+          children: [],
+          data: functionName + '.js',
+          fileData: finalContent,
+          isFolder: false,
+        },
+      };
+      return newFiles;
+    });
+
+    setNodes((nodes) => {
+      const newPosition = {
+        x: parentModule.data.width + 100,
+        y: 0,
+      };
+      const newNodes = getNodesForFile(
+        newPath,
+        finalContent,
+        newPosition,
+        functionNode.data.moduleId
+      );
+      return nodes.concat(newNodes);
+    });
+
+    // remove the function from its parent module
+    // create a new file using the function name in the directory of the parent
+    // check there isnt one already
+    // add the function to the new file as an export
+    // add an import to the parent module
+  };
+
   const onNodeDragStop = (event, node) => {
+    if (node.type === 'pureFunctionNode') {
+      handleFunctionDrag(node);
+    }
     setDraggingNode(null);
     // const allIntersections = getIntersectingNodes(node, true);
     // console.log('allIntersections', allIntersections);
@@ -960,6 +848,21 @@ export const Flow = () => {
 
   const onNodeDragStart = (event, node) => {
     setDraggingNode(node);
+    // check if shift key is down
+    if (!event.shiftKey) {
+      return;
+    }
+    if (node.type === 'pureFunctionNode') {
+      setNodes((nodes) => {
+        const newNodes = nodes.map((search) => {
+          if (search.id === node.id) {
+            search = { ...search, extent: undefined };
+          }
+          return search;
+        });
+        return newNodes;
+      });
+    }
   };
 
   const onSearchSelect = (selected) => {
