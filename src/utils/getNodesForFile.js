@@ -11,7 +11,6 @@ const createCodeNodes = (fullPath, fileContents, newPos, parentId) => {
   moduleNode.position = newPos;
 
   moduleNode.parentId = parentId;
-  console.log('setting moduleNode parent id:', parentId);
 
   const newNodes = [].concat(moduleNode).concat(rootCode).concat(children);
   return newNodes;

@@ -143,6 +143,7 @@ export const ModuleNode = (props) => {
           </div>
         )}
       </div>
+      <Handle type="source" position={'left'} id={props.id + '-handle'} />
       {importHandles}
     </ThemeProvider>
   );

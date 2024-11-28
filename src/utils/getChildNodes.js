@@ -31,8 +31,6 @@ export const getChildNodes = (nodes, moduleId, localFlatFiles) => {
   let offset = 0;
 
   resolvedFiles.forEach((file) => {
-    console.log('checking file:', file);
-
     const existingNode = nodes.find(
       (node) => node.data.fullPath === file.index && node.parentId === moduleId
     );
@@ -65,6 +63,5 @@ export const getChildNodes = (nodes, moduleId, localFlatFiles) => {
   // filter them by local files not modules
   // load the files
   // create modules for them
-  console.log('moduleNode', moduleNode.data.imports);
   return nodes;
 };

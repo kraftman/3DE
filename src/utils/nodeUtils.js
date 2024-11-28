@@ -359,11 +359,7 @@ export const getModuleNodes = (parsed, fullPath) => {
       height: `${moduleHeight + 60}px`,
     },
   };
-  console.log(
-    'setting module dimensions:',
-    moduleNode.data.width,
-    moduleNode.data.height
-  );
+
   const rootSize = getEditorSize(parsed.rootLevelCode.code);
 
   const importDefinitons = parsed.rootLevelCode.node.body.filter((node) => {
