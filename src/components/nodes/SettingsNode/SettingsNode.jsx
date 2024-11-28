@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo } from 'react';
-import { Handle, Position, NodeResizer } from 'reactflow';
+import { Handle, Position, NodeResizer } from '@xyflow/react';
 import { TabComponent } from './TabComponent';
 
 const SettingsNodeInternal = ({ data, selected }) => {

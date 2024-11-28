@@ -41,7 +41,17 @@ module.exports = {
     rules,
   },
   resolve: {
+    alias: {
+      '@babel/parser': require.resolve('@babel/parser'), // Ensure it resolves correctly
+    },
     extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    fallback: {
+      fs: false,
+      os: require.resolve('os-browserify/browser'),
+      path: require.resolve('path-browserify'),
+      util: require.resolve('util/'),
+      stream: require.resolve('stream-browserify'),
+    },
   },
   plugins: [new MonacoWebpackPlugin()],
 };

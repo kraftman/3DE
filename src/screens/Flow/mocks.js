@@ -52,7 +52,82 @@ export const myfunction2 = () => {
 }
 
 const privateFunction = () => {
-  return 'meep';
+  return 'meep'; 
 }
 
+`;
+
+export const mockModule = `
+import { Container } from '@mui/material';
+import { getCharacterById } from '../../actions/characterActions';
+import { CharacterDetail } from '../../../components/CharacterDetail';
+
+const Page = async ({ params }) => {
+  const { id } = params;
+
+  const character = await getCharacterById(id);
+
+  return (
+    <Container> 
+      <CharacterDetail character={character} />
+    </Container>
+  );
+};
+
+export default Page; 
+
+
+`;
+
+export const mockModuleold = `
+import { something 
+ } from './module';
+      import DefaultExport from './module2.js';
+// comment
+      //indented comment
+     export const a = 10;
+
+
+import { namedExport as alias } from './module3.js';
+        import * as namespace from './module4.js';
+import DefaultExport2, { namedExport } from './module5.js';
+
+
+
+const anonDepth1 = () => {
+        console.log('meeep in anon depth 1');
+}
+
+function decFunc2Depth1() {
+  anonDepth1()
+  console.log(
+  'doing something decFunc2Depth1');
+        return 'testreturn'
+  anonDepth1()  
+  return 'test return'
+}
+
+export function exportDepth1(param1, param2) {
+  const a = '1 '
+  const depth2Anon =() => {
+    console.log('inside another func depth2Anon')
+  }
+  function depth2Dec () {
+          console.log('also inside func depth2Dec')
+    // function depth3Dec() {
+    //   console.log('third depth depth3Dec')
+    // }
+    // const depth3Anon = () => { 
+    //   console.log('third depth anon depth3Anon')
+    // }
+  }
+    depth2Anon()
+    
+  console.log('doing something else in exportDepth1');
+  something()
+}
+
+const b = a + 20;
+
+export default b;
 `;

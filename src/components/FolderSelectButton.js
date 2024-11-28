@@ -2,7 +2,7 @@ import React from 'react';
 import Button from '@mui/material/Button';
 import { selectFolder, loadFolderTree } from '../electronHelpers';
 
-const FolderSelectorButton = ({ onFolderSelected }) => {
+export const FolderSelectButton = ({ onFolderSelected }) => {
   const handleButtonClick = async () => {
     const folder = await selectFolder();
     onFolderSelected(folder);
@@ -14,5 +14,3 @@ const FolderSelectorButton = ({ onFolderSelected }) => {
     </Button>
   );
 };
-
-export default FolderSelectorButton;

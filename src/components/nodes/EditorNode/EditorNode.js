@@ -4,20 +4,19 @@ import { Handle, Position, NodeToolbar } from '@xyflow/react';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import { EDITOR } from '../../constants';
+import { EDITOR } from '../../../constants';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import { Pip } from '../Pip';
+import { Pip } from '../../Pip';
 import { useDebouncedCallback } from 'use-debounce';
-import { FileName } from '../FileName';
+import { FileName } from '../../FileName';
 
-import { getDecorators, detectLanguage } from '../editorUtils';
+import { getDecorators, detectLanguage } from '../../editorUtils';
 
-import { useFileSystem } from '../../contexts/FileSystemContext';
+import { useFileSystem } from '../../../contexts/FileSystemContext';
 
 import 'react-tooltip/dist/react-tooltip.css';
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 loader.config({ monaco });
 
 export const EditorNode = ({
@@ -39,19 +38,12 @@ export const EditorNode = ({
   const isSaved = text === savedText;
 
   useEffect(() => {
-    onTextChange(id, text);
+    onTextChange(id, data.fullPath, text);
   }, []);
 
-  //TODOO split apart saving and updating the saved data
-  // so that debounce only applies to saving/formatting
-  const debouncedOnChange = useDebouncedCallback((newText) => {
-    onTextChange(id, newText);
-    addDecorators();
-  }, 1);
-
   const onChange = (newText) => {
-    //onTextChange(id, newText);
-    debouncedOnChange(newText);
+    onTextChange(id, data.fullPath, newText);
+    //debouncedOnChange(newText);
     addDecorators();
   };
 
@@ -61,8 +53,6 @@ export const EditorNode = ({
     if (selection.isEmpty()) {
       onSelectionChange(id, null);
     } else {
-      console.log('selection', selection);
-      console.log('visible range', editor.getVisibleRanges());
       onSelectionChange(id, selection);
     }
   };
@@ -91,49 +81,18 @@ export const EditorNode = ({
     setDecorations(newDecorationIds);
   };
 
-  const addFolding = async () => {
-    if (!editorRef.current || !data.selections) {
-      return;
-    }
-    const editor = editorRef.current;
-    for (let selection of data.selections) {
-      console.log('addingfold', selection.startLine, selection.endLine);
-      editor.setSelection(
-        new monaco.Selection(selection.startLine, 1, selection.endLine, 1)
-      );
-      await editor.getAction('editor.createFoldingRangeFromSelection').run();
-    }
-  };
-
-  useEffect(() => {
-    addFolding();
-  }, [data.selections]);
-
   const renderedHandles = data?.handles?.map((handle) => {
-    const editor = editorRef.current;
-    if (!editor) {
-      return null;
-    }
     const newTop = handle.style.top - verticalScroll;
     if (newTop < 40 || newTop > data.height) {
       return null;
     }
-    if (!handle.loc) {
-      console.log('no loc', handle);
-      return null;
-    }
-    const top = editor.getTopForLineNumber(handle.loc.end.line) + 20;
-    console.log('top is at:', top);
     return (
       <Handle
         key={handle.id}
         type={handle.type}
         position={handle.position}
         id={handle.id}
-        style={{
-          ...handle.style,
-          top: top,
-        }}
+        style={{ ...handle.style, top: newTop }}
       />
     );
   });
@@ -193,7 +152,6 @@ export const EditorNode = ({
               editorRef.current = editor;
               addDecorators();
               addListeners();
-              addFolding();
             }}
           />
         </div>

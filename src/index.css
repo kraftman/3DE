@@ -75,6 +75,10 @@ body,
   font-size: 12px;
 }
 
+.react-flow__node {
+  z-index: -1 !important;
+}
+
 .edgebutton {
   width: 20px;
   height: 20px;

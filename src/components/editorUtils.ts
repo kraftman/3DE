@@ -1,11 +1,13 @@
 import * as monaco from 'monaco-editor';
-import { Position } from 'reactflow';
+import { Position } from '@xyflow/react';
 
 import { EDITOR } from '../constants';
 
 import path from 'path-browserify';
 
 import * as ts from 'typescript';
+
+//const project = await createProject({ useInMemoryFileSystem: true });
 
 const fsMap = {
   js: 'javascript',
@@ -30,6 +32,60 @@ export const detectLanguage = (fileName) => {
   }
   return 'plaintext';
 };
+
+// for now this just gets imports, exports, root level logic, and functions
+// need to merge it with the function below it when we have a better idea of what we need
+export async function analyzeSourceFile(code) {
+  const sourceFile = ts.createSourceFile(
+    'tempFile.ts',
+    code,
+    ts.ScriptTarget.Latest,
+    true
+  );
+  const imports = [];
+  const exports = [];
+  const rootLevelLogic = [];
+  const functions: ts.Node[] = [];
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (ts.isImportDeclaration(node)) {
+      imports.push(node);
+    } else if (ts.isExportAssignment(node)) {
+      // Handles "export default ..."
+      exports.push(node);
+    } else if (ts.isExportDeclaration(node)) {
+      // Handles "export { ... }"
+      exports.push(node);
+    } else if (ts.isVariableStatement(node)) {
+      if (
+        node.modifiers?.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword)
+      ) {
+        // Exported variable statement
+        exports.push(node);
+      } else {
+        // Non-exported variable statement
+        rootLevelLogic.push(node);
+      }
+    } else if (ts.isFunctionDeclaration(node)) {
+      // Always add to functions
+      functions.push(node);
+
+      // Check if the function is exported
+      if (
+        node.modifiers?.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword)
+      ) {
+        exports.push(node);
+      }
+    } else if (
+      !ts.isInterfaceDeclaration(node) &&
+      !ts.isTypeAliasDeclaration(node)
+    ) {
+      rootLevelLogic.push(node);
+    }
+  });
+
+  return { imports, exports, rootLevelLogic, functions };
+}
 
 export const getFeatures = (code: string) => {
   try {
@@ -261,6 +317,21 @@ const getColor = (feature) => {
   }
 };
 
+const getMaxWidth = (lines) => {
+  let maxWidth = 0;
+  lines.forEach((line) => {
+    maxWidth = Math.max(maxWidth, line.length);
+  });
+  return maxWidth;
+};
+
+export const getEditorSize = (code) => {
+  const lines = code.split('\n');
+  const newHeight = 50 + lines.length * 15;
+  const newWidth = 100 + getMaxWidth(lines) * 6;
+  return { height: newHeight, width: newWidth };
+};
+
 export const getHandles = (nodeId, fullPath, code) => {
   const features = getFeatures(code);
   const handles = features.map((feature) => {
@@ -282,7 +353,6 @@ export const getHandles = (nodeId, fullPath, code) => {
         zIndex: 1000,
       },
     };
-    console.log('loc', feature.loc);
     if (feature.type === 'import') {
       // @ts-expect-error bleh
       newHandle.importPath = path.resolve(path.dirname(fullPath), fileName);
