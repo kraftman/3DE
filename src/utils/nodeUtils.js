@@ -324,11 +324,13 @@ export const getModuleNodes = (parsed, fullPath) => {
       position: 'right',
       style: {
         top: 100 + 30 * index,
-        right: -50,
+        right: 0,
         borderColor: imp.importType === 'local' ? 'blue' : 'green',
       },
       data: {
         name: imp.name,
+        fullPath: imp.fullPath,
+        importType: imp.importType,
       },
     };
   });

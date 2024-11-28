@@ -571,6 +571,39 @@ export const Flow = () => {
     });
   };
 
+  const createMissingImport = (moduleId, importPath) => {
+    // we dont know the extension so assume js for now
+    const fullPath = importPath + '.js';
+    if (flatFiles[fullPath]) {
+      return;
+    }
+    const newFile = {
+      index: fullPath,
+      children: [],
+      data: fullPath,
+      fileData: '',
+      isFolder: false,
+    };
+    setFlatFiles((files) => {
+      const newFiles = {
+        ...files,
+        [fullPath]: newFile,
+      };
+      return newFiles;
+    });
+
+    setNodes((nodes) => {
+      const parentModule = nodes.find(
+        (node) => node.id === moduleId && node.type === 'module'
+      );
+      const newPosition = {
+        x: parentModule.position.x + parentModule.data.width + 100,
+        y: parentModule.position.y,
+      };
+      const newNodes = getNodesForFile(fullPath, '', newPosition, moduleId);
+      return nodes.concat(newNodes);
+    });
+  };
   const nodeTypes = useMemo(
     () => ({
       editor: (props) => (
@@ -594,6 +627,7 @@ export const Flow = () => {
           onClose={onModuleClose}
           toggleChildren={toggleChildren}
           layoutChildren={layoutNodes}
+          createMissingImport={createMissingImport}
           {...props}
         />
       ),

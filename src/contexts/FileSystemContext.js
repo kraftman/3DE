@@ -8,7 +8,7 @@ export const useFileSystem = () => useContext(FileSystemContext);
 
 export const FileSystemProvider = ({ children }) => {
   const [folderData, setFolderData] = useState([]);
-  const [flatFiles, setFlatFiles] = useState([]);
+  const [flatFiles, setFlatFiles] = useState({});
   const [rootPath, setRootPath] = useState('');
 
   const loadFileSystem = async (newRootPath) => {

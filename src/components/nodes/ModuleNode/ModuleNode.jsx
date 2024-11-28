@@ -16,21 +16,43 @@ import PolylineIcon from '@mui/icons-material/Polyline';
 
 import { useFileSystem } from '../../../contexts/FileSystemContext';
 
+import { findFileForImport } from '../../../utils/fileUtils';
+
 import { TopBar } from './TopBar';
 
 loader.config({ monaco });
 
 const handleTextStyle = {
-  position: 'relative',
-  transform: 'translate(10px, -10px)',
-  fontSize: '12px',
-  pointerEvents: 'none',
+  position: 'absolute', // Absolute positioning to center the text on the handle
+  top: '50%', // Center vertically
+  left: '50%', // Center horizontally
+  transform: 'translate(-50%, 5px)', // Align the text perfectly at the center
+  fontSize: '10px',
+  pointerEvents: 'none', // Prevent the text from interfering with interactions
   color: 'white',
-  display: 'inline-block', // Ensures the width matches the text content
-  border: '1px solid white', // Adds the border
-  padding: '2px 4px', // Adds padding to make the border look better
+  backgroundColor: 'black',
+  border: '1px solid grey', // Adds the border
+  padding: '2px 2px', // Adds padding to make the border look better
   boxSizing: 'border-box', // Ensures padding doesn't increase the element size
   borderRadius: '4px',
+  whiteSpace: 'nowrap', // Prevents text wrapping
+  textAlign: 'center', // Centers text within the box
+};
+
+const handleNoImportStyle = {
+  position: 'absolute', // Absolute positioning to center the text on the handle
+  top: '50%', // Center vertically
+  left: '50%', // Center horizontally
+  transform: 'translate(-50%, 5px)', // Align the text perfectly at the center
+  fontSize: '10px',
+  color: 'white',
+  backgroundColor: 'black',
+  border: '1px solid grey', // Adds the border
+  padding: '2px 2px', // Adds padding to make the border look better
+  boxSizing: 'border-box', // Ensures padding doesn't increase the element size
+  borderRadius: '4px',
+  whiteSpace: 'nowrap', // Prevents text wrapping
+  textAlign: 'center', // Centers text within the box
 };
 
 const handleWrapper = {};
@@ -67,8 +89,65 @@ export const ModuleNode = (props) => {
     });
   };
 
+  const getImportHandles = (handle) => {
+    if (Object.keys(flatFiles).length === 0) {
+      return null;
+    }
+
+    if (
+      handle.data.fullPath === false ||
+      findFileForImport(flatFiles, handle.data.fullPath)
+    ) {
+      return (
+        <Handle
+          key={handle.key}
+          type="source"
+          position={'right'}
+          id={handle.id}
+          style={{ ...handle.style }}
+        >
+          <div style={handleTextStyle}>{handle.data.name}</div>
+        </Handle>
+      );
+    }
+
+    console.log('could not find file for import', handle.data.fullPath);
+
+    return (
+      <button
+        onClick={() => {
+          props.createMissingImport(data.moduleId, handle.data.fullPath);
+        }}
+        key={handle.key}
+        style={{
+          position: 'absolute',
+          display: 'inline-flex', // Ensures it wraps around its content
+          justifyContent: 'center', // Centers content horizontally
+          alignItems: 'center', // Centers content vertically
+          color: 'red',
+          fontSize: '10px',
+          backgroundColor: 'black',
+          border: '1px solid red',
+          padding: '2px 4px', // Add padding for spacing around the text
+          boxSizing: 'border-box',
+          borderRadius: '4px',
+          textAlign: 'center',
+          top: handle.style.top,
+          right: handle.style.right,
+          transform: 'translate(50%, 0)', // Center the text horizontally
+        }}
+      >
+        {handle.data.name}
+      </button>
+    );
+  };
+
   const editorRef = useRef(null);
-  const importHandles = data.handles.map((handle, index) => {
+  const allHandles = data.handles.map((handle, index) => {
+    if (handle.refType === 'import') {
+      return getImportHandles(handle);
+    }
+
     return (
       <Handle
         key={handle.key}
@@ -150,7 +229,7 @@ export const ModuleNode = (props) => {
         )}
       </div>
       <Handle type="source" position={'left'} id={props.id + '-handle'} />
-      {importHandles}
+      {allHandles}
     </ThemeProvider>
   );
 };
