@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Flow } from './screens/Flow/Flow';
-import { ReactFlowProvider } from 'reactflow';
+import { ReactFlowProvider } from '@xyflow/react';
 import { FlowProvider } from './screens/Flow/FlowContext';
 import { FileSystemProvider } from './contexts/FileSystemContext';
 

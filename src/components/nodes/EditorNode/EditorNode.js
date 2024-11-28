@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { Handle, Position, NodeToolbar } from 'reactflow';
+import { Handle, Position, NodeToolbar } from '@xyflow/react';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';

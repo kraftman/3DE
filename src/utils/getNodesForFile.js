@@ -5,11 +5,11 @@ import { getModuleNodes } from './nodeUtils';
 import { v4 as uuid } from 'uuid';
 
 const createCodeNodes = (fullPath, fileContents, newPos, parentId) => {
-  const module = parseCode(fileContents);
-  const moduleNodes = getModuleNodes(module);
+  const moduleCode = parseCode(fileContents);
+  const moduleNodes = getModuleNodes(moduleCode, fullPath);
   const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
   moduleNode.position = newPos;
-  moduleNode.data.fullPath = fullPath;
+
   moduleNode.parentId = parentId;
   console.log('setting moduleNode parent id:', parentId);
 

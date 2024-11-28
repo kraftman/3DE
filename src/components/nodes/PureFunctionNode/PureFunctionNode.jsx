@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { NodeResizer, Handle } from 'reactflow';
+import { NodeResizer, Handle } from '@xyflow/react';
 import Editor from '@monaco-editor/react';
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';

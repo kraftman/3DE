@@ -8,6 +8,8 @@ import { parseWithRecast } from './parseWithRecast';
 
 import { getEditorSize } from './codeUtils.js';
 
+import path from 'path-browserify';
+
 export const findChildren = (nodes, parentId) => {
   //rucursively find children from nodes and add to a flat array of children
   let children = [];
@@ -161,7 +163,7 @@ const getEdges = (handles) => {
 //   allHandles = allHandles.concat(functionHandles);
 // };
 
-export const getModuleNodes = (parsed) => {
+export const getModuleNodes = (parsed, fullPath) => {
   const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
   }, 0);
@@ -299,11 +301,14 @@ export const getModuleNodes = (parsed) => {
   }
 
   const imports = parsed.imports.map((imp) => {
-    const path = imp.moduleSpecifier;
-    const isLocal = path.startsWith('.') || path.startsWith('/');
+    const impPath = imp.moduleSpecifier;
+    const isLocal = impPath.startsWith('.') || impPath.startsWith('/');
+    const impFullPath =
+      isLocal && path.resolve(path.dirname(fullPath), impPath);
     return {
       ...imp,
       importType: isLocal ? 'local' : 'module',
+      fullPath: impFullPath,
     };
   });
 
@@ -340,6 +345,9 @@ export const getModuleNodes = (parsed) => {
       imports: imports,
       handles: moduleHandles,
       moduleId: newModuleId,
+      fullPath: fullPath,
+      width: moduleWidth + 30,
+      height: moduleHeight + 60,
     },
     type: 'module',
     position: {
@@ -351,6 +359,11 @@ export const getModuleNodes = (parsed) => {
       height: `${moduleHeight + 60}px`,
     },
   };
+  console.log(
+    'setting module dimensions:',
+    moduleNode.data.width,
+    moduleNode.data.height
+  );
   const rootSize = getEditorSize(parsed.rootLevelCode.code);
 
   const importDefinitons = parsed.rootLevelCode.node.body.filter((node) => {

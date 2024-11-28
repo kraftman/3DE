@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRef } from 'react';
-import { Handle } from 'reactflow';
+import { Handle } from '@xyflow/react';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';

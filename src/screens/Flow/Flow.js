@@ -5,7 +5,8 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   MiniMap,
   Panel,
   Controls,
@@ -14,12 +15,16 @@ import ReactFlow, {
   useUpdateNodeInternals,
   applyEdgeChanges,
   applyNodeChanges,
-} from 'reactflow';
+} from '@xyflow/react';
 
+import dagre from '@dagrejs/dagre';
 import Button from '@mui/material/Button';
 import { Tooltip } from 'react-tooltip';
 
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
+
+// or if you just want basic styles
+import '@xyflow/react/dist/base.css';
 import 'react-tooltip/dist/react-tooltip.css';
 import { EditorNode } from '../../components/nodes/EditorNode';
 import { ModuleNode } from '../../components/nodes/ModuleNode/ModuleNode.jsx';
@@ -100,10 +105,10 @@ export const Flow = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
     try {
       const newModule = parseCode(mockModule);
-      const moduleNodes = getModuleNodes(newModule);
+      const fullPath = '/home/chris/marvel-app/src/app/character/[id]/page.tsx';
+      const moduleNodes = getModuleNodes(newModule, fullPath);
       const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
-      moduleNode.data.fullPath =
-        '/home/chris/marvel-app/src/app/character/[id]/page.tsx';
+
       const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
       setNodes((nodes) => {
         return nodes.concat(allNodes);
@@ -832,13 +837,17 @@ export const Flow = () => {
 
   const onFileSelected = useCallback(
     async (event) => {
+      if (event.shiftKey) {
+        console.log('Shift key is held down!');
+      } else {
+        console.log('Shift key is not held.');
+      }
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const fileName = event.target.textContent;
       const relativePath = path.relative(rootPath, fullPath);
       const parsedPaths = relativePath.split(path.sep);
       const fileInfo = flatFiles[fullPath];
-      console.log('fileInfo', fileInfo);
-      console.log('parsedPaths', parsedPaths);
+
       const fileContents = fileInfo.fileData;
       const newPos = screenToFlowPosition({
         x: event.clientX,
@@ -1023,6 +1032,74 @@ export const Flow = () => {
     // });
   };
 
+  const findModuleEdges = (moduleNodes) => {
+    const edges = [];
+    moduleNodes.forEach((moduleNode) => {
+      // for each import, check if there is a module with the path
+      moduleNode.data.imports.forEach((importPath) => {
+        const targetModule = moduleNodes.find(
+          (node) => node.data.fullPath === importPath
+        );
+        if (targetModule) {
+          edges.push({
+            id: `${moduleNode.id}-${targetModule.id}`,
+            source: moduleNode.id,
+            target: targetModule.id,
+          });
+        }
+      });
+    });
+    return edges;
+  };
+
+  const layoutNodes = () => {
+    setNodes((nodes) => {
+      // need to get all the current modules
+      // find their width and height
+      // find their edges
+      // pass to dagre
+      //
+      const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(
+        () => ({})
+      );
+      dagreGraph.setGraph({ rankdir: 'TB' });
+      const moduleNodes = nodes.filter((node) => node.type === 'module');
+      const edges = findModuleEdges(moduleNodes);
+
+      moduleNodes.forEach((moduleNode) => {
+        console.log(
+          'moduleNodesize:',
+          moduleNode.data.width,
+          moduleNode.data.height
+        );
+        dagreGraph.setNode(moduleNode.id, {
+          width: moduleNode.data.width,
+          height: moduleNode.data.height,
+        });
+      });
+
+      edges.forEach((edge) => {
+        dagreGraph.setEdge(edge.source, edge.target);
+      });
+      dagre.layout(dagreGraph);
+
+      return nodes.map((node) => {
+        const layout = dagreGraph.node(node.id);
+        if (layout) {
+          const newNode = {
+            ...node,
+            position: {
+              x: layout.x - layout.width / 2,
+              y: layout.y - layout.height / 2,
+            },
+          };
+          return newNode;
+        }
+        return node;
+      });
+    });
+  };
+
   return (
     <>
       <ReactFlow
@@ -1049,14 +1126,16 @@ export const Flow = () => {
             background: layers[currentLayer].color,
           }}
         />
+
         <Panel position="top-left">
           <FolderSelectButton onFolderSelected={onFolderSelected} />
           <Button variant="contained" color="primary" onClick={createFunction}>
             New function
           </Button>
-          <Button variant="contained" color="primary" onClick={createCodeNode}>
-            New code
+          <Button variant="contained" color="primary" onClick={layoutNodes}>
+            LayoutNodes
           </Button>
+
           <BasicTree flatFiles={flatFiles} onFileSelected={onFileSelected} />
         </Panel>
         <Panel position="top-right">

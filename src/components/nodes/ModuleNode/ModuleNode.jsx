@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { NodeResizer, Handle } from 'reactflow';
+import { NodeResizer, Handle } from '@xyflow/react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Pip } from '../../Pip';
 

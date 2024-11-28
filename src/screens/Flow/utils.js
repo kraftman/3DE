@@ -9,7 +9,7 @@ import ReactFlow, {
   Background,
   useReactFlow,
   useUpdateNodeInternals,
-} from 'reactflow';
+} from '@xyflow/react';
 
 import * as ts from 'typescript';
 
