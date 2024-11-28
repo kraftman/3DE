@@ -21,12 +21,11 @@ export const findChildIds = (nodes, parentId) => {
   return children;
 };
 
-export function generateFunctionSignature(
-  functionName,
-  functionType,
-  functionArgs,
-  functionAsync = false // default to false for backward compatibility
+function generateFunctionSignature(
+  frameNodeData // default to false for backward compatibility
 ) {
+  const { functionName, functionType, functionArgs, functionAsync } =
+    frameNodeData;
   const args = functionArgs.join(', ');
   const asyncKeyword = functionAsync ? 'async ' : '';
 
@@ -46,19 +45,12 @@ export function generateFunctionSignature(
 }
 
 export const getFunctionContent = (codeStrings, nodes, parentId) => {
-  const codeNodes = nodes.filter(
+  const frameNodes = nodes.filter(
     (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
   );
-  console.log('found nodes:', codeNodes);
-  codeNodes.forEach((codeNode) => {
-    const { functionName, functionType, functionArgs, functionAsync } =
-      codeNode.data;
-    const signature = generateFunctionSignature(
-      functionName,
-      functionType,
-      functionArgs,
-      functionAsync
-    );
+  console.log('found nodes:', frameNodes);
+  frameNodes.forEach((codeNode) => {
+    const signature = generateFunctionSignature(codeNode.data);
     codeStrings.push(signature);
     codeStrings.push(codeNode.data.content);
     getFunctionContent(codeStrings, nodes, codeNode.id);
