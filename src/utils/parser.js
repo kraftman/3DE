@@ -202,7 +202,6 @@ const getRootLevelCode = (ast) => {
       // Traverse through the body of the program
       path.get('body').each((nodePath) => {
         const node = nodePath.node;
-        console.log('checking node:', nodePath);
 
         // Check if the node matches root-level conditions, excluding imports
         const isRootLevelNode =
@@ -273,8 +272,6 @@ export const parseCode = (code) => {
       rootLevelCode: null,
     };
   }
-  console.log('parsed ast:', ast);
-  console.log('printe d:', recast.print(ast).code);
 
   const imports = getImports(ast);
   const myExports = getExports(ast);

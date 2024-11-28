@@ -432,12 +432,79 @@ export const Flow = () => {
     });
   };
 
-  const openChildren = (localFlatFiles, moduleId) => {
+  const findChildNodes = (nodes, moduleId) => {
+    const childNodes = nodes.filter((node) => node.parentId === moduleId);
+    let foundNodes = [];
+    for (const child of childNodes) {
+      foundNodes.push(child);
+      const children = findChildNodes(nodes, child.id);
+      //console.log('found children:', children);
+      foundNodes = foundNodes.concat(children);
+    }
+    //console.log('found nodes  after :', childNodes);
+    return foundNodes;
+  };
+
+  const toggleChildren = (localFlatFiles, moduleId, showChildren) => {
     // later need to make sure the children arent already open
+    if (showChildren) {
+      setNodes((nodes) => {
+        const childModules = nodes.filter(
+          (node) => node.parentId === moduleId && node.type === 'module'
+        );
+        let foundNodes = [];
+        for (const child of childModules) {
+          foundNodes.push(child);
+          const children = findChildNodes(nodes, child.id);
+          foundNodes = foundNodes.concat(children);
+        }
+
+        const foundNodeIds = foundNodes.map((node) => node.id);
+
+        const newNodes = nodes.map((node) => {
+          if (node.id === moduleId) {
+            return {
+              ...node,
+              data: { ...node.data, showChildren: false },
+            };
+          }
+          if (foundNodeIds.includes(node.id)) {
+            return {
+              ...node,
+              hidden: true,
+            };
+          }
+          return node;
+        });
+        return newNodes;
+        //return newNodes.filter((node) => !foundNodeIds.includes(node.id));
+      });
+      return;
+    }
+
     setNodes((nodes) => {
+      // need to only create new ones if they dont already exist
       const newNodes = getChildNodes(nodes, moduleId, localFlatFiles);
-      console.log('newNodes', newNodes);
-      return newNodes;
+      const children = findChildNodes(nodes, moduleId);
+      const childIds = children.map((child) => child.id);
+      const newNewNodes = newNodes.map((node) => {
+        if (node.type === 'module' && node.id === moduleId) {
+          //console.log('found module node:', node);
+          return {
+            ...node,
+            data: { ...node.data, showChildren: true },
+          };
+        }
+        if (childIds.includes(node.id)) {
+          return {
+            ...node,
+            hidden: false,
+          };
+        }
+        return node;
+      });
+
+      return newNewNodes;
     });
   };
 
@@ -462,7 +529,7 @@ export const Flow = () => {
           toggleHideChildren={toggleHideChildren}
           toggleHideEdges={toggleHideEdges}
           onClose={onModuleClose}
-          openChildren={openChildren}
+          toggleChildren={toggleChildren}
           {...props}
         />
       ),
@@ -778,7 +845,7 @@ export const Flow = () => {
         y: event.clientY,
       });
 
-      const newNodes = getNodesForFile(fullPath, fileContents, newPos);
+      const newNodes = getNodesForFile(fullPath, fileContents, newPos, null);
       console.log('newNodes', newNodes);
       setNodes((nodes) => nodes.concat(newNodes));
     },

@@ -298,7 +298,16 @@ export const getModuleNodes = (parsed) => {
     }
   }
 
-  const moduleHandles = parsed.imports.map((imp, index) => {
+  const imports = parsed.imports.map((imp) => {
+    const path = imp.moduleSpecifier;
+    const isLocal = path.startsWith('.') || path.startsWith('/');
+    return {
+      ...imp,
+      importType: isLocal ? 'local' : 'module',
+    };
+  });
+
+  const moduleHandles = imports.map((imp, index) => {
     return {
       moduleId: newModuleId,
       parentId: newModuleId,
@@ -311,6 +320,7 @@ export const getModuleNodes = (parsed) => {
       style: {
         top: 100 + 30 * index,
         right: -50,
+        borderColor: imp.importType === 'local' ? 'blue' : 'green',
       },
       data: {
         name: imp.name,
@@ -327,7 +337,7 @@ export const getModuleNodes = (parsed) => {
     id: newModuleId,
     data: {
       exports: parsed.exports,
-      imports: parsed.imports,
+      imports: imports,
       handles: moduleHandles,
       moduleId: newModuleId,
     },

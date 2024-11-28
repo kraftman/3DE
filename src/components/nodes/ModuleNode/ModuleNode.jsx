@@ -86,8 +86,12 @@ export const ModuleNode = (props) => {
     props.toggleHideChildren(props.data.moduleId);
   };
 
-  const openChildren = () => {
-    props.openChildren(flatFiles, props.data.moduleId);
+  const toggleChildren = (value, value2) => {
+    props.toggleChildren(
+      flatFiles,
+      props.data.moduleId,
+      props.data.showChildren
+    );
   };
 
   return (
@@ -109,7 +113,8 @@ export const ModuleNode = (props) => {
           toggleHidden={toggleHidden}
           settings={settings}
           handleToggle={handleToggle}
-          openChildren={openChildren}
+          toggleChildren={toggleChildren}
+          showChildren={data.showChildren}
         />
         {data.showRaw && (
           <div className="editor-container">

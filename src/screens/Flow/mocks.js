@@ -52,7 +52,7 @@ export const myfunction2 = () => {
 }
 
 const privateFunction = () => {
-  return 'meep';
+  return 'meep'; 
 }
 
 `;
@@ -74,13 +74,13 @@ const Page = async ({ params }) => {
   );
 };
 
-export default Page;
+export default Page; 
 
 
 `;
 
 export const mockModuleold = `
-import { something
+import { something 
  } from './module';
       import DefaultExport from './module2.js';
 // comment

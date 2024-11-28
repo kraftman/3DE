@@ -10,8 +10,10 @@ export const TopBar = ({
   toggleHidden,
   settings,
   handleToggle,
-  openChildren,
+  toggleChildren,
+  showChildren,
 }) => {
+  const toggleChildrenValue = showChildren ? 'showChildren' : 'hideChildren';
   return (
     <div>
       <ToggleButtonGroup
@@ -39,16 +41,15 @@ export const TopBar = ({
           <CommitIcon fontSize="small" />
         </ToggleButton>
       </ToggleButtonGroup>
-      <ToggleButtonGroup
-        // value={settings}
-        onChange={openChildren}
-        size="small"
-        aria-label="text alignment"
+
+      <ToggleButton
+        value="check"
+        aria-label="justified"
+        selected={showChildren}
+        onChange={toggleChildren}
       >
-        <ToggleButton value="showEdges" aria-label="justified">
-          <ReadMoreIcon fontSize="small" />
-        </ToggleButton>
-      </ToggleButtonGroup>
+        <ReadMoreIcon fontSize="small" />
+      </ToggleButton>
     </div>
   );
 };
