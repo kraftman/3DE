@@ -94,6 +94,11 @@ export const ModuleNode = (props) => {
     );
   };
 
+  const layoutChildren = () => {
+    console.log('layout children with ', props.data.moduleId);
+    props.layoutChildren(props.data.moduleId);
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <div
@@ -115,6 +120,7 @@ export const ModuleNode = (props) => {
           handleToggle={handleToggle}
           toggleChildren={toggleChildren}
           showChildren={data.showChildren}
+          layoutChildren={layoutChildren}
         />
         {data.showRaw && (
           <div className="editor-container">

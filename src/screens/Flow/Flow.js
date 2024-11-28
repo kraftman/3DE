@@ -593,6 +593,7 @@ export const Flow = () => {
           toggleHideEdges={toggleHideEdges}
           onClose={onModuleClose}
           toggleChildren={toggleChildren}
+          layoutChildren={layoutNodes}
           {...props}
         />
       ),
@@ -1090,7 +1091,8 @@ export const Flow = () => {
     // });
   };
 
-  const layoutNodes = () => {
+  const layoutNodes = (parentId) => {
+    console.log('layout nodes ', parentId);
     setNodes((nodes) => {
       // need to get all the current modules
       // find their width and height
@@ -1105,11 +1107,18 @@ export const Flow = () => {
       const edges = findModuleEdges(moduleNodes);
 
       moduleNodes.forEach((moduleNode) => {
-        console.log(
-          'moduleNodesize:',
-          moduleNode.data.width,
-          moduleNode.data.height
-        );
+        if (parentId && moduleNode.id === parentId) {
+          console.log('parent node y:', moduleNode.position.y);
+          dagreGraph.setNode(moduleNode.id, {
+            width: moduleNode.data.width + 40,
+            height: moduleNode.data.height,
+            x: moduleNode.position.x,
+            y: moduleNode.position.y,
+            fixed: true,
+          });
+          return;
+        }
+
         dagreGraph.setNode(moduleNode.id, {
           width: moduleNode.data.width + 40,
           height: moduleNode.data.height,
@@ -1117,14 +1126,30 @@ export const Flow = () => {
       });
 
       edges.forEach((edge) => {
+        console.log('adding edge', edge);
         dagreGraph.setEdge(edge.source, edge.target);
       });
       dagre.layout(dagreGraph);
 
+      const graphState = {
+        graph: dagreGraph.graph(), // Global graph attributes
+        nodes: dagreGraph.nodes().map((nodeId) => ({
+          id: nodeId,
+          data: dagreGraph.node(nodeId), // Node attributes like position, size
+        })),
+        edges: dagreGraph.edges().map((edgeObj) => ({
+          source: edgeObj.v,
+          target: edgeObj.w,
+          data: dagreGraph.edge(edgeObj), // Edge attributes like weight, label
+        })),
+      };
+
+      // Log the entire state for debugging
+      console.log(JSON.stringify(graphState, null, 2));
+
       return nodes.map((node) => {
         const layout = dagreGraph.node(node.id);
         if (layout) {
-          console.log('layout:', layout);
           const newNode = {
             ...node,
             position: {
@@ -1171,9 +1196,9 @@ export const Flow = () => {
           <Button variant="contained" color="primary" onClick={createFunction}>
             New function
           </Button>
-          <Button variant="contained" color="primary" onClick={layoutNodes}>
+          {/* <Button variant="contained" color="primary" onClick={layoutNodes}>
             LayoutNodes
-          </Button>
+          </Button> */}
 
           <BasicTree flatFiles={flatFiles} onFileSelected={onFileSelected} />
         </Panel>

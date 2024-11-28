@@ -4,6 +4,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import CommitIcon from '@mui/icons-material/Commit';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import PolylineIcon from '@mui/icons-material/Polyline';
+import { Dashboard } from '@mui/icons-material';
 
 export const TopBar = ({
   showRaw,
@@ -12,6 +13,7 @@ export const TopBar = ({
   handleToggle,
   toggleChildren,
   showChildren,
+  layoutChildren,
 }) => {
   const toggleChildrenValue = showChildren ? 'showChildren' : 'hideChildren';
   return (
@@ -41,6 +43,14 @@ export const TopBar = ({
           <CommitIcon fontSize="small" />
         </ToggleButton>
       </ToggleButtonGroup>
+
+      <ToggleButton
+        value="check"
+        aria-label="justified"
+        onChange={layoutChildren}
+      >
+        <Dashboard fontSize="small" />
+      </ToggleButton>
 
       <ToggleButton
         value="check"
