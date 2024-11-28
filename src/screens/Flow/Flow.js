@@ -64,7 +64,7 @@ import { useFileSystem } from '../../contexts/FileSystemContext';
 
 import {
   getModuleNodes,
-  findChildren,
+  findChildIds,
   getRaw,
   getFunctionContent,
   getImportHandles,
@@ -337,7 +337,7 @@ export const Flow = () => {
 
   const toggleHideEdges = (nodeId, hideEdges) => {
     setNodes((nodes) => {
-      const childIds = findChildren(nodes, nodeId);
+      const childIds = findChildIds(nodes, nodeId);
 
       setEdges((edges) => {
         const newEdges = edges.map((edge) => {
@@ -621,13 +621,11 @@ export const Flow = () => {
       return;
     }
 
-    const { functionName, functionType, functionArgs } = functionNode.data;
-    console.log('functioninfo', functionNode.data);
-    console.log('all nodes', nodes);
+    const { functionName } = functionNode.data;
+
     const lines = [];
     getFunctionContent(lines, nodes, functionNode.parentId);
     const finalContent = lines.join('\n');
-    console.log('final content:', finalContent);
 
     const parentPath = parentModule.data.fullPath;
     const parentDir = path.dirname(parentPath);
@@ -658,7 +656,12 @@ export const Flow = () => {
         newPosition,
         functionNode.data.moduleId
       );
-      nodes = nodes.filter((node) => node.id !== functionNode.id);
+
+      const childNodeIds = findChildIds(nodes, functionNode.id);
+
+      childNodeIds.push(functionNode.id);
+      nodes = nodes.filter((node) => !childNodeIds.includes(node.id));
+      console.log('after filter:', nodes);
       nodes = nodes.map((node) => {
         if (node.id === functionNode.data.moduleId) {
           const newImport = {

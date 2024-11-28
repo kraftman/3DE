@@ -10,13 +10,13 @@ import { getEditorSize } from './codeUtils.js';
 
 import path from 'path-browserify';
 
-export const findChildren = (nodes, parentId) => {
+export const findChildIds = (nodes, parentId) => {
   //rucursively find children from nodes and add to a flat array of children
   let children = [];
   const foundChildren = nodes.filter((node) => node.parentId === parentId);
   foundChildren.forEach((child) => {
     children.push(child.id);
-    children = children.concat(findChildren(nodes, child.id));
+    children = children.concat(findChildIds(nodes, child.id));
   });
   return children;
 };
@@ -249,8 +249,8 @@ export const getModuleNodes = (parsed, fullPath) => {
   const children = [];
   let allHandles = [];
 
-  let moduleWidth = 200;
-  let moduleHeight = 200;
+  let moduleWidth = 100;
+  let moduleHeight = 100;
 
   for (let i = maxDepth; i >= 0; i--) {
     const functionsAtDepth = parsed.flatFunctions.filter(

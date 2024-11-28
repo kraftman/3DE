@@ -21,7 +21,7 @@ const codeNodeStyle = {
 
 export const CodeNode = ({ id, functionId, moduleId, data, onTextChange }) => {
   const editorRef = useRef(null);
-  const text = data.content || 'test string';
+  const text = data.content || '<no root content> ';
 
   //TODOO split apart saving and updating the saved data
   // so that debounce only applies to saving/formatting
