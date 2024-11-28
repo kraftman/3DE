@@ -39,24 +39,6 @@ const handleTextStyle = {
   textAlign: 'center', // Centers text within the box
 };
 
-const handleNoImportStyle = {
-  position: 'absolute', // Absolute positioning to center the text on the handle
-  top: '50%', // Center vertically
-  left: '50%', // Center horizontally
-  transform: 'translate(-50%, 5px)', // Align the text perfectly at the center
-  fontSize: '10px',
-  color: 'white',
-  backgroundColor: 'black',
-  border: '1px solid grey', // Adds the border
-  padding: '2px 2px', // Adds padding to make the border look better
-  boxSizing: 'border-box', // Ensures padding doesn't increase the element size
-  borderRadius: '4px',
-  whiteSpace: 'nowrap', // Prevents text wrapping
-  textAlign: 'center', // Centers text within the box
-};
-
-const handleWrapper = {};
-
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -110,8 +92,6 @@ export const ModuleNode = (props) => {
         </Handle>
       );
     }
-
-    console.log('could not find file for import', handle.data.fullPath);
 
     return (
       <button

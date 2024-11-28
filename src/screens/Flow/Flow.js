@@ -77,7 +77,10 @@ import { getNodesForFile } from '../../utils/getNodesForFile.js';
 import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
 import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
 
-import { getChildNodes } from '../../utils/getChildNodes.js';
+import {
+  hideModuleChildren,
+  showModuleChildren,
+} from '../../utils/moduleUtils.js';
 
 export const Flow = () => {
   const {
@@ -437,19 +440,6 @@ export const Flow = () => {
     });
   };
 
-  const findChildNodes = (nodes, moduleId) => {
-    const childNodes = nodes.filter((node) => node.parentId === moduleId);
-    let foundNodes = [];
-    for (const child of childNodes) {
-      foundNodes.push(child);
-      const children = findChildNodes(nodes, child.id);
-      //console.log('found children:', children);
-      foundNodes = foundNodes.concat(children);
-    }
-    //console.log('found nodes  after :', childNodes);
-    return foundNodes;
-  };
-
   const findModuleEdges = (moduleNodes) => {
     const edges = [];
     moduleNodes.forEach((moduleNode) => {
@@ -479,95 +469,20 @@ export const Flow = () => {
     return edges;
   };
 
-  const findHandleEdges = (moduleNodes) => {
-    const edges = [];
-    moduleNodes.forEach((moduleNode) => {
-      // for each import, check if there is a module with the path
-      moduleNode.data.imports.forEach((imp) => {
-        const targetModule = moduleNodes.find(
-          (node) =>
-            node.data.fullPath === imp.fullPath + '.js' ||
-            node.data.fullPath === imp.fullPath + '.ts' ||
-            node.data.fullPath === imp.fullPath + '.tsx' ||
-            node.data.fullPath === imp.fullPath + '.jsx'
-        );
-        if (targetModule) {
-          edges.push({
-            id: `${moduleNode.id}-${targetModule.id}}-${imp.name}`,
-            source: moduleNode.id,
-            target: targetModule.id,
-            targetHandle: targetModule.id + '-handle',
-            sourceHandle: imp.name + ':out',
-          });
-        }
-      });
-    });
-    return edges;
-  };
-
   const toggleChildren = (localFlatFiles, moduleId, showChildren) => {
     // later need to make sure the children arent already open
     if (showChildren) {
-      setNodes((nodes) => {
-        const childModules = nodes.filter(
-          (node) => node.parentId === moduleId && node.type === 'module'
-        );
-        let foundNodes = [];
-        for (const child of childModules) {
-          foundNodes.push(child);
-          const children = findChildNodes(nodes, child.id);
-          foundNodes = foundNodes.concat(children);
-        }
-
-        const foundNodeIds = foundNodes.map((node) => node.id);
-
-        const newNodes = nodes.map((node) => {
-          if (node.id === moduleId) {
-            return {
-              ...node,
-              data: { ...node.data, showChildren: false },
-            };
-          }
-          if (foundNodeIds.includes(node.id)) {
-            return {
-              ...node,
-              hidden: true,
-            };
-          }
-          return node;
-        });
-        return newNodes;
-        //return newNodes.filter((node) => !foundNodeIds.includes(node.id));
-      });
-      return;
+      return setNodes((nodes) => hideModuleChildren(nodes, moduleId));
     }
 
     setNodes((nodes) => {
-      // need to only create new ones if they dont already exist
-      const newNodes = getChildNodes(nodes, moduleId, localFlatFiles);
-      const children = findChildNodes(nodes, moduleId);
-      const childIds = children.map((child) => child.id);
-      const newNewNodes = newNodes.map((node) => {
-        if (node.type === 'module' && node.id === moduleId) {
-          //console.log('found module node:', node);
-          return {
-            ...node,
-            data: { ...node.data, showChildren: true },
-          };
-        }
-        if (childIds.includes(node.id)) {
-          return {
-            ...node,
-            hidden: false,
-          };
-        }
-        return node;
-      });
-      const newModules = newNewNodes.filter((node) => node.type === 'module');
-      const newEdges = findHandleEdges(newModules);
+      const { newNodes, newEdges } = showModuleChildren(
+        nodes,
+        moduleId,
+        localFlatFiles
+      );
       setEdges(newEdges);
-
-      return newNewNodes;
+      return newNodes;
     });
   };
 
@@ -597,8 +512,8 @@ export const Flow = () => {
         (node) => node.id === moduleId && node.type === 'module'
       );
       const newPosition = {
-        x: parentModule.position.x + parentModule.data.width + 100,
-        y: parentModule.position.y,
+        x: parentModule.data.width + 100,
+        y: 0,
       };
       const newNodes = getNodesForFile(fullPath, '', newPosition, moduleId);
       return nodes.concat(newNodes);

@@ -213,8 +213,8 @@ export const getModuleNodes = (parsed, fullPath) => {
   const children = [];
   let allHandles = [];
 
-  let moduleWidth = 0;
-  let moduleHeight = 0;
+  let moduleWidth = 200;
+  let moduleHeight = 200;
 
   for (let i = maxDepth; i >= 0; i--) {
     const functionsAtDepth = parsed.flatFunctions.filter(
@@ -313,12 +313,13 @@ export const getModuleNodes = (parsed, fullPath) => {
   });
 
   const moduleHandles = imports.map((imp, index) => {
+    console.log('making handle for import:', imp.name);
     return {
       moduleId: newModuleId,
       parentId: newModuleId,
       funcName: imp.name,
       refType: 'import',
-      id: imp.name + ':out',
+      id: newModuleId + '-' + imp.name + ':out',
       key: imp.name + ':out',
       type: 'source',
       position: 'right',
