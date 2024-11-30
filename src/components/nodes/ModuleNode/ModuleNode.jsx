@@ -57,20 +57,26 @@ import { useLayer } from '../../../hooks/useLayer';
 
 export const ModuleNode = ({
   id,
-  onClose,
+
   layoutChildren,
   toggleHideEdges,
   createMissingImport,
-  toggleHideChildren,
   toggleChildren,
 }) => {
   //const data = props.data;
 
   const [settings, setSettings] = useState([]);
   const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
-  const { getNodeById } = useLayer();
+  const { getNodeById, toggleHideImmediateChildren, onModuleClose } =
+    useLayer();
+  const editorRef = useRef(null);
 
   const node = getNodeById(id);
+  if (!node) {
+    console.error('could not find node with id', id);
+    return null;
+  }
+
   const data = node.data;
 
   // Toggle button state
@@ -132,8 +138,7 @@ export const ModuleNode = ({
     );
   };
 
-  const editorRef = useRef(null);
-  const allHandles = data.handles.map((handle, index) => {
+  const allHandles = data?.handles.map((handle, index) => {
     if (handle.refType === 'import') {
       return getImportHandles(handle);
     }
@@ -152,7 +157,7 @@ export const ModuleNode = ({
   });
 
   const toggleHidden = () => {
-    toggleHideChildren(data.moduleId);
+    toggleHideImmediateChildren(data.moduleId);
   };
 
   const toggleChildrenInternal = (value, value2) => {
@@ -172,7 +177,7 @@ export const ModuleNode = ({
       >
         <div className="pip-container">
           <Pip
-            onClick={() => onClose(data.moduleId)}
+            onClick={() => onModuleClose(data.moduleId)}
             targetTooltip="saved-tooltip"
             tooltipContent={'close'}
             status="error"

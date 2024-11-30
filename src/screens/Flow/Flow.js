@@ -348,15 +348,6 @@ export const Flow = () => {
     });
   };
 
-  const onModuleClose = (moduleId) => {
-    setNodes((nodes) => {
-      const nonModuleNodes = nodes.filter(
-        (node) => node.data.moduleId !== moduleId
-      );
-      return nonModuleNodes;
-    });
-  };
-
   const findModuleEdges = (moduleNodes) => {
     const edges = [];
     moduleNodes.forEach((moduleNode) => {
@@ -445,9 +436,7 @@ export const Flow = () => {
       ),
       module: (props) => (
         <ModuleNode
-          toggleHideChildren={toggleHideImmediateChildren}
           toggleHideEdges={toggleHideEdges}
-          onClose={onModuleClose}
           toggleChildren={toggleChildren}
           layoutChildren={layoutNodes}
           createMissingImport={createMissingImport}
