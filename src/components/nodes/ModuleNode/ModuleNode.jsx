@@ -55,12 +55,7 @@ const darkTheme = createTheme({
 
 import { useLayer } from '../../../hooks/useLayer';
 
-export const ModuleNode = ({
-  id,
-  layoutChildren,
-  toggleHideEdges,
-  toggleChildren,
-}) => {
+export const ModuleNode = ({ id, toggleHideEdges, toggleChildren }) => {
   //const data = props.data;
 
   const [settings, setSettings] = useState([]);
@@ -70,6 +65,7 @@ export const ModuleNode = ({
     onModuleClose,
     flatFiles,
     createMissingImport,
+    layoutNodes,
   } = useLayer();
   const editorRef = useRef(null);
 
@@ -168,7 +164,7 @@ export const ModuleNode = ({
 
   const layoutChildrenInternal = () => {
     console.log('layout children with ', data.moduleId);
-    layoutChildren(data.moduleId);
+    layoutNodes(data.moduleId);
   };
 
   return (
