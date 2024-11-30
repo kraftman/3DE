@@ -54,7 +54,7 @@ import { SearchBar } from '../../components/SearchBar';
 
 import { getNewEdges, getNewNodeId, isValidCode } from './utils';
 import { useFileSystem } from '../../contexts/FileSystemContext';
-
+import { useStore } from '../../contexts/useStore.js';
 import {
   getModuleNodes,
   findChildIds,
@@ -99,7 +99,7 @@ export const Flow = () => {
 
   const updateNodeInternals = useUpdateNodeInternals();
 
-  const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useFileSystem();
+  const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useStore();
 
   const loadModules = () => {
     // parse the module into an AST, getting the exports, the imports, the root level declarations,
@@ -394,39 +394,6 @@ export const Flow = () => {
     });
   };
 
-  const createMissingImport = (moduleId, importPath) => {
-    // we dont know the extension so assume js for now
-    const fullPath = importPath + '.js';
-    if (flatFiles[fullPath]) {
-      return;
-    }
-    const newFile = {
-      index: fullPath,
-      children: [],
-      data: fullPath,
-      fileData: '',
-      isFolder: false,
-    };
-    setFlatFiles((files) => {
-      const newFiles = {
-        ...files,
-        [fullPath]: newFile,
-      };
-      return newFiles;
-    });
-
-    setNodes((nodes) => {
-      const parentModule = nodes.find(
-        (node) => node.id === moduleId && node.type === 'module'
-      );
-      const newPosition = {
-        x: parentModule.data.width + 100,
-        y: 0,
-      };
-      const newNodes = getNodesForFile(fullPath, '', newPosition, moduleId);
-      return nodes.concat(newNodes);
-    });
-  };
   const nodeTypes = useMemo(
     () => ({
       text: (props) => <TextNode {...props} />,
@@ -439,7 +406,6 @@ export const Flow = () => {
           toggleHideEdges={toggleHideEdges}
           toggleChildren={toggleChildren}
           layoutChildren={layoutNodes}
-          createMissingImport={createMissingImport}
           {...props}
         />
       ),

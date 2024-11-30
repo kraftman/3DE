@@ -57,18 +57,20 @@ import { useLayer } from '../../../hooks/useLayer';
 
 export const ModuleNode = ({
   id,
-
   layoutChildren,
   toggleHideEdges,
-  createMissingImport,
   toggleChildren,
 }) => {
   //const data = props.data;
 
   const [settings, setSettings] = useState([]);
-  const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
-  const { getNodeById, toggleHideImmediateChildren, onModuleClose } =
-    useLayer();
+  const {
+    getNodeById,
+    toggleHideImmediateChildren,
+    onModuleClose,
+    flatFiles,
+    createMissingImport,
+  } = useLayer();
   const editorRef = useRef(null);
 
   const node = getNodeById(id);

@@ -1,6 +1,8 @@
 import { useStore } from '../contexts/useStore'; // adjust the import path as needed
 import { getRaw } from '../utils/nodeUtils';
 
+import { getNodesForFile } from '../utils/getNodesForFile.js';
+
 export const useLayer = () => {
   const store = useStore();
 
@@ -40,6 +42,40 @@ export const useLayer = () => {
     });
   };
 
+  const createMissingImport = (moduleId, importPath) => {
+    // we dont know the extension so assume js for now
+    const fullPath = importPath + '.js';
+    if (store.flatFiles[fullPath]) {
+      return;
+    }
+    const newFile = {
+      index: fullPath,
+      children: [],
+      data: fullPath,
+      fileData: '',
+      isFolder: false,
+    };
+    store.setFlatFiles((files) => {
+      const newFiles = {
+        ...files,
+        [fullPath]: newFile,
+      };
+      return newFiles;
+    });
+
+    store.setNodes((nodes) => {
+      const parentModule = nodes.find(
+        (node) => node.id === moduleId && node.type === 'module'
+      );
+      const newPosition = {
+        x: parentModule.data.width + 100,
+        y: 0,
+      };
+      const newNodes = getNodesForFile(fullPath, '', newPosition, moduleId);
+      return nodes.concat(newNodes);
+    });
+  };
+
   const onModuleClose = (moduleId) => {
     store.setNodes((nodes) => {
       const nonModuleNodes = nodes.filter(
@@ -57,5 +93,6 @@ export const useLayer = () => {
       store.layers[store.currentLayer]?.nodes.find((node) => node.id === id),
     toggleHideImmediateChildren,
     onModuleClose,
+    createMissingImport,
   };
 };
