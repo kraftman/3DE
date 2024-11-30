@@ -41,7 +41,7 @@ import './updatenode.css';
 import path from 'path-browserify';
 
 import { SnackbarProvider, enqueueSnackbar } from 'notistack';
-import { useLayer } from './useLayer';
+import { useLayer } from '../../hooks/useLayer.js';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -52,14 +52,7 @@ import {
 
 import { SearchBar } from '../../components/SearchBar';
 
-import { removeTextChunk, insertTextChunk } from '../../components/editorUtils';
-
-import {
-  createSelectionHandle,
-  getNewEdges,
-  getNewNodeId,
-  isValidCode,
-} from './utils';
+import { getNewEdges, getNewNodeId, isValidCode } from './utils';
 import { useFileSystem } from '../../contexts/FileSystemContext';
 
 import {
@@ -75,8 +68,6 @@ import { parseCode } from '../../utils/parser';
 import { mockModule } from './mocks.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
-
-import { loadSession, saveSession } from '../../electronHelpers.js';
 
 import { getNodesForFile } from '../../utils/getNodesForFile.js';
 
@@ -119,9 +110,11 @@ export const Flow = () => {
       const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
 
       const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
+
       setNodes((nodes) => {
         return nodes.concat(allNodes);
       });
+      console.log('added nodes', allNodes);
 
       setEdges((edges) => {
         return edges.concat(newEdges);
@@ -1053,6 +1046,7 @@ export const Flow = () => {
     });
   };
 
+  console.log('nodes', nodes);
   return (
     <>
       <ReactFlow

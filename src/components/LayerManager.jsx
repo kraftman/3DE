@@ -7,7 +7,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 
 import { ChromePicker } from 'react-color';
-import { useLayer } from '../screens/Flow/useLayer';
+import { useLayer } from '../hooks/useLayer';
 
 const lightenColor = (color, percent) => {
   let r, g, b, a;

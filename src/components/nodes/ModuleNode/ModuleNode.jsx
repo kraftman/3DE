@@ -6,19 +6,16 @@ import { Pip } from '../../Pip';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import CodeIcon from '@mui/icons-material/Code';
-import CommitIcon from '@mui/icons-material/Commit';
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
 
 import { useState } from 'react';
-import { IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import PolylineIcon from '@mui/icons-material/Polyline';
 
 import { useFileSystem } from '../../../contexts/FileSystemContext';
 
 import { findFileForImport } from '../../../utils/fileUtils';
 
 import { TopBar } from './TopBar';
+
+import { useStore } from '../../../contexts/useStore';
 
 loader.config({ monaco });
 
@@ -56,17 +53,30 @@ const darkTheme = createTheme({
   },
 });
 
-export const ModuleNode = (props) => {
-  const data = props.data;
+import { useLayer } from '../../../hooks/useLayer';
+
+export const ModuleNode = ({
+  id,
+  onClose,
+  layoutChildren,
+  toggleHideEdges,
+  createMissingImport,
+  toggleHideChildren,
+  toggleChildren,
+}) => {
+  //const data = props.data;
 
   const [settings, setSettings] = useState([]);
   const { flatFiles, rootPath, loadFileSystem } = useFileSystem();
+  const { getNodeById } = useLayer();
+
+  const node = getNodeById(id);
+  const data = node.data;
 
   // Toggle button state
   const handleToggle = (event, newSettings) => {
     setSettings((oldSettings) => {
-      props.toggleHideEdges(props.id, newSettings.showEdges);
-
+      toggleHideEdges(id, newSettings.showEdges);
       return newSettings;
     });
   };
@@ -96,7 +106,7 @@ export const ModuleNode = (props) => {
     return (
       <button
         onClick={() => {
-          props.createMissingImport(data.moduleId, handle.data.fullPath);
+          createMissingImport(data.moduleId, handle.data.fullPath);
         }}
         key={handle.key}
         style={{
@@ -142,20 +152,16 @@ export const ModuleNode = (props) => {
   });
 
   const toggleHidden = () => {
-    props.toggleHideChildren(props.data.moduleId);
+    toggleHideChildren(data.moduleId);
   };
 
-  const toggleChildren = (value, value2) => {
-    props.toggleChildren(
-      flatFiles,
-      props.data.moduleId,
-      props.data.showChildren
-    );
+  const toggleChildrenInternal = (value, value2) => {
+    toggleChildren(flatFiles, data.moduleId, data.showChildren);
   };
 
-  const layoutChildren = () => {
-    console.log('layout children with ', props.data.moduleId);
-    props.layoutChildren(props.data.moduleId);
+  const layoutChildrenInternal = () => {
+    console.log('layout children with ', data.moduleId);
+    layoutChildren(data.moduleId);
   };
 
   return (
@@ -166,7 +172,7 @@ export const ModuleNode = (props) => {
       >
         <div className="pip-container">
           <Pip
-            onClick={() => props.onClose(data.moduleId)}
+            onClick={() => onClose(data.moduleId)}
             targetTooltip="saved-tooltip"
             tooltipContent={'close'}
             status="error"
@@ -177,9 +183,9 @@ export const ModuleNode = (props) => {
           toggleHidden={toggleHidden}
           settings={settings}
           handleToggle={handleToggle}
-          toggleChildren={toggleChildren}
+          toggleChildren={toggleChildrenInternal}
           showChildren={data.showChildren}
-          layoutChildren={layoutChildren}
+          layoutChildren={layoutChildrenInternal}
         />
         {data.showRaw && (
           <div className="editor-container">
@@ -208,7 +214,7 @@ export const ModuleNode = (props) => {
           </div>
         )}
       </div>
-      <Handle type="source" position={'left'} id={props.id + '-handle'} />
+      <Handle type="source" position={'left'} id={id + '-handle'} />
       {allHandles}
     </ThemeProvider>
   );
