@@ -5,6 +5,7 @@ import {
   getFunctionContent,
   getImportHandles,
 } from '../utils/nodeUtils';
+import { useUpdateNodeInternals } from '@xyflow/react';
 
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import path from 'path-browserify';
@@ -24,13 +25,14 @@ const stripExt = (filename) => {
 
 export const useNodeManager = () => {
   const store = useStore();
+  const updateNodeInternals = useUpdateNodeInternals();
 
   const toggleHideImmediateChildren = (moduleId) => {
     store.setNodes((nodes) => {
       const moduleNodes = nodes.filter(
         (node) => node.data.moduleId === moduleId
       );
-      console.log('found module nodes:', moduleNodes);
+
       const moduleNodeIds = moduleNodes.map((node) => node.id);
 
       const moduleNode = moduleNodes.find(
@@ -52,6 +54,44 @@ export const useNodeManager = () => {
             raw: newRaw,
           };
         }
+        return node;
+      });
+      return newNodes;
+    });
+  };
+
+  const toggleExpandModule = (moduleId) => {
+    store.setNodes((nodes) => {
+      const moduleNode = nodes.find(
+        (node) => node.id === moduleId && node.type === 'module'
+      );
+      const moduleNodes = nodes.filter(
+        (node) => node.data.moduleId === moduleId
+      );
+
+      const moduleNodeIds = moduleNodes.map((node) => node.id);
+
+      const oldHeight = moduleNode.data.height;
+      const newHeight = moduleNode.data.expand ? 100 : oldHeight;
+
+      const newNodes = nodes.map((node) => {
+        if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
+          return {
+            ...node,
+            hidden: !moduleNode.data.expand,
+          };
+        }
+        if (node.type === 'module' && node.id === moduleId) {
+          node.data = {
+            ...node.data,
+            expand: !node.data.expand,
+          };
+          node.style = {
+            ...node.style,
+            height: newHeight + 'px',
+          };
+        }
+        updateNodeInternals(moduleId);
         return node;
       });
       return newNodes;
@@ -201,12 +241,6 @@ export const useNodeManager = () => {
       });
       return nodes.concat(newNodes);
     });
-
-    // remove the function from its parent module
-    // create a new file using the function name in the directory of the parent
-    // check there isnt one already
-    // add the function to the new file as an export
-    // add an import to the parent module
   };
 
   const onNodeDragStop = (event, node) => {
@@ -217,6 +251,7 @@ export const useNodeManager = () => {
 
   return {
     toggleHideImmediateChildren,
+    toggleExpandModule,
     createMissingImport,
     onNodeDragStart,
     onNodeDragStop,

@@ -2,6 +2,9 @@ import React, { useRef } from 'react';
 import { Handle } from '@xyflow/react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Pip } from '../../Pip';
+import { ToggleButton } from '@mui/material';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
@@ -59,8 +62,12 @@ export const ModuleNode = ({ id }) => {
   const [settings, setSettings] = useState([]);
   const { onModuleClose, layoutNodes, toggleChildren, toggleHideEdges } =
     useLayer();
-  const { getNodeById, toggleHideImmediateChildren, createMissingImport } =
-    useNodeManager();
+  const {
+    getNodeById,
+    toggleHideImmediateChildren,
+    createMissingImport,
+    toggleExpandModule,
+  } = useNodeManager();
   const { flatFiles } = useFileManager();
   const editorRef = useRef(null);
 
@@ -162,6 +169,29 @@ export const ModuleNode = ({ id }) => {
     layoutNodes(data.moduleId);
   };
 
+  const toggleExpandModuleInternal = () => {
+    toggleExpandModule(data.moduleId);
+  };
+
+  const expanded = data.expand;
+
+  const ToggleExpand = () => {
+    return (
+      <ToggleButton
+        value="check"
+        aria-label="justified"
+        selected={data.expand}
+        onChange={toggleExpandModuleInternal}
+      >
+        {data.expand ? (
+          <ExpandLessIcon fontSize="small" />
+        ) : (
+          <ExpandMoreIcon fontSize="small" />
+        )}
+      </ToggleButton>
+    );
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <div
@@ -176,16 +206,19 @@ export const ModuleNode = ({ id }) => {
             status="error"
           />
         </div>
-        <TopBar
-          showRaw={data.showRaw}
-          toggleHidden={toggleHidden}
-          settings={settings}
-          handleToggle={handleToggle}
-          toggleChildren={toggleChildrenInternal}
-          showChildren={data.showChildren}
-          layoutChildren={layoutChildrenInternal}
-        />
-        {data.showRaw && (
+        <ToggleExpand />
+        {expanded && (
+          <TopBar
+            showRaw={data.showRaw}
+            toggleHidden={toggleHidden}
+            settings={settings}
+            handleToggle={handleToggle}
+            toggleChildren={toggleChildrenInternal}
+            showChildren={data.showChildren}
+            layoutChildren={layoutChildrenInternal}
+          />
+        )}
+        {data.showRaw && expanded && (
           <div className="editor-container">
             <Editor
               className="editor nodrag"
