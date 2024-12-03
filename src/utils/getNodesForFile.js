@@ -4,9 +4,7 @@ import { getModuleNodes } from './nodeUtils';
 import { v4 as uuid } from 'uuid';
 
 const createCodeNodes = (fileInfo, newPos, parentId) => {
-  const fullPath = fileInfo.index;
-  console.log('fileinfo', fileInfo);
-  const moduleNodes = getModuleNodes(fileInfo, fullPath);
+  const moduleNodes = getModuleNodes(fileInfo);
   const { moduleNode, rootCode, children } = moduleNodes;
   moduleNode.position = newPos;
 

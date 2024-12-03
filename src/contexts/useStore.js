@@ -1,9 +1,4 @@
 import { create } from 'zustand';
-import { loadFolderTree, loadFile } from '../electronHelpers';
-import { flattenFileTree } from '../screens/Flow/utils';
-import { parseCode } from '../utils/parser';
-import { getModuleNodes } from '../utils/nodeUtils';
-import { isCodeFile } from '../utils/fileUtils';
 
 // Zustand Store
 export const useStore = create((set, get) => ({
@@ -66,38 +61,12 @@ export const useStore = create((set, get) => ({
         },
       },
     })),
+  setFlatFiles: (payload) =>
+    set((state) => ({
+      flatFiles:
+        typeof payload === 'function' ? payload(state.flatFiles) : payload,
+    })),
+
   setFolderData: (payload) => set(() => ({ folderData: payload })),
-  setFlatFiles: (payload) => set(() => ({ flatFiles: payload })),
   setRootPath: (payload) => set(() => ({ rootPath: payload })),
-  loadFileSystem: async (newRootPath) => {
-    const { fullRootPath, folderTree } = await loadFolderTree(newRootPath);
-    set(() => ({ rootPath: fullRootPath, folderData: folderTree }));
-    const flatFiles = flattenFileTree(folderTree);
-    console.log('flatFiles', flatFiles);
-
-    for (const [fullPath, fileInfo] of Object.entries(flatFiles)) {
-      try {
-        if (fileInfo.isFolder) {
-          continue;
-        }
-        if (!isCodeFile(fullPath)) {
-          continue;
-        }
-
-        fileInfo.fileData = await loadFile(fullPath);
-        const moduleCode = parseCode(fileInfo.fileData);
-        const { imports, exports, flatFunctions, rootLevelCode } = moduleCode;
-        fileInfo.imports = imports;
-        fileInfo.exports = exports;
-        fileInfo.functions = flatFunctions;
-        fileInfo.rootCode = rootLevelCode;
-
-        fileInfo.savedData = fileInfo.fileData;
-      } catch (error) {
-        console.error('error loading file', fullPath, error);
-      }
-    }
-    set(() => ({ flatFiles }));
-    return fullRootPath;
-  },
 }));

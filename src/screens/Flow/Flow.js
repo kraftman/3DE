@@ -1,27 +1,16 @@
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   MiniMap,
   Panel,
   Controls,
   Background,
-  useReactFlow,
-  useUpdateNodeInternals,
   applyEdgeChanges,
   applyNodeChanges,
 } from '@xyflow/react';
 
 import { Tooltip } from 'react-tooltip';
-
 import '@xyflow/react/dist/style.css';
-
-// or if you just want basic styles
 import '@xyflow/react/dist/base.css';
 import 'react-tooltip/dist/react-tooltip.css';
 import { ModuleNode } from '../../components/nodes/ModuleNode/ModuleNode.jsx';
@@ -29,47 +18,27 @@ import { PureFunctionNode } from '../../components/nodes/PureFunctionNode/PureFu
 import { CodeNode } from '../../components/nodes/CodeNode/CodeNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
 import { ImageNode } from '../../components/nodes/ImageNode';
-
 import { FolderSelectButton } from '../../components/FolderSelectButton';
 import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
-import path from 'path-browserify';
-
-import { SnackbarProvider, enqueueSnackbar } from 'notistack';
+import { SnackbarProvider } from 'notistack';
 import { useLayer } from '../../hooks/useLayer.js';
-
-import {
-  LayerManager,
-  getRandomDarkHexColorWithAlpha,
-} from '../../components/LayerManager';
-
+import { LayerManager } from '../../components/LayerManager';
 import { SearchBar } from '../../components/SearchBar';
-
-import { getNewEdges, getNewNodeId, isValidCode } from './utils';
 import { useStore } from '../../contexts/useStore.js';
-import { getModuleNodes } from '../../utils/nodeUtils.js';
-
-import { parseCode } from '../../utils/parser';
-
-import { mockModule } from './mocks.js';
+import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
+import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
+import { useFileManager } from '../../hooks/useFileManager.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
-import { getNodesForFile } from '../../utils/getNodesForFile.js';
-
-import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
-import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
-
 export const Flow = () => {
   const {
-    setLayers,
-    setCurrentLayer,
     layers,
     setNodes,
     setEdges,
     nodes,
     edges,
-    state: layerState,
     currentLayer,
     onNodeDragStart,
     onNodeDragStop,
@@ -79,32 +48,8 @@ export const Flow = () => {
     shiftLayerDown,
   } = useLayer();
 
-  const { loadFileSystem, setFocusNode, flatFiles } = useStore();
-
-  const loadModules = () => {
-    // for testing
-    try {
-      const fullPath = '/home/chris/marvel-app/src/app/character/[id]/page.tsx';
-      const file = flatFiles[fullPath];
-      console.log('file', file);
-      console.log('flatfiles', flatFiles);
-      const moduleNodes = getModuleNodes(file, fullPath);
-      const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
-
-      const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
-
-      setNodes((nodes) => {
-        return nodes.concat(allNodes);
-      });
-      console.log('added nodes', allNodes);
-
-      setEdges((edges) => {
-        return edges.concat(newEdges);
-      });
-    } catch (e) {
-      console.error('error parsing module:', e);
-    }
-  };
+  const { setFocusNode } = useStore();
+  const { loadFileSystem } = useFileManager();
 
   const addKeyListener = () => {
     const handleKeyDown = async (e) => {

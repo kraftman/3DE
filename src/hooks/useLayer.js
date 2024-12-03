@@ -46,7 +46,24 @@ export const useLayer = () => {
     });
   };
 
-  const onCodeNodeTextChange = (moduleId, functionId, value) => {
+  const onCodeNodeTextChange = (fullPath, functionId, value) => {
+    // update the body of the function
+
+    store.setFlatFiles((files) => {
+      const file = files[fullPath];
+
+      const newFile = {
+        ...file,
+        functions: file.functions.map((func) => {
+          if (func.id === functionId) {
+            func.body = value;
+          }
+          return func;
+        }),
+      };
+      return { ...files, [fullPath]: newFile };
+    });
+
     store.setNodes((nodes) => {
       return nodes.map((node) => {
         if (node.data.functionId === functionId && node.type === 'code') {

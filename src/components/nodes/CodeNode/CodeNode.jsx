@@ -43,7 +43,7 @@ export const CodeNode = ({ id }) => {
   const text = data.content || '<no root content> ';
 
   const onChange = (newText) => {
-    onCodeNodeTextChange(data.moduleId, data.functionId, newText);
+    onCodeNodeTextChange(data.fullPath, data.functionId, newText);
     //debouncedOnChange(newText);
   };
 

@@ -189,10 +189,12 @@ export const getImportHandles = (imports, moduleId) => {
   });
 };
 
-export const getModuleNodes = (parsed, fullPath) => {
+export const getModuleNodes = (parsed) => {
   const maxDepth = parsed.functions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
   }, 0);
+
+  const fullPath = parsed.index;
 
   const newModuleId = uuid();
 
@@ -211,6 +213,7 @@ export const getModuleNodes = (parsed, fullPath) => {
         depth: func.depth,
         functionId: func.id,
         moduleId: newModuleId,
+        fullPath: fullPath,
         frameSize: { ...func.contentSize },
       },
     };
@@ -224,6 +227,7 @@ export const getModuleNodes = (parsed, fullPath) => {
         content: func.body,
         functionId: func.id,
         moduleId: newModuleId,
+        fullPath: fullPath,
       },
       position: {
         x: 10,

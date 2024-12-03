@@ -2,6 +2,10 @@ import { useStore } from '../contexts/useStore';
 import { isValidCode } from '../screens/Flow/utils.js';
 import path from 'path-browserify';
 import { enqueueSnackbar } from 'notistack';
+import { loadFolderTree, loadFile } from '../electronHelpers';
+import { flattenFileTree } from '../screens/Flow/utils';
+import { parseCode } from '../utils/parser';
+import { isCodeFile } from '../utils/fileUtils';
 
 export const useFileManager = () => {
   const store = useStore();
@@ -36,8 +40,43 @@ export const useFileManager = () => {
     });
   };
 
+  const loadFileSystem = async (newRootPath) => {
+    const { fullRootPath, folderTree } = await loadFolderTree(newRootPath);
+    store.setRootPath(fullRootPath);
+    store.setFolderData(folderTree);
+    const flatFiles = flattenFileTree(folderTree);
+    console.log('flatFiles', flatFiles);
+
+    for (const [fullPath, fileInfo] of Object.entries(flatFiles)) {
+      try {
+        if (fileInfo.isFolder) {
+          continue;
+        }
+        if (!isCodeFile(fullPath)) {
+          continue;
+        }
+
+        fileInfo.fileData = await loadFile(fullPath);
+        const moduleCode = parseCode(fileInfo.fileData);
+        const { imports, exports, flatFunctions, rootLevelCode } = moduleCode;
+        fileInfo.imports = imports;
+        fileInfo.exports = exports;
+        fileInfo.functions = flatFunctions;
+        fileInfo.rootCode = rootLevelCode;
+
+        fileInfo.savedData = fileInfo.fileData;
+      } catch (error) {
+        console.error('error loading file', fullPath, error);
+      }
+    }
+    store.setFlatFiles(flatFiles);
+
+    return fullRootPath;
+  };
+
   return {
     flatFiles: store.flatFiles,
     handleSave,
+    loadFileSystem,
   };
 };
