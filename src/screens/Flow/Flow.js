@@ -79,14 +79,16 @@ export const Flow = () => {
     shiftLayerDown,
   } = useLayer();
 
-  const { loadFileSystem, setFocusNode } = useStore();
+  const { loadFileSystem, setFocusNode, flatFiles } = useStore();
 
   const loadModules = () => {
     // for testing
     try {
-      const newModule = parseCode(mockModule);
       const fullPath = '/home/chris/marvel-app/src/app/character/[id]/page.tsx';
-      const moduleNodes = getModuleNodes(newModule, fullPath);
+      const file = flatFiles[fullPath];
+      console.log('file', file);
+      console.log('flatfiles', flatFiles);
+      const moduleNodes = getModuleNodes(file, fullPath);
       const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
 
       const allNodes = [].concat(moduleNode).concat(rootCode).concat(children);
@@ -123,13 +125,16 @@ export const Flow = () => {
   };
 
   useEffect(() => {
-    const loadSessions = async () => {
-      return;
+    const init = async () => {
+      const loadSessions = async () => {
+        return;
+      };
+      loadSessions();
+      await onFolderSelected('/home/chris/marvel-app');
+
+      addKeyListener();
     };
-    loadSessions();
-    loadModules();
-    onFolderSelected('/home/chris/marvel-app');
-    addKeyListener();
+    init();
   }, []);
 
   const onNodeClick = (event, node) => {

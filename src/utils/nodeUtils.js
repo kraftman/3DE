@@ -190,7 +190,7 @@ export const getImportHandles = (imports, moduleId) => {
 };
 
 export const getModuleNodes = (parsed, fullPath) => {
-  const maxDepth = parsed.flatFunctions.reduce((acc, func) => {
+  const maxDepth = parsed.functions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
   }, 0);
 
@@ -424,6 +424,7 @@ export const getModuleNodes = (parsed, fullPath) => {
 
   const sortedChildren = children.reverse();
 
+  // Internal edges, needs moving out
   const edges = getEdges(allHandles);
 
   return {

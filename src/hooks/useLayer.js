@@ -47,20 +47,6 @@ export const useLayer = () => {
   };
 
   const onCodeNodeTextChange = (moduleId, functionId, value) => {
-    store.setModules((modules) => {
-      return modules.map((module) => {
-        if (module.id === moduleId) {
-          module.functions = module.functions.map((func) => {
-            if (func.id === functionId) {
-              func.data.content = value;
-            }
-            return func;
-          });
-        }
-        return module;
-      });
-    });
-
     store.setNodes((nodes) => {
       return nodes.map((node) => {
         if (node.data.functionId === functionId && node.type === 'code') {
