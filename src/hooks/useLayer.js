@@ -50,33 +50,11 @@ export const useLayer = () => {
     store.setNodes((nodes) => {
       return nodes.map((node) => {
         if (node.data.functionId === functionId && node.type === 'code') {
-          console.log('found node:', node);
           node.data = { ...node.data, content: value };
         }
         return node;
       });
     });
-  };
-
-  const onFunctionTextChanged = (functionId, content) => {
-    let foundfunc;
-    store.setFunctions((functions) =>
-      functions.map((func) => {
-        if (func.id === functionId) {
-          func.content = content;
-          foundfunc = func;
-        }
-        return func;
-      })
-    );
-    store.setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.data.functionId === functionId) {
-          node.data = { ...node.data, content, functionName: foundfunc.name };
-        }
-        return node;
-      })
-    );
   };
 
   const onfunctionTitledChanged = (functionId, title) => {
@@ -101,9 +79,7 @@ export const useLayer = () => {
   const onFileSelected = (newPos, fullPath) => {
     const fileInfo = store.flatFiles[fullPath];
 
-    const fileContents = fileInfo.fileData;
-
-    const newNodes = getNodesForFile(fullPath, fileContents, newPos, null);
+    const newNodes = getNodesForFile(fileInfo, newPos, null);
     console.log('newNodes', newNodes);
     store.setNodes((nodes) => nodes.concat(newNodes));
   };
@@ -115,7 +91,6 @@ export const useLayer = () => {
     onModuleClose,
     toggleChildren,
     onCodeNodeTextChange,
-    onFunctionTextChanged,
     onfunctionTitledChanged,
     onFileSelected,
   };

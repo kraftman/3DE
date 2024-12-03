@@ -10,7 +10,7 @@ loader.config({ monaco });
 export const PureFunctionNode = ({ id }) => {
   const editorRef = useRef(null);
 
-  const { onFunctionTextChanged, onfunctionTitledChanged } = useLayer();
+  const { onfunctionTitledChanged } = useLayer();
   const { getNodeById } = useNodeManager();
 
   const node = getNodeById(id);
@@ -22,10 +22,6 @@ export const PureFunctionNode = ({ id }) => {
   const data = node.data;
 
   const text = data.content || '<no root content> ';
-
-  const onChange = (value) => {
-    onFunctionTextChanged(data.functionId, value);
-  };
 
   const onTitleChangeInternal = (value) => {
     onfunctionTitledChanged(data.functionId, value);

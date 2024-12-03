@@ -1,13 +1,13 @@
 const codeExtensions = ['js', 'jsx', 'ts', 'tsx'];
 const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg'];
-import { parseCode } from './parser';
 import { getModuleNodes } from './nodeUtils';
 import { v4 as uuid } from 'uuid';
 
-const createCodeNodes = (fullPath, fileContents, newPos, parentId) => {
-  const moduleCode = parseCode(fileContents);
-  const moduleNodes = getModuleNodes(moduleCode, fullPath);
-  const { moduleNode, rootCode, children, edges: newEdges } = moduleNodes;
+const createCodeNodes = (fileInfo, newPos, parentId) => {
+  const fullPath = fileInfo.index;
+  console.log('fileinfo', fileInfo);
+  const moduleNodes = getModuleNodes(fileInfo, fullPath);
+  const { moduleNode, rootCode, children } = moduleNodes;
   moduleNode.position = newPos;
 
   moduleNode.parentId = parentId;
@@ -69,10 +69,12 @@ const createMarkdownNode = (fullPath, fileContents, newPos) => {
   ];
 };
 
-export const getNodesForFile = (fullPath, fileContents, newPos, parentId) => {
+export const getNodesForFile = (fileInfo, newPos, parentId) => {
+  const fullPath = fileInfo.index;
+  const fileContents = fileInfo.fileData;
   const extension = fullPath.split('.').pop();
   if (codeExtensions.includes(extension)) {
-    const codeNodes = createCodeNodes(fullPath, fileContents, newPos, parentId);
+    const codeNodes = createCodeNodes(fileInfo, newPos, parentId);
     //codeNodes.moduleNode.parentId = parentId;
     return codeNodes;
   }

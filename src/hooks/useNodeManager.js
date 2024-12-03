@@ -70,6 +70,8 @@ export const useNodeManager = () => {
       data: fullPath,
       fileData: '',
       isFolder: false,
+      rootCode: [],
+      functions: [],
     };
     store.setFlatFiles((files) => {
       const newFiles = {
@@ -87,7 +89,7 @@ export const useNodeManager = () => {
         x: parentModule.data.width + 100,
         y: 0,
       };
-      const newNodes = getNodesForFile(fullPath, '', newPosition, moduleId);
+      const newNodes = getNodesForFile(newFile, newPosition, moduleId);
       return nodes.concat(newNodes);
     });
   };

@@ -197,7 +197,7 @@ export const getModuleNodes = (parsed, fullPath) => {
   const newModuleId = uuid();
 
   const nodes = [];
-  parsed.flatFunctions.forEach((func) => {
+  parsed.functions.forEach((func) => {
     const frameNode = {
       id: uuid(),
       type: 'pureFunctionNode',
@@ -245,7 +245,7 @@ export const getModuleNodes = (parsed, fullPath) => {
   let moduleHeight = 100;
 
   for (let i = maxDepth; i >= 0; i--) {
-    const functionsAtDepth = parsed.flatFunctions.filter(
+    const functionsAtDepth = parsed.functions.filter(
       (func) => func.depth === i
     );
     const nodesAtDepth = nodes.filter(
@@ -343,7 +343,7 @@ export const getModuleNodes = (parsed, fullPath) => {
   const moduleHandles = getImportHandles(imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
 
-  const baseSize = getEditorSize(parsed.rootLevelCode.code);
+  const baseSize = getEditorSize(parsed.rootCode.code);
   moduleWidth = Math.max(moduleWidth, baseSize.width);
   moduleHeight = Math.max(moduleHeight, baseSize.height);
 
@@ -369,9 +369,9 @@ export const getModuleNodes = (parsed, fullPath) => {
     },
   };
 
-  const rootSize = getEditorSize(parsed.rootLevelCode.code);
+  const rootSize = getEditorSize(parsed.rootCode.code);
 
-  const importDefinitons = parsed.rootLevelCode.node.body.filter((node) => {
+  const importDefinitons = parsed.rootCode.node.body.filter((node) => {
     return node.type === 'ImportDeclaration';
   });
 
@@ -403,7 +403,7 @@ export const getModuleNodes = (parsed, fullPath) => {
   const rootCode = {
     id: uuid(),
     data: {
-      content: parsed.rootLevelCode.code,
+      content: parsed.rootCode.code,
       imports: parsed.imports,
       exports: parsed.exports,
       handles: importHandles,

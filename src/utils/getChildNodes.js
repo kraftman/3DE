@@ -43,13 +43,7 @@ export const getChildNodes = (nodes, moduleId, localFlatFiles) => {
       y: 0 + offset,
     };
     offset += 200;
-    const myNodes = getNodesForFile(
-      file.index,
-      file.fileData,
-      newPos,
-      moduleId
-    );
-    console.log('new children:', myNodes);
+    const myNodes = getNodesForFile(file, newPos, moduleId);
     nodes = nodes.concat(myNodes);
     myNodes.forEach((node) => {
       if (node.type === 'module') {
