@@ -11,6 +11,14 @@ export const useStore = create((set, get) => ({
   folderData: [],
   flatFiles: {},
   rootPath: '',
+  functions: [],
+  focusNode: null,
+  setFocusNode: (node) => set(() => node),
+  setFunctions: (payload) =>
+    set((state) => ({
+      functions:
+        typeof payload === 'function' ? payload(state.functions) : payload,
+    })),
   setState: (newState) => set(() => newState),
   setLayers: (payload) =>
     set((state) => ({

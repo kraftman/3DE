@@ -18,6 +18,86 @@ let nodeIdCount = 0;
 
 export const getNewNodeId = () => `${nodeIdCount++}`;
 
+const updateParentSize = (nodes, node) => {
+  const parent = nodes.find((search) => search.id === node.parentId);
+  const nx = node.positionAbsolute.x;
+  const ny = node.positionAbsolute.y;
+  const nw = node.width;
+  const nh = node.height;
+
+  const px = parent?.positionAbsolute?.x || parent?.position?.x || 0;
+  const py = parent?.positionAbsolute?.y || parent?.position?.y || 0;
+  const pw = parent.width;
+  const ph = parent.height;
+
+  if (nx < px + 50) {
+    const diff = px + 50 - nx;
+    parent.position.x = px - diff;
+    parent.width = pw + diff;
+    parent.style.width = `${pw + diff}px`;
+  }
+
+  if (ny < py + 50) {
+    const diff = py + 50 - ny;
+    parent.position.y = py - diff;
+    parent.height = ph + diff;
+    parent.style.height = `${ph + diff}px`;
+  }
+
+  if (nx + nw > px + pw - 50) {
+    const diff = nx + nw - (px + pw - 50);
+    parent.width = pw + diff;
+    parent.style.width = `${pw + diff}px`;
+  }
+
+  if (ny + nh > py + ph - 50) {
+    const diff = ny + nh - (py + ph - 50);
+    parent.height = ph + diff;
+    parent.style.height = `${ph + diff}px`;
+  }
+
+  if (parent.parentId) {
+    updateParentSize(nodes, parent);
+  }
+};
+
+const makeSafeFilename = (input) => {
+  // Extract the first 8 characters
+  let base = input.slice(0, 8);
+
+  // Define a regex pattern for characters not allowed in filenames
+  const unsafeChars = /[\/\?<>\\:\*\|\"=\s]/g;
+
+  // Replace unsafe characters with an underscore
+  let safeFilename = base.replace(unsafeChars, '_');
+
+  return safeFilename;
+};
+
+const getParentIntersections = (node, intersections) => {
+  // find the smallest node that the current node is inside of
+
+  const parentNodes = intersections.filter((search) => {
+    return (
+      node.positionAbsolute.x > search.positionAbsolute.x &&
+      node.positionAbsolute.y > search.positionAbsolute.y &&
+      node.positionAbsolute.x + node.width <
+        search.positionAbsolute.x + search.width &&
+      node.positionAbsolute.y + node.height <
+        search.positionAbsolute.y + search.height
+    );
+  });
+  if (!parentNodes) {
+    return null;
+  }
+  const sorted = parentNodes.sort((a, b) => {
+    //calculate the area of the intersection and sort by that
+    const areaA = a.width * a.height;
+    const areaB = b.width * b.height;
+    return areaA - areaB;
+  });
+  return sorted[0];
+};
 export const createEditorNode = (nodeId) => {
   const newNode = {
     id: nodeId,

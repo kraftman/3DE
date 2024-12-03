@@ -1,38 +1,34 @@
-import React, { useRef, useState, useMemo } from 'react';
-import { NodeResizer, Handle } from '@xyflow/react';
-import Editor from '@monaco-editor/react';
+import React, { useRef } from 'react';
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import { findFunctions } from './findFunctions';
 import { EditableText } from '../../EditableText';
+import { useLayer } from '../../../hooks/useLayer';
+import { useNodeManager } from '../../../hooks/useNodeManager';
 
 loader.config({ monaco });
 
-const handleTextStyle = {
-  position: 'relative',
-  width: '200px',
-  transform: 'translate(10px, 40%)',
-  fontSize: '12px',
-  pointerEvents: 'none',
-  color: 'white',
-};
-
-export const PureFunctionNode = ({
-  data,
-  selected,
-  onTextChanged,
-  onTitleChanged,
-}) => {
+export const PureFunctionNode = ({ id }) => {
   const editorRef = useRef(null);
 
-  const text = data.content;
+  const { onFunctionTextChanged, onfunctionTitledChanged } = useLayer();
+  const { getNodeById } = useNodeManager();
+
+  const node = getNodeById(id);
+  if (!node) {
+    console.error('could not find node with id', id);
+    return null;
+  }
+
+  const data = node.data;
+
+  const text = data.content || '<no root content> ';
 
   const onChange = (value) => {
-    onTextChanged(data.functionId, value);
+    onFunctionTextChanged(data.functionId, value);
   };
 
   const onTitleChangeInternal = (value) => {
-    onTitleChanged(data.functionId, value);
+    onfunctionTitledChanged(data.functionId, value);
   };
 
   return (

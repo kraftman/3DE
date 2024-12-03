@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { NodeResizer, Handle } from '@xyflow/react';
+import { Handle } from '@xyflow/react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Pip } from '../../Pip';
 
@@ -9,13 +9,9 @@ import * as monaco from 'monaco-editor';
 
 import { useState } from 'react';
 
-import { useFileSystem } from '../../../contexts/FileSystemContext';
-
 import { findFileForImport } from '../../../utils/fileUtils';
 
 import { TopBar } from './TopBar';
-
-import { useStore } from '../../../contexts/useStore';
 
 loader.config({ monaco });
 
@@ -54,19 +50,18 @@ const darkTheme = createTheme({
 });
 
 import { useLayer } from '../../../hooks/useLayer';
+import { useNodeManager } from '../../../hooks/useNodeManager';
+import { useFileManager } from '../../../hooks/useFileManager';
 
-export const ModuleNode = ({ id, toggleHideEdges, toggleChildren }) => {
+export const ModuleNode = ({ id }) => {
   //const data = props.data;
 
   const [settings, setSettings] = useState([]);
-  const {
-    getNodeById,
-    toggleHideImmediateChildren,
-    onModuleClose,
-    flatFiles,
-    createMissingImport,
-    layoutNodes,
-  } = useLayer();
+  const { onModuleClose, layoutNodes, toggleChildren, toggleHideEdges } =
+    useLayer();
+  const { getNodeById, toggleHideImmediateChildren, createMissingImport } =
+    useNodeManager();
+  const { flatFiles } = useFileManager();
   const editorRef = useRef(null);
 
   const node = getNodeById(id);

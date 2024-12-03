@@ -1,24 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import {
-  UncontrolledTreeEnvironment,
-  Tree,
-  StaticTreeDataProvider,
-  ControlledTreeEnvironment,
-} from 'react-complex-tree';
+import { Tree, ControlledTreeEnvironment } from 'react-complex-tree';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import { renderers as bpRenderers } from 'react-complex-tree-blueprintjs-renderers';
+import { useLayer } from '../hooks/useLayer';
 
-export const BasicTree = ({ flatFiles, onFileSelected }) => {
+import { useReactFlow } from '@xyflow/react';
+
+export const BasicTree = () => {
   const [focusedItem, setFocusedItem] = useState();
   const [expandedItems, setExpandedItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+
+  const flatFiles = useLayer((state) => state.flatFiles);
+
+  const { screenToFlowPosition } = useReactFlow();
+  const { onFileSelected } = useLayer();
+
+  const onFileSelectedInternal = (event) => {
+    const newPos = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+    const fullPath = event.target.getAttribute('data-rct-item-id');
+    onFileSelected(newPos, fullPath);
+  };
 
   useEffect(() => {
     const handleDragEnd = (event) => {
       const fullPath = event.target.getAttribute('data-rct-item-id');
       const isInTree = event.target.closest('.react-complex-tree');
       if (!isInTree && !flatFiles[fullPath].isFolder) {
-        onFileSelected(event);
+        onFileSelectedInternal(event);
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();

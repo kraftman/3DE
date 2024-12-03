@@ -17,7 +17,6 @@ import {
   applyNodeChanges,
 } from '@xyflow/react';
 
-import Button from '@mui/material/Button';
 import { Tooltip } from 'react-tooltip';
 
 import '@xyflow/react/dist/style.css';
@@ -25,13 +24,10 @@ import '@xyflow/react/dist/style.css';
 // or if you just want basic styles
 import '@xyflow/react/dist/base.css';
 import 'react-tooltip/dist/react-tooltip.css';
-import { EditorNode } from '../../components/nodes/EditorNode';
 import { ModuleNode } from '../../components/nodes/ModuleNode/ModuleNode.jsx';
 import { PureFunctionNode } from '../../components/nodes/PureFunctionNode/PureFunctionNode';
 import { CodeNode } from '../../components/nodes/CodeNode/CodeNode';
 import { PreviewNode } from '../../components/nodes/PreviewNode';
-import { GroupNode } from '../../components/nodes/GroupNode';
-import { SettingsNode } from '../../components/nodes/SettingsNode/SettingsNode';
 import { ImageNode } from '../../components/nodes/ImageNode';
 
 import { FolderSelectButton } from '../../components/FolderSelectButton';
@@ -42,8 +38,6 @@ import path from 'path-browserify';
 import { SnackbarProvider, enqueueSnackbar } from 'notistack';
 import { useLayer } from '../../hooks/useLayer.js';
 
-import { v4 as uuidv4 } from 'uuid';
-
 import {
   LayerManager,
   getRandomDarkHexColorWithAlpha,
@@ -52,15 +46,8 @@ import {
 import { SearchBar } from '../../components/SearchBar';
 
 import { getNewEdges, getNewNodeId, isValidCode } from './utils';
-import { useFileSystem } from '../../contexts/FileSystemContext';
 import { useStore } from '../../contexts/useStore.js';
-import {
-  getModuleNodes,
-  findChildIds,
-  getRaw,
-  getFunctionContent,
-  getImportHandles,
-} from '../../utils/nodeUtils.js';
+import { getModuleNodes } from '../../utils/nodeUtils.js';
 
 import { parseCode } from '../../utils/parser';
 
@@ -73,11 +60,6 @@ import { getNodesForFile } from '../../utils/getNodesForFile.js';
 import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
 import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
 
-import {
-  hideModuleChildren,
-  showModuleChildren,
-} from '../../utils/moduleUtils.js';
-
 export const Flow = () => {
   const {
     setLayers,
@@ -89,19 +71,18 @@ export const Flow = () => {
     edges,
     state: layerState,
     currentLayer,
+    onNodeDragStart,
+    onNodeDragStop,
+    functions,
+    handleSave,
+    shiftLayerUp,
+    shiftLayerDown,
   } = useLayer();
 
-  const [focusNode, setFocusNode] = useState(null);
-  const [functions, setFunctions] = useState([]);
-  const [draggingNode, setDraggingNode] = useState(null);
-  const [modules, setModules] = useState([]);
-
-  const updateNodeInternals = useUpdateNodeInternals();
-
-  const { flatFiles, rootPath, loadFileSystem, setFlatFiles } = useStore();
+  const { loadFileSystem, setFocusNode } = useStore();
 
   const loadModules = () => {
-    // parse the module into an AST, getting the exports, the imports, the root level declarations,
+    // for testing
     try {
       const newModule = parseCode(mockModule);
       const fullPath = '/home/chris/marvel-app/src/app/character/[id]/page.tsx';
@@ -118,10 +99,27 @@ export const Flow = () => {
       setEdges((edges) => {
         return edges.concat(newEdges);
       });
-      setModules((modules) => modules.concat(module));
     } catch (e) {
       console.error('error parsing module:', e);
     }
+  };
+
+  const addKeyListener = () => {
+    const handleKeyDown = async (e) => {
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      } else if (e.ctrlKey && e.key === 'ArrowUp') {
+        shiftLayerUp();
+      } else if (e.ctrlKey && e.key === 'ArrowDown') {
+        shiftLayerDown();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   };
 
   useEffect(() => {
@@ -131,71 +129,12 @@ export const Flow = () => {
     loadSessions();
     loadModules();
     onFolderSelected('/home/chris/marvel-app');
+    addKeyListener();
   }, []);
 
   const onNodeClick = (event, node) => {
     setFocusNode(node);
   };
-
-  useEffect(() => {
-    const handleKeyDown = async (e) => {
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        const fullPath = nodes.find((node) => node.id === focusNode.id).data
-          .fullPath;
-
-        const extension = path.extname(fullPath);
-        const jsFiles = ['.js', '.jsx', '.ts', '.tsx'];
-        const isJsFile = jsFiles.includes(extension);
-
-        const fileData = flatFiles[fullPath].fileData;
-        const isValid = isValidCode(fileData);
-        if (!isJsFile || !isValid) {
-          enqueueSnackbar({
-            message: 'Invalid code',
-            options: {
-              variant: 'error',
-            },
-          });
-          return;
-        }
-
-        //TODO use the result as the new file contents, as it should be formatted
-        setFlatFiles((files) => {
-          const newFiles = {
-            ...files,
-            [fullPath]: { ...files[fullPath], savedData: fileData },
-          };
-          return newFiles;
-        });
-      } else if (e.ctrlKey && e.key === 'ArrowUp') {
-        const nextLayer = Math.max(currentLayer - 1, 0);
-        setCurrentLayer(nextLayer);
-      } else if (e.ctrlKey && e.key === 'ArrowDown') {
-        const numLayers = Object.keys(layers).length;
-        const nextLayer = Math.min(currentLayer + 1, numLayers - 1);
-
-        setCurrentLayer(nextLayer);
-      } else if (e.ctrlKey && e.shiftKey && e.key === 'T') {
-        setLayers((layers) => {
-          const layerCount = Object.keys(layers).length;
-          return {
-            ...layers,
-            [layerCount]: {
-              nodes: [],
-              edges: [],
-              color: getRandomDarkHexColorWithAlpha(),
-            },
-          };
-        });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [focusNode, flatFiles, currentLayer, layers]);
 
   const onNodesChange = (changes) => {
     setNodes((prevNodes) => {
@@ -209,614 +148,23 @@ export const Flow = () => {
     });
   };
 
-  const connectingNodeId = useRef(null);
-  const connectingHandleId = useRef(null);
-  const { screenToFlowPosition, getIntersectingNodes } = useReactFlow();
-
-  const onSettingsChanged = (newSettings) => {
-    //setSettings(newSettings);
-    // also update settings node
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.type === 'settings') {
-          node.data = { ...node.data, settings: newSettings };
-        }
-        return node;
-      })
-    );
-  };
-
-  const onFunctionTextChanged = (functionId, content) => {
-    let foundfunc;
-    setFunctions((functions) =>
-      functions.map((func) => {
-        if (func.id === functionId) {
-          func.content = content;
-          foundfunc = func;
-        }
-        return func;
-      })
-    );
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.data.functionId === functionId) {
-          node.data = { ...node.data, content, functionName: foundfunc.name };
-        }
-        return node;
-      })
-    );
-  };
-
-  const onfunctionTitledChanged = (functionId, title) => {
-    setFunctions((functions) =>
-      functions.map((func) => {
-        if (func.id === functionId) {
-          func.name = title;
-        }
-        return func;
-      })
-    );
-    setNodes((nodes) =>
-      nodes.map((node) => {
-        if (node.data.functionId === functionId) {
-          node.data = { ...node.data, functionName: title };
-        }
-        return node;
-      })
-    );
-  };
-
-  const onCodeNodeTextChange = (moduleId, functionId, value) => {
-    setModules((modules) => {
-      return modules.map((module) => {
-        if (module.id === moduleId) {
-          module.functions = module.functions.map((func) => {
-            if (func.id === functionId) {
-              func.data.content = value;
-            }
-            return func;
-          });
-        }
-        return module;
-      });
-    });
-
-    setNodes((nodes) => {
-      return nodes.map((node) => {
-        if (node.data.functionId === functionId && node.type === 'code') {
-          console.log('found node:', node);
-          node.data = { ...node.data, content: value };
-        }
-        return node;
-      });
-    });
-  };
-
-  const toggleHideImmediateChildren = (moduleId) => {
-    // TODO: rename, just hides the immediate children of the module
-    // not other modules
-    setNodes((nodes) => {
-      const moduleNodes = nodes.filter(
-        (node) => node.data.moduleId === moduleId
-      );
-      console.log('found module nodes:', moduleNodes);
-      const moduleNodeIds = moduleNodes.map((node) => node.id);
-
-      const moduleNode = moduleNodes.find(
-        (node) => node.type === 'module' && node.id === moduleId
-      );
-
-      const newRaw = getRaw(moduleId, moduleNodes);
-      const newNodes = nodes.map((node) => {
-        if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
-          return {
-            ...node,
-            hidden: moduleNode.data.showRaw,
-          };
-        }
-        if (node.type === 'module' && node.id === moduleId) {
-          node.data = {
-            ...node.data,
-            showRaw: !node.data.showRaw,
-            raw: newRaw,
-          };
-        }
-        return node;
-      });
-      return newNodes;
-    });
-  };
-
-  const toggleHideEdges = (nodeId, hideEdges) => {
-    setNodes((nodes) => {
-      const childIds = findChildIds(nodes, nodeId);
-
-      setEdges((edges) => {
-        const newEdges = edges.map((edge) => {
-          if (
-            childIds.includes(edge.source) ||
-            childIds.includes(edge.target)
-          ) {
-            return { ...edge, hidden: hideEdges };
-          }
-          return edge;
-        });
-        return newEdges;
-      });
-      return nodes;
-    });
-  };
-
-  const toggleChildren = (localFlatFiles, moduleId, showChildren) => {
-    // later need to make sure the children arent already open
-    if (showChildren) {
-      return setNodes((nodes) => hideModuleChildren(nodes, moduleId));
-    }
-
-    setNodes((nodes) => {
-      const { newNodes, newEdges } = showModuleChildren(
-        nodes,
-        moduleId,
-        localFlatFiles
-      );
-      setEdges(newEdges);
-      return newNodes;
-    });
-  };
-
   const nodeTypes = useMemo(
     () => ({
-      text: (props) => <TextNode {...props} />,
-      markdown: (props) => <MarkdownNode {...props} />,
-      code: (props) => (
-        <CodeNode onTextChange={onCodeNodeTextChange} {...props} />
-      ),
-      module: (props) => (
-        <ModuleNode
-          toggleHideEdges={toggleHideEdges}
-          toggleChildren={toggleChildren}
-          {...props}
-        />
-      ),
-      pureFunctionNode: (props) => (
-        <PureFunctionNode
-          functions={functions}
-          onTextChanged={onFunctionTextChanged}
-          onTitleChanged={onfunctionTitledChanged}
-          {...props}
-        />
-      ),
+      text: TextNode,
+      markdown: MarkdownNode,
+      code: CodeNode,
+      module: ModuleNode,
+      pureFunctionNode: PureFunctionNode,
       image: ImageNode,
       preview: PreviewNode,
-      group: GroupNode,
-      settings: (props) => (
-        <SettingsNode {...props} onSettingsChanged={onSettingsChanged} />
-      ),
     }),
     []
   );
 
-  const updateEdges = (nodeId, existingHandles, newHandles) => {
-    const newEdges = getNewEdges(nodeId, existingHandles, newHandles);
-
-    setEdges((edges) => {
-      const existingEdges = edges.filter(
-        (edge) => edge.source !== nodeId && edge.target !== nodeId
-      );
-      return existingEdges.concat(newEdges);
-    });
-  };
-
-  const getMaxWidth = (lines) => {
-    let maxWidth = 0;
-    lines.forEach((line) => {
-      maxWidth = Math.max(maxWidth, line.length);
-    });
-    return maxWidth;
-  };
-
-  const onTextChange = async (nodeId, value) => {
-    setNodes((nodes) => {
-      const node = nodes.find((node) => node.id === nodeId);
-      const fullPath = node.data.fullPath;
-      setFlatFiles((files) => {
-        const newFiles = {
-          ...files,
-          [fullPath]: { ...files[fullPath], fileData: value },
-        };
-        return newFiles;
-      });
-      const lines = value.split('\n');
-      const newHeight = 50 + lines.length * 15;
-      const newWidth = 100 + getMaxWidth(lines) * 6;
-      //const newHandles = getHandles(nodeId, node.data.fullPath, value);
-      const newNodes = nodes.map((node) => {
-        if (node.id === nodeId) {
-          node.data = {
-            ...node.data,
-            handles: [],
-            height: newHeight,
-            width: newWidth,
-          };
-          node.style = {
-            ...node.style,
-            height: `${newHeight}px`,
-            width: `${newWidth}px`,
-          };
-        }
-        return node;
-      });
-      updateNodeInternals(nodeId);
-
-      return newNodes;
-    });
-  };
   const nodeClassName = (node) => node.type;
-
-  const onConnectStart = useCallback((_, { nodeId, handleId }) => {
-    connectingNodeId.current = nodeId;
-    connectingHandleId.current = handleId;
-  }, []);
-
-  const makeSafeFilename = (input) => {
-    // Extract the first 8 characters
-    let base = input.slice(0, 8);
-
-    // Define a regex pattern for characters not allowed in filenames
-    const unsafeChars = /[\/\?<>\\:\*\|\"=\s]/g;
-
-    // Replace unsafe characters with an underscore
-    let safeFilename = base.replace(unsafeChars, '_');
-
-    return safeFilename;
-  };
-
-  const onConnectEnd = () => {};
-
-  const onConnect = () => {};
-
-  const getParentIntersections = (node, intersections) => {
-    // find the smallest node that the current node is inside of
-
-    const parentNodes = intersections.filter((search) => {
-      return (
-        node.positionAbsolute.x > search.positionAbsolute.x &&
-        node.positionAbsolute.y > search.positionAbsolute.y &&
-        node.positionAbsolute.x + node.width <
-          search.positionAbsolute.x + search.width &&
-        node.positionAbsolute.y + node.height <
-          search.positionAbsolute.y + search.height
-      );
-    });
-    if (!parentNodes) {
-      return null;
-    }
-    const sorted = parentNodes.sort((a, b) => {
-      //calculate the area of the intersection and sort by that
-      const areaA = a.width * a.height;
-      const areaB = b.width * b.height;
-      return areaA - areaB;
-    });
-    return sorted[0];
-  };
-
-  const functionIsOutsideParent = (parent, functionNode) => {
-    return (
-      functionNode.position.x > parent.data.width ||
-      functionNode.position.y > parent.data.height ||
-      functionNode.position.x + functionNode.data.width < 0 ||
-      functionNode.position.y + functionNode.data.height < 0
-    );
-  };
-
-  const stripExt = (filename) => {
-    return filename.replace(/\.[^/.]+$/, '');
-  };
-
-  const handleFunctionDrag = (functionNode) => {
-    const parentModule = nodes.find(
-      (node) => node.id === functionNode.data.moduleId
-    );
-    console.log(
-      'checking if function is in parent',
-      parentModule,
-      functionNode
-    );
-    const isOutside = functionIsOutsideParent(parentModule, functionNode);
-
-    if (!isOutside) {
-      console.log('still in module, skipping');
-      setNodes((nodes) => {
-        const newNodes = nodes.map((search) => {
-          if (search.id === functionNode.id) {
-            search.extent = 'parent';
-          }
-          return search;
-        });
-        return newNodes;
-      });
-      return;
-    }
-
-    const { functionName } = functionNode.data;
-
-    const lines = [];
-    getFunctionContent(lines, nodes, functionNode.parentId);
-    const finalContent = lines.join('\n');
-
-    const parentPath = parentModule.data.fullPath;
-    const parentDir = path.dirname(parentPath);
-    const newPath = path.join(parentDir, functionName + '.js');
-
-    setFlatFiles((files) => {
-      const newFiles = {
-        ...files,
-        [newPath]: {
-          index: newPath,
-          children: [],
-          data: functionName + '.js',
-          fileData: finalContent,
-          isFolder: false,
-        },
-      };
-      return newFiles;
-    });
-
-    setNodes((nodes) => {
-      const newPosition = {
-        x: parentModule.data.width + 100,
-        y: 0,
-      };
-      const newNodes = getNodesForFile(
-        newPath,
-        finalContent,
-        newPosition,
-        functionNode.data.moduleId
-      );
-
-      const childNodeIds = findChildIds(nodes, functionNode.id);
-
-      childNodeIds.push(functionNode.id);
-      nodes = nodes.filter((node) => !childNodeIds.includes(node.id));
-      console.log('after filter:', nodes);
-      nodes = nodes.map((node) => {
-        if (node.id === functionNode.data.moduleId) {
-          const newImport = {
-            name: functionName,
-            imported: functionName,
-            moduleSpecifier: './' + functionName,
-            type: 'local',
-            fullPath: stripExt(newPath),
-          };
-          console.log('newImport', newImport);
-          const newHandles = getImportHandles(
-            node.data.imports.concat(newImport),
-            node.id
-          );
-          console.log('newHandles', newHandles);
-
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              imports: node.data.imports.concat(newImport),
-              handles: newHandles,
-            },
-          };
-        }
-        return node;
-      });
-      return nodes.concat(newNodes);
-    });
-    updateNodeInternals(functionNode.data.mockModuleId);
-
-    // remove the function from its parent module
-    // create a new file using the function name in the directory of the parent
-    // check there isnt one already
-    // add the function to the new file as an export
-    // add an import to the parent module
-  };
-
-  const onNodeDragStop = (event, node) => {
-    if (node.type === 'pureFunctionNode') {
-      handleFunctionDrag(node);
-    }
-    setDraggingNode(null);
-    // const allIntersections = getIntersectingNodes(node, true);
-    // console.log('allIntersections', allIntersections);
-    // const immediateParent = getParentIntersections(node, allIntersections);
-
-    // if (immediateParent && immediateParent.id !== node.parentId) {
-    //   if (node.parentId === immediateParent.id) {
-    //     return;
-    //   }
-    //   console.log('new node landed on function');
-    //   setNodes((nodes) => {
-    //     const newNodes = nodes
-    //       .map((search) => {
-    //         if (search.id === node.id) {
-    //           search.parentId = immediateParent.id;
-    //           search.position.x =
-    //             node.positionAbsolute.x - immediateParent.positionAbsolute.x;
-    //           search.position.y =
-    //             node.positionAbsolute.y - immediateParent.positionAbsolute.y;
-    //         }
-
-    //         return search;
-    //       })
-    //       // sort nodes by if they have a parentId or not
-    //       .sort((a, b) => {
-    //         if (a.parentId && !b.parentId) {
-    //           return 1;
-    //         }
-    //         if (!a.parentId && b.parentId) {
-    //           return -1;
-    //         }
-    //         return 0;
-    //       });
-
-    //     return newNodes;
-    //   });
-
-    //   // its still inside its parent group
-    // } else if (!immediateParent && node.parentId) {
-    //   console.log('moved out of group');
-    //   const oldGroupNode = nodes.find(
-    //     (searchNode) => searchNode.id === node.parentId
-    //   );
-
-    //   setNodes((nodes) => {
-    //     const newNodes = nodes.map((search) => {
-    //       if (search.id === node.id) {
-    //         search.parentId = null;
-    //         search.position.x = node.position.x + oldGroupNode.position.x;
-    //         search.position.y = node.position.y + oldGroupNode.position.y;
-    //       }
-    //       return search;
-    //     });
-    //     return newNodes;
-    //   });
-    // } else {
-    //   console.log('moved on canvas');
-    // }
-  };
 
   const onFolderSelected = (folder) => {
     loadFileSystem(folder);
-  };
-
-  const onFileSelected = useCallback(
-    async (event) => {
-      if (event.shiftKey) {
-        console.log('Shift key is held down!');
-      } else {
-        console.log('Shift key is not held.');
-      }
-      const fullPath = event.target.getAttribute('data-rct-item-id');
-      const fileName = event.target.textContent;
-      const relativePath = path.relative(rootPath, fullPath);
-      const parsedPaths = relativePath.split(path.sep);
-      const fileInfo = flatFiles[fullPath];
-
-      const fileContents = fileInfo.fileData;
-      const newPos = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-
-      const newNodes = getNodesForFile(fullPath, fileContents, newPos, null);
-      console.log('newNodes', newNodes);
-      setNodes((nodes) => nodes.concat(newNodes));
-    },
-    [screenToFlowPosition, rootPath, flatFiles]
-  );
-
-  const onFileSelectedSearchBar = (fullPath) => {
-    const fileName = flatFiles[fullPath].data;
-    const relativePath = path.relative(rootPath, fullPath);
-    const parsedPaths = relativePath.split(path.sep);
-    const fileInfo = flatFiles[fullPath];
-    const fileContents = fileInfo.fileData;
-
-    setNodes((nodes) => {
-      let parentId = null;
-
-      const nextNodeId = getNewNodeId();
-
-      const isImage = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i.test(fileName);
-
-      const newNode = {
-        id: nextNodeId,
-        data: {
-          fullPath,
-          fileName,
-          handles: [],
-        },
-        type: isImage ? 'image' : 'editor',
-        position: {
-          x: 500,
-          y: 500,
-        },
-        style: {
-          width: '500px',
-          height: '500px',
-        },
-        parentId,
-      };
-
-      const children = []; //createChildren(flatFiles, newNode);
-
-      const newNodes = nodes.concat(newNode).concat(children);
-      return newNodes;
-    });
-  };
-
-  const createFunction = () => {
-    const newFunction = {
-      name: 'testfunchere',
-      id: uuidv4(),
-      content: 'meep()',
-    };
-    setFunctions((functions) => {
-      return functions.concat(newFunction);
-    });
-    const newNode = {
-      id: (nodes.length + 1).toString(),
-      data: {
-        functionId: newFunction.id,
-        content: newFunction.content,
-        functionName: newFunction.name,
-      },
-      type: 'pureFunctionNode',
-      position: {
-        x: 500,
-        y: 500,
-      },
-      style: {
-        width: '400px',
-        height: '300px',
-      },
-    };
-    setNodes((nodes) => {
-      return nodes.concat(newNode);
-    });
-  };
-  const createCodeNode = () => {
-    const newNode = {
-      id: (nodes.length + 1).toString(),
-      data: {},
-      type: 'code',
-      position: {
-        x: 200,
-        y: 500,
-      },
-      style: {
-        width: '200px',
-        height: '200px',
-      },
-    };
-    setNodes((nodes) => {
-      return nodes.concat(newNode);
-    });
-  };
-
-  const onNodeDragStart = (event, node) => {
-    setDraggingNode(node);
-    // check if shift key is down
-    if (!event.shiftKey) {
-      return;
-    }
-    if (node.type === 'pureFunctionNode') {
-      setNodes((nodes) => {
-        const newNodes = nodes.map((search) => {
-          if (search.id === node.id) {
-            search = { ...search, extent: undefined };
-          }
-          return search;
-        });
-        return newNodes;
-      });
-    }
   };
 
   const onSearchSelect = (selected) => {
@@ -843,61 +191,6 @@ export const Flow = () => {
     });
   };
 
-  const updateParentSize = (nodes, node) => {
-    const parent = nodes.find((search) => search.id === node.parentId);
-    const nx = node.positionAbsolute.x;
-    const ny = node.positionAbsolute.y;
-    const nw = node.width;
-    const nh = node.height;
-
-    const px = parent?.positionAbsolute?.x || parent?.position?.x || 0;
-    const py = parent?.positionAbsolute?.y || parent?.position?.y || 0;
-    const pw = parent.width;
-    const ph = parent.height;
-
-    if (nx < px + 50) {
-      const diff = px + 50 - nx;
-      parent.position.x = px - diff;
-      parent.width = pw + diff;
-      parent.style.width = `${pw + diff}px`;
-    }
-
-    if (ny < py + 50) {
-      const diff = py + 50 - ny;
-      parent.position.y = py - diff;
-      parent.height = ph + diff;
-      parent.style.height = `${ph + diff}px`;
-    }
-
-    if (nx + nw > px + pw - 50) {
-      const diff = nx + nw - (px + pw - 50);
-      parent.width = pw + diff;
-      parent.style.width = `${pw + diff}px`;
-    }
-
-    if (ny + nh > py + ph - 50) {
-      const diff = ny + nh - (py + ph - 50);
-      parent.height = ph + diff;
-      parent.style.height = `${ph + diff}px`;
-    }
-
-    if (parent.parentId) {
-      updateParentSize(nodes, parent);
-    }
-  };
-
-  const onNodeDrag = (event, node) => {
-    // if (!node.parentId) {
-    //   return;
-    // }
-    // setNodes((nodes) => {
-    //   const newNodes = [...nodes];
-    //   updateParentSize(newNodes, node);
-    //   return newNodes;
-    // });
-  };
-
-  console.log('nodes', nodes);
   return (
     <>
       <ReactFlow
@@ -911,13 +204,9 @@ export const Flow = () => {
         minZoom={0.2}
         maxZoom={4}
         attributionPosition="bottom-left"
-        onConnectEnd={onConnectEnd}
-        onConnectStart={onConnectStart}
-        onConnect={onConnect}
         connectionMode="loose"
         onNodeDragStop={onNodeDragStop}
         onNodeDragStart={onNodeDragStart}
-        onNodeDrag={onNodeDrag}
       >
         <Background
           style={{
@@ -927,14 +216,8 @@ export const Flow = () => {
 
         <Panel position="top-left">
           <FolderSelectButton onFolderSelected={onFolderSelected} />
-          <Button variant="contained" color="primary" onClick={createFunction}>
-            New function
-          </Button>
-          {/* <Button variant="contained" color="primary" onClick={layoutNodes}>
-            LayoutNodes
-          </Button> */}
 
-          <BasicTree flatFiles={flatFiles} onFileSelected={onFileSelected} />
+          <BasicTree />
         </Panel>
         <Panel position="top-right">
           <LayerManager />

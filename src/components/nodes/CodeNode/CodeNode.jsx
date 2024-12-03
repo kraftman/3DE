@@ -8,6 +8,9 @@ import { useDebouncedCallback } from 'use-debounce';
 
 import 'react-tooltip/dist/react-tooltip.css';
 
+import { useLayer } from '../../../hooks/useLayer';
+import { useNodeManager } from '../../../hooks/useNodeManager';
+
 loader.config({ monaco });
 
 const codeNodeStyle = {
@@ -19,18 +22,28 @@ const codeNodeStyle = {
   boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
 };
 
-export const CodeNode = ({ id, functionId, moduleId, data, onTextChange }) => {
+export const CodeNode = ({ id }) => {
   const editorRef = useRef(null);
-  const text = data.content || '<no root content> ';
 
-  //TODOO split apart saving and updating the saved data
-  // so that debounce only applies to saving/formatting
   const debouncedOnChange = useDebouncedCallback((newText) => {
-    onTextChange(id, newText);
+    onCodeNodeTextChange(id, newText);
   }, 1);
 
+  const { onCodeNodeTextChange } = useLayer();
+  const { getNodeById } = useNodeManager();
+
+  const node = getNodeById(id);
+  if (!node) {
+    console.error('could not find node with id', id);
+    return null;
+  }
+
+  const data = node.data;
+
+  const text = data.content || '<no root content> ';
+
   const onChange = (newText) => {
-    onTextChange(data.moduleId, data.functionId, newText);
+    onCodeNodeTextChange(data.moduleId, data.functionId, newText);
     //debouncedOnChange(newText);
   };
 
