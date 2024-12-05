@@ -9,6 +9,7 @@ import { useUpdateNodeInternals } from '@xyflow/react';
 
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import path from 'path-browserify';
+import { collapseModule, expandModule } from '../utils/moduleUtils';
 
 const functionIsOutsideParent = (parent, functionNode) => {
   return (
@@ -60,40 +61,17 @@ export const useNodeManager = () => {
     });
   };
 
-  const toggleExpandModule = (moduleId) => {
+  const toggleCollapseModule = (moduleId, isCollapsed) => {
+    console.log('toggleCollapseModule', moduleId, isCollapsed);
     store.setNodes((nodes) => {
-      const moduleNode = nodes.find(
-        (node) => node.id === moduleId && node.type === 'module'
-      );
-      const moduleNodes = nodes.filter(
-        (node) => node.data.moduleId === moduleId
-      );
-
-      const moduleNodeIds = moduleNodes.map((node) => node.id);
-
-      const oldHeight = moduleNode.data.height;
-      const newHeight = moduleNode.data.expand ? 100 : oldHeight;
-
-      const newNodes = nodes.map((node) => {
-        if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
-          return {
-            ...node,
-            hidden: !moduleNode.data.expand,
-          };
-        }
-        if (node.type === 'module' && node.id === moduleId) {
-          node.data = {
-            ...node.data,
-            expand: !node.data.expand,
-          };
-          node.style = {
-            ...node.style,
-            height: newHeight + 'px',
-          };
-        }
-        updateNodeInternals(moduleId);
-        return node;
-      });
+      let newNodes;
+      if (isCollapsed) {
+        console.log('expanding');
+        newNodes = expandModule(nodes, moduleId);
+      } else {
+        console.log('collapsing');
+        newNodes = collapseModule(nodes, moduleId);
+      }
       return newNodes;
     });
   };
@@ -251,7 +229,7 @@ export const useNodeManager = () => {
 
   return {
     toggleHideImmediateChildren,
-    toggleExpandModule,
+    toggleCollapseModule,
     createMissingImport,
     onNodeDragStart,
     onNodeDragStop,

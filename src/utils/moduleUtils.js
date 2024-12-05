@@ -11,6 +11,61 @@ export const findChildNodes = (nodes, moduleId) => {
   return foundNodes;
 };
 
+export const collapseModule = (nodes, moduleId) => {
+  const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
+
+  const moduleNodeIds = moduleNodes.map((node) => node.id);
+
+  const collapsedHeight = 100;
+
+  const newNodes = nodes.map((node) => {
+    if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
+      return {
+        ...node,
+        hidden: true,
+      };
+    }
+    if (node.type === 'module' && node.id === moduleId) {
+      return {
+        ...node,
+        data: { ...node.data, isCollapsed: true },
+        style: { ...node.style, height: collapsedHeight + 'px' },
+      };
+    }
+    return node;
+  });
+  return newNodes;
+};
+
+export const expandModule = (nodes, moduleId) => {
+  const moduleNode = nodes.find(
+    (node) => node.id === moduleId && node.type === 'module'
+  );
+  const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
+
+  const moduleNodeIds = moduleNodes.map((node) => node.id);
+
+  const oldHeight = moduleNode.data.height;
+
+  const newNodes = nodes.map((node) => {
+    if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
+      return {
+        ...node,
+        hidden: false,
+      };
+    }
+    if (node.type === 'module' && node.id === moduleId) {
+      return {
+        ...node,
+        data: { ...node.data, isCollapsed: false },
+        style: { ...node.style, height: oldHeight + 'px' },
+      };
+    }
+    return node;
+  });
+  return newNodes;
+};
+
 export const findHandleEdges = (moduleNodes) => {
   const edges = [];
   moduleNodes.forEach((moduleNode) => {

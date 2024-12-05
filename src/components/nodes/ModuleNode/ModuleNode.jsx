@@ -66,7 +66,7 @@ export const ModuleNode = ({ id }) => {
     getNodeById,
     toggleHideImmediateChildren,
     createMissingImport,
-    toggleExpandModule,
+    toggleCollapseModule,
   } = useNodeManager();
   const { flatFiles } = useFileManager();
   const editorRef = useRef(null);
@@ -170,20 +170,20 @@ export const ModuleNode = ({ id }) => {
   };
 
   const toggleExpandModuleInternal = () => {
-    toggleExpandModule(data.moduleId);
+    toggleCollapseModule(data.moduleId, data.isCollapsed);
   };
 
-  const expanded = data.expand;
+  const isCollapsed = data.isCollapsed;
 
   const ToggleExpand = () => {
     return (
       <ToggleButton
         value="check"
         aria-label="justified"
-        selected={data.expand}
+        selected={data.isCollapsed}
         onChange={toggleExpandModuleInternal}
       >
-        {data.expand ? (
+        {data.isCollapsed ? (
           <ExpandLessIcon fontSize="small" />
         ) : (
           <ExpandMoreIcon fontSize="small" />
@@ -207,7 +207,7 @@ export const ModuleNode = ({ id }) => {
           />
         </div>
         <ToggleExpand />
-        {expanded && (
+        {!isCollapsed && (
           <TopBar
             showRaw={data.showRaw}
             toggleHidden={toggleHidden}
@@ -218,7 +218,7 @@ export const ModuleNode = ({ id }) => {
             layoutChildren={layoutChildrenInternal}
           />
         )}
-        {data.showRaw && expanded && (
+        {data.showRaw && isCollapsed && (
           <div className="editor-container">
             <Editor
               className="editor nodrag"
