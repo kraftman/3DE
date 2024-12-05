@@ -1,7 +1,7 @@
 import path from 'path-browserify';
 import { getNodesForFile } from './getNodesForFile';
 
-export const getChildNodes = (nodes, moduleId, localFlatFiles) => {
+export const createChildNodes = (nodes, moduleId, localFlatFiles) => {
   const moduleNode = nodes.find(
     (node) => node.type === 'module' && node.id === moduleId
   );

@@ -64,6 +64,7 @@ export const ModuleNode = ({ id }) => {
     toggleHideImmediateChildren,
     createMissingImport,
     toggleCollapseModule,
+    toggleChildModule,
     renameModule,
   } = useNodeManager();
   const { flatFiles } = useFileManager();
@@ -84,7 +85,7 @@ export const ModuleNode = ({ id }) => {
   const data = node.data;
 
   // Toggle button state
-  const handleToggle = (event, newSettings) => {
+  const toggleHideEdgesInternal = (event, newSettings) => {
     setSettings((oldSettings) => {
       toggleHideEdges(id, newSettings.showEdges);
       return newSettings;
@@ -100,16 +101,44 @@ export const ModuleNode = ({ id }) => {
       handle.data.fullPath === false ||
       findFileForImport(flatFiles, handle.data.fullPath)
     ) {
+      const isExternal = handle.data.fullPath === false;
       return (
-        <Handle
-          key={handle.key}
-          type="source"
-          position={'right'}
-          id={handle.id}
-          style={{ ...handle.style }}
-        >
-          <div style={handleTextStyle}>{handle.data.name}</div>
-        </Handle>
+        <div key={handle.key}>
+          <Handle
+            key={handle.key}
+            type="source"
+            position={'right'}
+            id={handle.id}
+            style={{ ...handle.style }}
+          ></Handle>
+          <button
+            disabled={isExternal}
+            onClick={() => {
+              console.log('handle clic k', handle);
+              toggleChildModule(data.moduleId, handle.data.fullPath);
+            }}
+            key={handle.key + 'button'}
+            style={{
+              position: 'absolute',
+              display: 'inline-flex', // Ensures it wraps around its content
+              justifyContent: 'center', // Centers content horizontally
+              alignItems: 'center', // Centers content vertically
+              color: isExternal ? 'grey' : 'white',
+              fontSize: '10px',
+              backgroundColor: 'black',
+              border: '1px solid white',
+              padding: '2px 4px', // Add padding for spacing around the text
+              boxSizing: 'border-box',
+              borderRadius: '4px',
+              textAlign: 'center',
+              top: handle.style.top + 5,
+              right: handle.style.right,
+              transform: 'translate(50%, 0)', // Center the text horizontally
+            }}
+          >
+            {handle.data.name}
+          </button>
+        </div>
       );
     }
 
@@ -155,12 +184,12 @@ export const ModuleNode = ({ id }) => {
         id={handle.id}
         style={{ ...handle.style }}
       >
-        <div style={handleTextStyle}>{handle.data.name}</div>
+        <button style={handleTextStyle}>{handle.data.name}</button>
       </Handle>
     );
   });
 
-  const toggleHidden = () => {
+  const toggleHideImmediateChildrenInternal = () => {
     toggleHideImmediateChildren(data.moduleId);
   };
 
@@ -228,19 +257,27 @@ export const ModuleNode = ({ id }) => {
             status="error"
           />
         </div>
-        <EditableText
-          onFinishEditing={onFinishEditing}
-          text={fileName}
-          onChange={onFileNameChange}
-          error={fileNameError}
-        />
-        <ToggleExpand />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <EditableText
+            onFinishEditing={onFinishEditing}
+            text={fileName}
+            onChange={onFileNameChange}
+            error={fileNameError}
+          />
+          <ToggleExpand />
+        </div>
         {!isCollapsed && (
           <TopBar
             showRaw={data.showRaw}
-            toggleHidden={toggleHidden}
+            toggleHidden={toggleHideImmediateChildren}
             settings={settings}
-            handleToggle={handleToggle}
+            handleToggle={toggleHideEdgesInternal}
             toggleChildren={toggleChildrenInternal}
             showChildren={data.showChildren}
             layoutChildren={layoutChildrenInternal}

@@ -14,7 +14,7 @@ export const BasicTree = () => {
 
   const flatFiles = useStore((state) => state.flatFiles);
 
-  console.log('flatFiles in tree', flatFiles);
+  //console.log('flatFiles in tree', flatFiles);
 
   const { screenToFlowPosition } = useReactFlow();
   const { onFileSelected } = useLayer();

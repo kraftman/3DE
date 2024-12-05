@@ -257,6 +257,21 @@ export const useNodeManager = () => {
     // and in the filesystem
   };
 
+  const toggleChildModule = (moduleId, fullPath) => {
+    console.log('toggle child module', fullPath);
+    // if the child module exists, remove it
+    // if the child module doesnt exist, create it
+
+    // const fileInfo = store.flatFiles[fullPath];
+
+    // const newNodes = getNodesForFile(fileInfo, newPos, null);
+    // console.log('newNodes', newNodes);
+    // store.setNodes((nodes) => nodes.concat(newNodes));
+
+    // find modules where the path is the fullPath, and the parentId is this module
+    // recursively remove it and its children
+  };
+
   return {
     toggleHideImmediateChildren,
     toggleCollapseModule,
@@ -264,6 +279,7 @@ export const useNodeManager = () => {
     onNodeDragStart,
     onNodeDragStop,
     renameModule,
+    toggleChildModule,
     getNodeById: (id) =>
       store.layers[store.currentLayer]?.nodes.find((node) => node.id === id),
   };

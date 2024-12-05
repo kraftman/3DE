@@ -1,4 +1,4 @@
-import { getChildNodes } from './getChildNodes';
+import { createChildNodes } from './createChildNodes';
 
 export const findChildNodes = (nodes, moduleId) => {
   const childNodes = nodes.filter((node) => node.parentId === moduleId);
@@ -125,7 +125,7 @@ export const hideModuleChildren = (nodes, moduleId) => {
 
 export const showModuleChildren = (nodes, moduleId, localFlatFiles) => {
   // need to only create new ones if they dont already exist
-  const newNodes = getChildNodes(nodes, moduleId, localFlatFiles);
+  const newNodes = createChildNodes(nodes, moduleId, localFlatFiles);
   const children = findChildNodes(nodes, moduleId);
   const childIds = children.map((child) => child.id);
   const newNewNodes = newNodes.map((node) => {
