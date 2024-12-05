@@ -70,17 +70,19 @@ export const ModuleNode = ({ id }) => {
   const { flatFiles } = useFileManager();
   const editorRef = useRef(null);
 
+  const node = getNodeById(id);
+  const [fileName, setFileName] = useState(node?.data?.fullPath);
+
+  const [fileNameError, setFileNameError] = useState(false);
+
   // ===================================================================
   // ===== ALL HOOKS NEED TO BE ABOVE THIS LINE ========================
   // ===================================================================
-  const node = getNodeById(id);
+
   if (!node) {
     console.error('could not find node with id', id);
     return null;
   }
-  const [fileName, setFileName] = useState(node.data.fullPath);
-
-  const [fileNameError, setFileNameError] = useState(false);
 
   const data = node.data;
 

@@ -9,8 +9,14 @@ import { useUpdateNodeInternals } from '@xyflow/react';
 
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import path from 'path-browserify';
-import { collapseModule, expandModule } from '../utils/moduleUtils';
+import {
+  collapseModule,
+  expandModule,
+  findChildNodes,
+  findChildModules,
+} from '../utils/moduleUtils';
 import { useFileManager } from './useFileManager.js';
+import { findFileForImport, importWithoutExtension } from '../utils/fileUtils';
 
 const functionIsOutsideParent = (parent, functionNode) => {
   return (
@@ -270,6 +276,39 @@ export const useNodeManager = () => {
 
     // find modules where the path is the fullPath, and the parentId is this module
     // recursively remove it and its children
+    store.setNodes((nodes) => {
+      const children = findChildModules(nodes, moduleId);
+      console.log('children', children);
+      const foundChild = children.find(
+        (child) =>
+          importWithoutExtension(child.data.fullPath) ===
+          importWithoutExtension(fullPath)
+      );
+      if (foundChild) {
+        const childrenOfChild = findChildNodes(nodes, foundChild.id);
+        const childIds = childrenOfChild.map((child) => child.id);
+        childIds.push(foundChild.id);
+        return nodes.filter((node) => !childIds.includes(node.id));
+      } else {
+        const parentModule = nodes.find(
+          (node) => node.id === moduleId && node.type === 'module'
+        );
+        const newPos = {
+          x: parentModule.position.x + 500,
+          y: 0,
+        };
+        const resolvedFile = findFileForImport(store.flatFiles, fullPath);
+
+        const newNodes = getNodesForFile(resolvedFile, newPos, moduleId);
+        return nodes.concat(newNodes);
+      }
+    });
+  };
+
+  const getNodeById = (id) => {
+    return store.layers[store.currentLayer]?.nodes.find(
+      (node) => node.id === id
+    );
   };
 
   return {
@@ -280,7 +319,6 @@ export const useNodeManager = () => {
     onNodeDragStop,
     renameModule,
     toggleChildModule,
-    getNodeById: (id) =>
-      store.layers[store.currentLayer]?.nodes.find((node) => node.id === id),
+    getNodeById,
   };
 };
