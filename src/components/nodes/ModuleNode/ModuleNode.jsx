@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Handle } from '@xyflow/react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Pip } from '../../Pip';
@@ -9,12 +9,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-
-import { useState } from 'react';
-
 import { findFileForImport } from '../../../utils/fileUtils';
-
 import { TopBar } from './TopBar';
+import { EditableText } from '../../EditableText';
 
 loader.config({ monaco });
 
@@ -67,15 +64,22 @@ export const ModuleNode = ({ id }) => {
     toggleHideImmediateChildren,
     createMissingImport,
     toggleCollapseModule,
+    renameModule,
   } = useNodeManager();
   const { flatFiles } = useFileManager();
   const editorRef = useRef(null);
 
+  // ===================================================================
+  // ===== ALL HOOKS NEED TO BE ABOVE THIS LINE ========================
+  // ===================================================================
   const node = getNodeById(id);
   if (!node) {
     console.error('could not find node with id', id);
     return null;
   }
+  const [fileName, setFileName] = useState(node.data.fullPath);
+
+  const [fileNameError, setFileNameError] = useState(false);
 
   const data = node.data;
 
@@ -192,6 +196,24 @@ export const ModuleNode = ({ id }) => {
     );
   };
 
+  const onFileNameChange = (value) => {
+    if (flatFiles[value]) {
+      setFileNameError('file exists');
+    } else {
+      setFileNameError(false);
+    }
+
+    setFileName(value);
+  };
+
+  const onFinishEditing = () => {
+    if (fileNameError) {
+      setFileName(data.fullPath);
+      return;
+    }
+    renameModule(data.moduleId, fileName);
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <div
@@ -206,6 +228,12 @@ export const ModuleNode = ({ id }) => {
             status="error"
           />
         </div>
+        <EditableText
+          onFinishEditing={onFinishEditing}
+          text={fileName}
+          onChange={onFileNameChange}
+          error={fileNameError}
+        />
         <ToggleExpand />
         {!isCollapsed && (
           <TopBar

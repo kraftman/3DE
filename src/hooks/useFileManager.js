@@ -5,7 +5,11 @@ import { enqueueSnackbar } from 'notistack';
 import { loadFolderTree, loadFile } from '../electronHelpers';
 import { flattenFileTree } from '../screens/Flow/utils';
 import { parseCode } from '../utils/parser';
-import { isCodeFile } from '../utils/fileUtils';
+import {
+  isCodeFile,
+  getFileNameFromPath,
+  getFileFolder,
+} from '../utils/fileUtils';
 
 export const useFileManager = () => {
   const store = useStore();
@@ -74,9 +78,56 @@ export const useFileManager = () => {
     return fullRootPath;
   };
 
+  const renameFile = (fullPath, newFullPath) => {
+    store.setFlatFiles((files) => {
+      const newFiles = { ...files };
+      const file = newFiles[fullPath];
+
+      file.index = newFullPath;
+      file.data = getFileNameFromPath(newFullPath);
+      delete newFiles[fullPath];
+      newFiles[newFullPath] = file;
+
+      const oldFolderPath = getFileFolder(fullPath);
+      const newFolderPath = getFileFolder(newFullPath);
+
+      const oldFolder = newFiles[oldFolderPath];
+      oldFolder.children = oldFolder.children.filter(
+        (child) => child !== fullPath
+      );
+
+      // Recursively ensure parent folders exist and update their children
+      const ensureFolderExists = (folderPath) => {
+        if (!newFiles[folderPath]) {
+          const parentFolderPath = getFileFolder(folderPath);
+          if (parentFolderPath !== folderPath) {
+            ensureFolderExists(parentFolderPath); // Ensure parent exists first
+            // Add this folder to its parent's children
+            newFiles[parentFolderPath].children.push(folderPath);
+          }
+          newFiles[folderPath] = {
+            index: folderPath,
+            children: [],
+            data: getFileNameFromPath(folderPath),
+            isFolder: true,
+          };
+        }
+      };
+
+      // Ensure the new folder hierarchy exists
+      ensureFolderExists(newFolderPath);
+
+      // Add the file to the new folder
+      newFiles[newFolderPath].children.push(newFullPath);
+
+      return newFiles;
+    });
+  };
+
   return {
     flatFiles: store.flatFiles,
     handleSave,
     loadFileSystem,
+    renameFile,
   };
 };

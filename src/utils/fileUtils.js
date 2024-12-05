@@ -10,6 +10,11 @@ export const findFileForImport = (flatFiles, importPath) => {
   }
 };
 
+export const getFileNameFromPath = (fullPath) => {
+  const parts = fullPath.split('/');
+  return parts[parts.length - 1];
+};
+
 export const getFileExtension = (fullPath) => {
   const parts = fullPath.split('.');
   return parts[parts.length - 1];
@@ -18,4 +23,10 @@ export const getFileExtension = (fullPath) => {
 export const isCodeFile = (fullPath) => {
   const extension = getFileExtension(fullPath);
   return ['js', 'jsx', 'ts', 'tsx'].includes(extension);
+};
+
+export const getFileFolder = (fullPath) => {
+  const parts = fullPath.split('/');
+  parts.pop();
+  return parts.join('/');
 };

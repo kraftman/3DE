@@ -10,6 +10,7 @@ import { useUpdateNodeInternals } from '@xyflow/react';
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import path from 'path-browserify';
 import { collapseModule, expandModule } from '../utils/moduleUtils';
+import { useFileManager } from './useFileManager.js';
 
 const functionIsOutsideParent = (parent, functionNode) => {
   return (
@@ -26,6 +27,7 @@ const stripExt = (filename) => {
 
 export const useNodeManager = () => {
   const store = useStore();
+  const { renameFile } = useFileManager();
   const updateNodeInternals = useUpdateNodeInternals();
 
   const toggleHideImmediateChildren = (moduleId) => {
@@ -227,12 +229,41 @@ export const useNodeManager = () => {
     }
   };
 
+  const renameModule = (moduleId, newPath) => {
+    store.setNodes((nodes) => {
+      const moduleNode = nodes.find(
+        (node) => node.id === moduleId && node.type === 'module'
+      );
+      const oldPath = moduleNode.data.fullPath;
+      console.log('rename', oldPath, newPath);
+      renameFile(oldPath, newPath);
+
+      return nodes.map((node) => {
+        if (node.id === moduleId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              fullPath: newPath,
+            },
+          };
+        }
+        return node;
+      });
+    });
+
+    // should ths be here or filemanager?
+    // need to change the fullpath in the module
+    // and in the filesystem
+  };
+
   return {
     toggleHideImmediateChildren,
     toggleCollapseModule,
     createMissingImport,
     onNodeDragStart,
     onNodeDragStop,
+    renameModule,
     getNodeById: (id) =>
       store.layers[store.currentLayer]?.nodes.find((node) => node.id === id),
   };
