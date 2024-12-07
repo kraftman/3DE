@@ -46,6 +46,18 @@ export const useLayer = () => {
     });
   };
 
+  const onRootNodeTextChange = (fullPath, value) => {
+    // might be able to merge this with onCodeNodeTextChange
+    store.setNodes((nodes) => {
+      return nodes.map((node) => {
+        if (node.data.fullPath === fullPath && node.type === 'module') {
+          node.data = { ...node.data, rootCode: value };
+        }
+        return node;
+      });
+    });
+  };
+
   const onCodeNodeTextChange = (fullPath, functionId, value) => {
     // update the body of the function
 
@@ -110,5 +122,6 @@ export const useLayer = () => {
     onCodeNodeTextChange,
     onfunctionTitledChanged,
     onFileSelected,
+    onRootNodeTextChange,
   };
 };

@@ -58,8 +58,13 @@ export const ModuleNode = ({ id }) => {
   //const data = props.data;
 
   const [settings, setSettings] = useState([]);
-  const { onModuleClose, layoutNodes, toggleChildren, toggleHideEdges } =
-    useLayer();
+  const {
+    onModuleClose,
+    layoutNodes,
+    toggleChildren,
+    toggleHideEdges,
+    onRootNodeTextChange,
+  } = useLayer();
   const {
     getNodeById,
     toggleHideImmediateChildren,
@@ -246,6 +251,10 @@ export const ModuleNode = ({ id }) => {
     renameModule(data.moduleId, fileName);
   };
 
+  const onRootCodeChangeInternal = (newCode) => {
+    onRootNodeTextChange(data.fullPath, newCode);
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <div
@@ -286,7 +295,7 @@ export const ModuleNode = ({ id }) => {
           )}
           <ToggleExpand />
         </div>
-        <RootCode content={data.rootCode} />
+        <RootCode content={data.rootCode} onChange={onRootCodeChangeInternal} />
 
         {data.showRaw && isCollapsed && (
           <div className="editor-container">
