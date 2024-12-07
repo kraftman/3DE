@@ -4,11 +4,11 @@ import path from 'path-browserify';
 import { enqueueSnackbar } from 'notistack';
 import { loadFolderTree, loadFile } from '../electronHelpers';
 import { flattenFileTree } from '../screens/Flow/utils';
-import { parseCode } from '../utils/parser';
 import {
   isCodeFile,
   getFileNameFromPath,
   getFileFolder,
+  enrichFileInfo,
 } from '../utils/fileUtils';
 
 export const useFileManager = () => {
@@ -61,14 +61,9 @@ export const useFileManager = () => {
         }
 
         fileInfo.fileData = await loadFile(fullPath);
-        const moduleCode = parseCode(fileInfo.fileData);
-        const { imports, exports, flatFunctions, rootLevelCode } = moduleCode;
-        fileInfo.imports = imports;
-        fileInfo.exports = exports;
-        fileInfo.functions = flatFunctions;
-        fileInfo.rootCode = rootLevelCode;
-
         fileInfo.savedData = fileInfo.fileData;
+
+        enrichFileInfo(fileInfo);
       } catch (error) {
         console.error('error loading file', fullPath, error);
       }

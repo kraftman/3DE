@@ -16,7 +16,11 @@ import {
   findChildModules,
 } from '../utils/moduleUtils';
 import { useFileManager } from './useFileManager.js';
-import { findFileForImport, importWithoutExtension } from '../utils/fileUtils';
+import {
+  findFileForImport,
+  importWithoutExtension,
+  enrichFileInfo,
+} from '../utils/fileUtils';
 
 const functionIsOutsideParent = (parent, functionNode) => {
   return (
@@ -34,7 +38,6 @@ const stripExt = (filename) => {
 export const useNodeManager = () => {
   const store = useStore();
   const { renameFile } = useFileManager();
-  const updateNodeInternals = useUpdateNodeInternals();
 
   const toggleHideImmediateChildren = (moduleId) => {
     store.setNodes((nodes) => {
@@ -125,58 +128,75 @@ export const useNodeManager = () => {
       return;
     }
     if (node.type === 'pureFunctionNode') {
-      store.setNodes((nodes) => {
-        const newNodes = nodes.map((search) => {
-          if (search.id === node.id) {
-            search = { ...search, extent: undefined };
-          }
-          return search;
-        });
-        return newNodes;
-      });
+      unclampFunction(node.id);
     }
   };
 
+  const clampFunctionToModule = (functionNodeId) => {
+    store.setNodes((nodes) => {
+      const newNodes = nodes.map((search) => {
+        if (search.id === functionNodeId) {
+          return {
+            ...search,
+            extent: 'parent',
+          };
+        }
+        return search;
+      });
+      return newNodes;
+    });
+  };
+
+  const unclampFunction = (functionNodeId) => {
+    store.setNodes((nodes) => {
+      const newNodes = nodes.map((search) => {
+        if (search.id === functionNodeId) {
+          return {
+            ...search,
+            extent: undefined,
+          };
+        }
+        return search;
+      });
+      return newNodes;
+    });
+  };
+
   const handleFunctionDrag = (functionNode) => {
-    const parentModule = store.nodes.find(
+    const currentNodes = store.getNodes();
+    const parentModule = currentNodes.find(
       (node) => node.id === functionNode.data.moduleId
     );
     const isOutside = functionIsOutsideParent(parentModule, functionNode);
 
     if (!isOutside) {
-      console.log('still in module, skipping');
-      store.setNodes((nodes) => {
-        const newNodes = nodes.map((search) => {
-          if (search.id === functionNode.id) {
-            search.extent = 'parent';
-          }
-          return search;
-        });
-        return newNodes;
-      });
+      clampFunctionToModule(functionNode.id);
       return;
     }
 
     const { functionName } = functionNode.data;
 
-    const lines = [];
-    getFunctionContent(lines, store.nodes, functionNode.parentId);
+    const lines = getFunctionContent(currentNodes, functionNode);
     const finalContent = lines.join('\n');
 
     const parentPath = parentModule.data.fullPath;
     const parentDir = path.dirname(parentPath);
     const newPath = path.join(parentDir, functionName + '.js');
+    const newFileInfo = {
+      index: newPath,
+      children: [],
+      data: functionName + '.js',
+      fileData: finalContent,
+      savedData: finalContent,
+      isFolder: false,
+    };
+
+    enrichFileInfo(newFileInfo);
 
     store.setFlatFiles((files) => {
       const newFiles = {
         ...files,
-        [newPath]: {
-          index: newPath,
-          children: [],
-          data: functionName + '.js',
-          fileData: finalContent,
-          isFolder: false,
-        },
+        [newPath]: newFileInfo,
       };
       return newFiles;
     });
@@ -186,9 +206,9 @@ export const useNodeManager = () => {
         x: parentModule.data.width + 100,
         y: 0,
       };
+
       const newNodes = getNodesForFile(
-        newPath,
-        finalContent,
+        newFileInfo,
         newPosition,
         functionNode.data.moduleId
       );
@@ -197,7 +217,7 @@ export const useNodeManager = () => {
 
       childNodeIds.push(functionNode.id);
       nodes = nodes.filter((node) => !childNodeIds.includes(node.id));
-      console.log('after filter:', nodes);
+
       nodes = nodes.map((node) => {
         if (node.id === functionNode.data.moduleId) {
           const newImport = {

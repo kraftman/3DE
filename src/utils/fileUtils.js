@@ -1,4 +1,5 @@
 const extensions = ['/index.js', '/index.jsx', '.js', '.jsx', '.ts', '.tsx'];
+import { parseCode } from './parser';
 
 export const findFileForImport = (flatFiles, importPath) => {
   if (flatFiles[importPath]) {
@@ -11,6 +12,15 @@ export const findFileForImport = (flatFiles, importPath) => {
       return flatFiles[fullPath];
     }
   }
+};
+
+export const enrichFileInfo = (fileInfo) => {
+  const moduleCode = parseCode(fileInfo.fileData);
+  const { imports, exports, flatFunctions, rootLevelCode } = moduleCode;
+  fileInfo.imports = imports;
+  fileInfo.exports = exports;
+  fileInfo.functions = flatFunctions;
+  fileInfo.rootCode = rootLevelCode;
 };
 
 export const importWithoutExtension = (fullPath) => {

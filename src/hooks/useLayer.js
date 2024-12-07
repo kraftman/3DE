@@ -1,13 +1,5 @@
 import { useStore } from '../contexts/useStore'; // adjust the import path as needed
-import {
-  findChildIds,
-  getFunctionContent,
-  getImportHandles,
-} from '../utils/nodeUtils';
-
 import { getNodesForFile } from '../utils/getNodesForFile.js';
-
-import path from 'path-browserify';
 
 import {
   hideModuleChildren,
@@ -47,7 +39,15 @@ export const useLayer = () => {
   };
 
   const onRootNodeTextChange = (fullPath, value) => {
-    // might be able to merge this with onCodeNodeTextChange
+    // might be able to merge this with onCodeNodeTextChange below
+    store.setFlatFiles((files) => {
+      const file = files[fullPath];
+      const newFile = {
+        ...file,
+        rootCode: value,
+      };
+      return { ...files, [fullPath]: newFile };
+    });
     store.setNodes((nodes) => {
       return nodes.map((node) => {
         if (node.data.fullPath === fullPath && node.type === 'module') {

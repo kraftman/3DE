@@ -66,6 +66,9 @@ export const useStore = create((set, get) => ({
       flatFiles:
         typeof payload === 'function' ? payload(state.flatFiles) : payload,
     })),
+  getNodes() {
+    return get().layers[get().currentLayer].nodes;
+  },
 
   setFolderData: (payload) => set(() => ({ folderData: payload })),
   setRootPath: (payload) => set(() => ({ rootPath: payload })),

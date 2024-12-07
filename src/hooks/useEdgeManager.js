@@ -1,5 +1,5 @@
 import { useStore } from '../contexts/useStore';
-import { getRaw, findChildIds, getFunctionContent } from '../utils/nodeUtils';
+import { findChildIds } from '../utils/nodeUtils';
 
 export const useEdgeManager = () => {
   const store = useStore();

@@ -24,6 +24,7 @@ export const findChildIds = (nodes, parentId) => {
 function generateFunctionSignature(
   frameNodeData // default to false for backward compatibility
 ) {
+  console.log('frameNodeData:', frameNodeData);
   const { functionName, functionType, functionArgs, functionAsync } =
     frameNodeData;
   const args = functionArgs.join(', ');
@@ -44,19 +45,40 @@ function generateFunctionSignature(
   }
 }
 
-export const getFunctionContent = (codeStrings, nodes, parentId) => {
+export const getFunctionContent = (nodes, functionNode) => {
+  const lines = [];
+  const signature = generateFunctionSignature(functionNode.data);
+  lines.push(signature);
+  lines.push(functionNode.data.content);
+
   const frameNodes = nodes.filter(
-    (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
+    (node) =>
+      node.parentId === functionNode.id && node.type === 'pureFunctionNode'
   );
-  console.log('found nodes:', frameNodes);
   frameNodes.forEach((codeNode) => {
-    const signature = generateFunctionSignature(codeNode.data);
-    codeStrings.push(signature);
-    codeStrings.push(codeNode.data.content);
-    getFunctionContent(codeStrings, nodes, codeNode.id);
-    codeStrings.push('}');
+    const subLines = getFunctionContent(nodes, codeNode);
+    lines.push(...subLines);
   });
+  lines.push('}');
+  return lines;
 };
+
+// export const getFunctionContent = (codeStrings, nodes, nodeId) => {
+//   const lines = [];
+//   const thisNode = nodes.find((node) => node.id === nodeId);
+//   const newLines = functionNodeToString(thisNode);
+//   const frameNodes = nodes.filter(
+//     (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
+//   );
+//   console.log('found nodes:', frameNodes);
+//   frameNodes.forEach((codeNode) => {
+//     const signature = generateFunctionSignature(codeNode.data);
+//     codeStrings.push(signature);
+//     codeStrings.push(codeNode.data.content);
+//     getFunctionContent(codeStrings, nodes, codeNode.id);
+//     codeStrings.push('}');
+//   });
+// };
 
 export const getRaw = (moduleId, moduleNodes) => {
   // need to decide if this should be raw or asts

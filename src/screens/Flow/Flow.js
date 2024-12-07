@@ -29,6 +29,7 @@ import { useStore } from '../../contexts/useStore.js';
 import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
 import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
 import { useFileManager } from '../../hooks/useFileManager.js';
+import { useNodeManager } from '../../hooks/useNodeManager.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
@@ -40,13 +41,13 @@ export const Flow = () => {
     nodes,
     edges,
     currentLayer,
-    onNodeDragStart,
-    onNodeDragStop,
     functions,
     handleSave,
     shiftLayerUp,
     shiftLayerDown,
   } = useLayer();
+
+  const { onNodeDragStart, onNodeDragStop } = useNodeManager();
 
   const { setFocusNode } = useStore();
   const { loadFileSystem } = useFileManager();
