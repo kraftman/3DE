@@ -73,6 +73,40 @@ export const useFileManager = () => {
     return fullRootPath;
   };
 
+  const ensureFolderExists = (flatFiles, folderPath) => {
+    if (!flatFiles[folderPath]) {
+      const parentFolderPath = getFileFolder(folderPath);
+      if (parentFolderPath !== folderPath) {
+        ensureFolderExists(parentFolderPath); // Ensure parent exists first
+        // Add this folder to its parent's children
+        flatFiles[parentFolderPath].children.push(folderPath);
+      }
+      flatFiles[folderPath] = {
+        index: folderPath,
+        children: [],
+        data: getFileNameFromPath(folderPath),
+        isFolder: true,
+      };
+    }
+  };
+
+  const createFile = (fileInfo) => {
+    console.log('ceate file', fileInfo);
+    store.setFlatFiles((files) => {
+      const newFiles = {
+        ...files,
+        [fileInfo.index]: fileInfo,
+      };
+
+      const folderPath = getFileFolder(fileInfo.index);
+      ensureFolderExists(newFiles, folderPath);
+
+      newFiles[folderPath].children.push(fileInfo.index);
+
+      return newFiles;
+    });
+  };
+
   const renameFile = (fullPath, newFullPath) => {
     store.setFlatFiles((files) => {
       const newFiles = { ...files };
@@ -92,25 +126,9 @@ export const useFileManager = () => {
       );
 
       // Recursively ensure parent folders exist and update their children
-      const ensureFolderExists = (folderPath) => {
-        if (!newFiles[folderPath]) {
-          const parentFolderPath = getFileFolder(folderPath);
-          if (parentFolderPath !== folderPath) {
-            ensureFolderExists(parentFolderPath); // Ensure parent exists first
-            // Add this folder to its parent's children
-            newFiles[parentFolderPath].children.push(folderPath);
-          }
-          newFiles[folderPath] = {
-            index: folderPath,
-            children: [],
-            data: getFileNameFromPath(folderPath),
-            isFolder: true,
-          };
-        }
-      };
 
       // Ensure the new folder hierarchy exists
-      ensureFolderExists(newFolderPath);
+      ensureFolderExists(newFiles, newFolderPath);
 
       // Add the file to the new folder
       newFiles[newFolderPath].children.push(newFullPath);
@@ -124,5 +142,6 @@ export const useFileManager = () => {
     handleSave,
     loadFileSystem,
     renameFile,
+    createFile,
   };
 };

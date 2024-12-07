@@ -37,7 +37,7 @@ const stripExt = (filename) => {
 
 export const useNodeManager = () => {
   const store = useStore();
-  const { renameFile } = useFileManager();
+  const { renameFile, createFile } = useFileManager();
 
   const toggleHideImmediateChildren = (moduleId) => {
     store.setNodes((nodes) => {
@@ -200,6 +200,8 @@ export const useNodeManager = () => {
       };
       return newFiles;
     });
+
+    createFile(newFileInfo);
 
     store.setNodes((nodes) => {
       const newPosition = {
