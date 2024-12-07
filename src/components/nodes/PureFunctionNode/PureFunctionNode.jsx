@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { EditableText } from '../../EditableText';
@@ -14,6 +14,10 @@ export const PureFunctionNode = ({ id }) => {
   const { getNodeById } = useNodeManager();
 
   const node = getNodeById(id);
+
+  const [functionName, setFunctionName] = useState(
+    node?.data?.functionName || ''
+  );
   if (!node) {
     console.error('could not find node with id', id);
     return null;
@@ -23,8 +27,15 @@ export const PureFunctionNode = ({ id }) => {
 
   const text = data.content || '<no root content> ';
 
-  const onTitleChangeInternal = (value) => {
-    onfunctionTitledChanged(data.functionId, value);
+  const onTitleChange = (value) => {
+    // this needs to eventually check for name conflicts and prevent them
+    //onfunctionTitledChanged(data.functionId, value);
+    //onFinishEditing()
+    setFunctionName(value);
+  };
+
+  const onfunctionTitledChangedInternal = () => {
+    onfunctionTitledChanged(data.functionId, functionName);
   };
 
   return (
@@ -32,8 +43,9 @@ export const PureFunctionNode = ({ id }) => {
       {/* {renderedHandles} */}
       <div className="text-updater-node" style={{ border: '2px solid black' }}>
         <EditableText
-          text={data.functionName}
-          onChange={onTitleChangeInternal}
+          text={functionName}
+          onChange={onTitleChange}
+          onFinishEditing={onfunctionTitledChangedInternal}
         />
         {/* <div className="editor-container">
           <Editor

@@ -12,6 +12,7 @@ import * as monaco from 'monaco-editor';
 import { findFileForImport } from '../../../utils/fileUtils';
 import { TopBar } from './TopBar';
 import { EditableText } from '../../EditableText';
+import { RootCode } from './RootCode';
 
 loader.config({ monaco });
 
@@ -272,19 +273,21 @@ export const ModuleNode = ({ id }) => {
             onChange={onFileNameChange}
             error={fileNameError}
           />
+          {!isCollapsed && (
+            <TopBar
+              showRaw={data.showRaw}
+              toggleHidden={toggleHideImmediateChildren}
+              settings={settings}
+              handleToggle={toggleHideEdgesInternal}
+              toggleChildren={toggleChildrenInternal}
+              showChildren={data.showChildren}
+              layoutChildren={layoutChildrenInternal}
+            />
+          )}
           <ToggleExpand />
         </div>
-        {!isCollapsed && (
-          <TopBar
-            showRaw={data.showRaw}
-            toggleHidden={toggleHideImmediateChildren}
-            settings={settings}
-            handleToggle={toggleHideEdgesInternal}
-            toggleChildren={toggleChildrenInternal}
-            showChildren={data.showChildren}
-            layoutChildren={layoutChildrenInternal}
-          />
-        )}
+        <RootCode content={data.rootCode} />
+
         {data.showRaw && isCollapsed && (
           <div className="editor-container">
             <Editor

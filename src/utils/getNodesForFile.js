@@ -5,12 +5,12 @@ import { v4 as uuid } from 'uuid';
 
 const createCodeNodes = (fileInfo, newPos, parentId) => {
   const moduleNodes = getModuleNodes(fileInfo);
-  const { moduleNode, rootCode, children } = moduleNodes;
+  const { moduleNode, children } = moduleNodes;
   moduleNode.position = newPos;
 
   moduleNode.parentId = parentId;
 
-  const newNodes = [].concat(moduleNode).concat(rootCode).concat(children);
+  const newNodes = [].concat(moduleNode).concat(children);
   return newNodes;
 };
 

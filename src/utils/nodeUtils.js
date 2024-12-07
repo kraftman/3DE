@@ -361,6 +361,7 @@ export const getModuleNodes = (parsed) => {
       fullPath: fullPath,
       width: moduleWidth + 30,
       height: moduleHeight + 60,
+      rootCode: parsed.rootCode.code,
     },
     type: 'module',
     position: {
@@ -404,27 +405,27 @@ export const getModuleNodes = (parsed) => {
     };
   });
 
-  const rootCode = {
-    id: uuid(),
-    data: {
-      content: parsed.rootCode.code,
-      imports: parsed.imports,
-      exports: parsed.exports,
-      handles: importHandles,
-      moduleId: newModuleId,
-    },
-    type: 'code',
-    parentId: newModuleId,
-    extent: 'parent',
-    position: {
-      x: 10,
-      y: 50,
-    },
-    style: {
-      width: `${rootSize.width}px`,
-      height: `${rootSize.height}px`,
-    },
-  };
+  // const rootCode = {
+  //   id: uuid(),
+  //   data: {
+  //     content: parsed.rootCode.code,
+  //     imports: parsed.imports,
+  //     exports: parsed.exports,
+  //     handles: importHandles,
+  //     moduleId: newModuleId,
+  //   },
+  //   type: 'code',
+  //   parentId: newModuleId,
+  //   extent: 'parent',
+  //   position: {
+  //     x: 10,
+  //     y: 50,
+  //   },
+  //   style: {
+  //     width: `${rootSize.width}px`,
+  //     height: `${rootSize.height}px`,
+  //   },
+  // };
 
   const sortedChildren = children.reverse();
 
@@ -434,7 +435,7 @@ export const getModuleNodes = (parsed) => {
   return {
     id: newModuleId,
     moduleNode,
-    rootCode,
+    // rootCode,
     children: sortedChildren,
     edges,
     parsedAst: parsed,
