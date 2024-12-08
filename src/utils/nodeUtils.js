@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { findCallExpressions } from './astUtils.js';
 
 import * as recast from 'recast';
+import { findReferences } from './parser.js';
 
 import { parseWithRecast } from './parseWithRecast';
 
@@ -80,30 +81,56 @@ export const getFunctionContent = (nodes, functionNode) => {
 //   });
 // };
 
-export const getRaw = (moduleId, moduleNodes) => {
-  // need to decide if this should be raw or asts
-
-  const codeStrings = [];
+export const getRaw = (nodes, moduleId) => {
+  // start with the imports
+  // get the root functions
+  // ensure they are ordered correctly if hey call each other
+  //
+  const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
 
   const moduleNode = moduleNodes.find(
-    (node) => node.id === moduleId && node.type === 'module'
+    (node) => node.type === 'module' && node.id === moduleId
   );
 
+  let lines = [];
+
+  // add the imports
   moduleNode.data.imports.forEach((imp) => {
-    codeStrings.push(recast.print(imp.node).code);
+    lines.push(recast.print(imp.node).code);
+  });
+  // add the root level code
+  // TODO: any root level code that invokes a function needs to be after the function
+  lines.push(moduleNode.data.rootCode);
+
+  // order the functions
+
+  // add the functions and sub functions
+  const children = moduleNodes.filter(
+    (node) => node.type === 'pureFunctionNode' && node.parentId === moduleId
+  );
+
+  const parsedFunctions = children.map((child) => {
+    const newLines = getFunctionContent(nodes, child);
+    return {
+      id: child.id,
+      functionName: child.data.functionName,
+      rawCode: newLines.join('\n'),
+    };
   });
 
-  getFunctionContent(codeStrings, moduleNodes, moduleId);
+  // for each function, check if any other functionn references it
+  // if so, move it after that function
 
-  const rootCode = moduleNodes.find(
-    (node) => node.type === 'code' && node.parentId === moduleId
-  );
-  codeStrings.push(rootCode.data.content);
+  children.forEach((child) => {
+    const newLines = getFunctionContent(nodes, child);
+    const references = findReferences(newLines.join('\n'));
+    console.log('found references:', references);
+    lines.push(...newLines);
+  });
 
-  const code = codeStrings.join('\n');
+  const code = lines.join('\n');
   const newAst = parseWithRecast(code);
 
-  //return codeStrings.join('\n');
   return recast.prettyPrint(newAst).code;
 };
 

@@ -91,7 +91,6 @@ export const useFileManager = () => {
   };
 
   const createFile = (fileInfo) => {
-    console.log('ceate file', fileInfo);
     store.setFlatFiles((files) => {
       const newFiles = {
         ...files,

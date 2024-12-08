@@ -67,7 +67,7 @@ export const ModuleNode = ({ id }) => {
   } = useLayer();
   const {
     getNodeById,
-    toggleHideImmediateChildren,
+    toggleShowRawCode,
     createMissingImport,
     toggleCollapseModule,
     toggleChildModule,
@@ -197,8 +197,8 @@ export const ModuleNode = ({ id }) => {
     );
   });
 
-  const toggleHideImmediateChildrenInternal = () => {
-    toggleHideImmediateChildren(data.moduleId);
+  const toggleShowRawCodeInternal = () => {
+    toggleShowRawCode(data.moduleId);
   };
 
   const toggleChildrenInternal = (value, value2) => {
@@ -285,7 +285,7 @@ export const ModuleNode = ({ id }) => {
           {!isCollapsed && (
             <TopBar
               showRaw={data.showRaw}
-              toggleHidden={toggleHideImmediateChildren}
+              toggleShowRawCode={toggleShowRawCodeInternal}
               settings={settings}
               handleToggle={toggleHideEdgesInternal}
               toggleChildren={toggleChildrenInternal}
@@ -297,7 +297,7 @@ export const ModuleNode = ({ id }) => {
         </div>
         <RootCode content={data.rootCode} onChange={onRootCodeChangeInternal} />
 
-        {data.showRaw && isCollapsed && (
+        {data.showRaw && !isCollapsed && (
           <div className="editor-container">
             <Editor
               className="editor nodrag"

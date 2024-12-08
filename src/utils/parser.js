@@ -290,3 +290,40 @@ export const parseCode = (code) => {
     flatFunctions,
   };
 };
+
+export const findReferences = (raw) => {
+  const references = [];
+
+  const ast = parseWithRecast(raw);
+
+  // Traverse the AST
+  recast.types.visit(ast, {
+    visitIdentifier(path) {
+      // Skip declarations
+      if (
+        path.parentPath.node.type !== 'VariableDeclarator' && // Not in `const x = ...`
+        path.parentPath.node.type !== 'FunctionDeclaration' && // Not in `function example`
+        path.parentPath.node.type !== 'FunctionExpression' && // Not in `const x = function() {}`
+        path.parentPath.node.type !== 'ArrowFunctionExpression' // Not in `const x = () => {}`
+      ) {
+        references.push(path.node.name);
+      }
+      this.traverse(path);
+    },
+    visitCallExpression(path) {
+      // Record function invocations
+      const callee = path.node.callee;
+      if (callee.type === 'Identifier') {
+        references.push(callee.name); // Simple function calls
+      } else if (callee.type === 'MemberExpression') {
+        // Handle calls like `object.method()`
+        const objectName = callee.object.name || '(unknown)';
+        const propertyName = callee.property.name || '(unknown)';
+        references.push(`${objectName}.${propertyName}`);
+      }
+      this.traverse(path);
+    },
+  });
+
+  return references;
+};

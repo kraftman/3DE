@@ -39,19 +39,18 @@ export const useNodeManager = () => {
   const store = useStore();
   const { renameFile, createFile } = useFileManager();
 
-  const toggleHideImmediateChildren = (moduleId) => {
+  const toggleShowRawCode = (moduleId) => {
     store.setNodes((nodes) => {
       const moduleNodes = nodes.filter(
         (node) => node.data.moduleId === moduleId
       );
-
       const moduleNodeIds = moduleNodes.map((node) => node.id);
-
       const moduleNode = moduleNodes.find(
-        (node) => node.type === 'module' && node.id === moduleId
+        (node) => node.id === moduleId && node.type === 'module'
       );
 
-      const newRaw = getRaw(moduleId, moduleNodes);
+      const newRaw = getRaw(nodes, moduleId);
+      console.log('got raw', newRaw);
       const newNodes = nodes.map((node) => {
         if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
           return {
@@ -334,7 +333,7 @@ export const useNodeManager = () => {
   };
 
   return {
-    toggleHideImmediateChildren,
+    toggleShowRawCode,
     toggleCollapseModule,
     createMissingImport,
     onNodeDragStart,

@@ -8,7 +8,7 @@ import { Dashboard } from '@mui/icons-material';
 
 export const TopBar = ({
   showRaw,
-  toggleHidden,
+  toggleShowRawCode,
   settings,
   handleToggle,
   toggleChildren,
@@ -21,7 +21,7 @@ export const TopBar = ({
       <ToggleButtonGroup
         // value={settings}
         value={showRaw ? 'code' : 'nodes'}
-        onChange={toggleHidden}
+        onChange={toggleShowRawCode}
         exclusive
         size="small"
         aria-label="text alignment"
