@@ -6,9 +6,6 @@ export const useStore = create((set, get) => ({
     0: { nodes: [], edges: [], color: '#11441166' },
   },
   currentLayer: 0,
-  folderData: [],
-  flatFiles: {},
-  rootPath: '',
   focusNode: null,
   setFocusNode: (node) => set(() => node),
   setFunctions: (payload) =>
@@ -59,11 +56,6 @@ export const useStore = create((set, get) => ({
               : payload,
         },
       },
-    })),
-  setFlatFiles: (payload) =>
-    set((state) => ({
-      flatFiles:
-        typeof payload === 'function' ? payload(state.flatFiles) : payload,
     })),
   getNodes() {
     return get().layers[get().currentLayer].nodes;

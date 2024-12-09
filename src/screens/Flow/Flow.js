@@ -35,17 +35,18 @@ const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
   const {
-    layers,
-    setNodes,
     setEdges,
-    nodes,
-    edges,
-    currentLayer,
-    functions,
+    //functions,
     handleSave,
     shiftLayerUp,
     shiftLayerDown,
   } = useLayer();
+  const { setNodes } = useStore();
+
+  const layers = useStore((store) => store.layers);
+  const nodes = useStore((store) => store.getNodes());
+  const edges = useStore((store) => store.edges);
+  const currentLayer = useStore((store) => store.currentLayer);
 
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();
 
@@ -180,10 +181,10 @@ export const Flow = () => {
               horizontal: 'center',
             }}
           />
-          <SearchBar
+          {/* <SearchBar
             searchContent={functions}
             onSearchSelect={onSearchSelect}
-          />
+          /> */}
           <Tooltip
             id="saved-tooltip"
             place="bottom"

@@ -7,7 +7,6 @@ import * as monaco from 'monaco-editor';
 loader.config({ monaco });
 
 export const RootCode = ({ content, onChange }) => {
-  console.log('content in root code', content);
   const editorRef = useRef(null);
   const [isExpanded, setIsExpanded] = useState(false);
 

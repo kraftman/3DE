@@ -2,22 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Tree, ControlledTreeEnvironment } from 'react-complex-tree';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import { renderers as bpRenderers } from 'react-complex-tree-blueprintjs-renderers';
-import { useLayer } from '../hooks/useLayer';
-import { useStore } from '../contexts/useStore';
 
 import { useReactFlow } from '@xyflow/react';
+import { useFileSystem } from '../stores/useFileSystem';
+import { useFileManager } from '../hooks/useFileManager';
 
 export const BasicTree = () => {
   const [focusedItem, setFocusedItem] = useState();
   const [expandedItems, setExpandedItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
 
-  const flatFiles = useStore((state) => state.flatFiles);
+  const flatFiles = useFileSystem((state) => state.flatFiles);
 
   //console.log('flatFiles in tree', flatFiles);
+  const { onFileSelected } = useFileManager();
 
   const { screenToFlowPosition } = useReactFlow();
-  const { onFileSelected } = useLayer();
 
   const onFileSelectedInternal = (event) => {
     const newPos = screenToFlowPosition({

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Handle } from '@xyflow/react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Pip } from '../../Pip';
@@ -13,11 +13,10 @@ import { findFileForImport } from '../../../utils/fileUtils';
 import { TopBar } from './TopBar';
 import { EditableText } from '../../EditableText';
 import { RootCode } from './RootCode';
-import { useStore } from '../../../contexts/useStore';
 
 import { useLayer } from '../../../hooks/useLayer';
 import { useNodeManager } from '../../../hooks/useNodeManager';
-import { useFileManager } from '../../../hooks/useFileManager';
+import { useFileSystem } from '../../../stores/useFileSystem';
 import * as recast from 'recast';
 
 loader.config({ monaco });
@@ -56,7 +55,7 @@ const darkTheme = createTheme({
   },
 });
 
-export const ModuleNode = ({ id }) => {
+export const ModuleNode = ({ id, data }) => {
   //const data = props.data;
 
   const [settings, setSettings] = useState([]);
@@ -68,38 +67,31 @@ export const ModuleNode = ({ id }) => {
     onRootNodeTextChange,
   } = useLayer();
   const {
-    getNodeById,
     toggleShowRawCode,
     createMissingImport,
     toggleCollapseModule,
     toggleChildModule,
     renameModule,
   } = useNodeManager();
-  const { flatFiles } = useFileManager();
+  const { flatFiles } = useFileSystem();
   const editorRef = useRef(null);
 
-  const node = getNodeById(id);
-  const [fileName, setFileName] = useState(node?.data?.fullPath);
+  const [fileName, setFileName] = useState(data?.fullPath);
 
   const [fileNameError, setFileNameError] = useState(false);
 
-  const rootCodeAst = useStore((state) => {
-    return state.flatFiles[node?.data?.fullPath]?.rootCode;
+  const rootCodeAst = useFileSystem((state) => {
+    return state.flatFiles[data?.fullPath]?.rootCode;
   });
-  console.log('rootCodeAst', rootCodeAst);
 
-  const rootContent = recast.print(rootCodeAst, { reuseWhitespace: true }).code;
+  const rootContent = useMemo(
+    () => recast.print(rootCodeAst, { reuseWhitespace: true }).code,
+    [rootCodeAst]
+  );
 
   // ===================================================================
   // ===== ALL HOOKS NEED TO BE ABOVE THIS LINE ========================
   // ===================================================================
-
-  if (!node) {
-    console.error('could not find node with id', id);
-    return null;
-  }
-
-  const data = node.data;
 
   // Toggle button state
   const toggleHideEdgesInternal = (event, newSettings) => {

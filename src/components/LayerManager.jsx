@@ -8,6 +8,7 @@ import Button from '@mui/material/Button';
 
 import { ChromePicker } from 'react-color';
 import { useLayer } from '../hooks/useLayer';
+import { useStore } from '../contexts/useStore';
 
 const lightenColor = (color, percent) => {
   let r, g, b, a;
@@ -87,8 +88,11 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
   const [localLayerName, setLocalLayerName] = useState(layerName);
   const [localColor, setLocalColor] = useState(color);
 
-  const { nodes, edges, currentLayer, layers, setLayers, setCurrentLayer } =
-    useLayer();
+  const { setLayers, setCurrentLayer } = useLayer();
+  const layers = useStore((store) => store.layers);
+  const nodes = useStore((store) => store.getNodes());
+  const edges = useStore((store) => store.edges);
+  const currentLayer = useStore((store) => store.currentLayer);
 
   let outlineColor = lightenColor(color, 20); // Lighten by 20%
 
@@ -203,8 +207,11 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
 };
 
 export const LayerManager = ({}) => {
-  const { nodes, edges, currentLayer, layers, setLayers, setCurrentLayer } =
-    useLayer();
+  const { setLayers, setCurrentLayer } = useLayer();
+  const layers = useStore((store) => store.layers);
+  const nodes = useStore((store) => store.nodes);
+  const edges = useStore((store) => store.edges);
+  const currentLayer = useStore((store) => store.currentLayer);
 
   const onNewLayer = () => {
     setLayers((layers) => {

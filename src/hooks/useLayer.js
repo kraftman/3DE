@@ -1,5 +1,5 @@
 import { useStore } from '../contexts/useStore'; // adjust the import path as needed
-import { getNodesForFile } from '../utils/getNodesForFile.js';
+
 import { parseWithRecast } from '../utils/parseWithRecast.js';
 
 import {
@@ -110,23 +110,13 @@ export const useLayer = () => {
     );
   };
 
-  const onFileSelected = (newPos, fullPath) => {
-    const fileInfo = store.flatFiles[fullPath];
-
-    const newNodes = getNodesForFile(fileInfo, newPos, null);
-    console.log('newNodes', newNodes);
-    store.setNodes((nodes) => nodes.concat(newNodes));
-  };
-
   return {
-    ...store,
     nodes: nodes,
     edges: edges,
     onModuleClose,
     toggleChildren,
     onCodeNodeTextChange,
     onfunctionTitledChanged,
-    onFileSelected,
     onRootNodeTextChange,
   };
 };

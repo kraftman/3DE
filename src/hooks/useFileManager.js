@@ -10,8 +10,11 @@ import {
   getFileFolder,
   enrichFileInfo,
 } from '../utils/fileUtils';
+import { useFileSystem } from '../stores/useFileSystem.js';
+import { getNodesForFile } from '../utils/getNodesForFile.js';
 
 export const useFileManager = () => {
+  const fileStore = useFileSystem();
   const store = useStore();
 
   const handleSave = () => {
@@ -35,7 +38,7 @@ export const useFileManager = () => {
     }
 
     //TODO use the result as the new file contents, as it should be formatted
-    store.setFlatFiles((files) => {
+    fileStore.setFlatFiles((files) => {
       const newFiles = {
         ...files,
         [fullPath]: { ...files[fullPath], savedData: fileData },
@@ -45,9 +48,10 @@ export const useFileManager = () => {
   };
 
   const loadFileSystem = async (newRootPath) => {
+    console.log('load folder tree: ', newRootPath);
     const { fullRootPath, folderTree } = await loadFolderTree(newRootPath);
-    store.setRootPath(fullRootPath);
-    store.setFolderData(folderTree);
+    fileStore.setRootPath(fullRootPath);
+    fileStore.setFolderData(folderTree);
     const flatFiles = flattenFileTree(folderTree);
     console.log('flatFiles', flatFiles);
 
@@ -68,7 +72,7 @@ export const useFileManager = () => {
         console.error('error loading file', fullPath, error);
       }
     }
-    store.setFlatFiles(flatFiles);
+    fileStore.setFlatFiles(flatFiles);
 
     return fullRootPath;
   };
@@ -91,7 +95,7 @@ export const useFileManager = () => {
   };
 
   const createFile = (fileInfo) => {
-    store.setFlatFiles((files) => {
+    fileStore.setFlatFiles((files) => {
       const newFiles = {
         ...files,
         [fileInfo.index]: fileInfo,
@@ -107,7 +111,7 @@ export const useFileManager = () => {
   };
 
   const renameFile = (fullPath, newFullPath) => {
-    store.setFlatFiles((files) => {
+    fileStore.setFlatFiles((files) => {
       const newFiles = { ...files };
       const file = newFiles[fullPath];
 
@@ -136,11 +140,21 @@ export const useFileManager = () => {
     });
   };
 
+  const onFileSelected = (newPos, fullPath) => {
+    console.log('fileselected', fullPath);
+    const fileInfo = fileStore.flatFiles[fullPath];
+
+    const newNodes = getNodesForFile(fileInfo, newPos, null);
+    console.log('newNodes', newNodes);
+    store.setNodes((nodes) => nodes.concat(newNodes));
+  };
+
   return {
     flatFiles: store.flatFiles,
     handleSave,
     loadFileSystem,
     renameFile,
     createFile,
+    onFileSelected,
   };
 };

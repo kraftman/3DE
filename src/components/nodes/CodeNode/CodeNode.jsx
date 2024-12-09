@@ -13,6 +13,7 @@ import { useNodeManager } from '../../../hooks/useNodeManager';
 import { useStore } from '../../../contexts/useStore';
 import { extractNonFunctionStatements } from '../../../utils/parser';
 import { parseWithRecast } from '../../../utils/parseWithRecast';
+import { useFileSystem } from '../../../stores/useFileSystem';
 
 loader.config({ monaco });
 
@@ -37,7 +38,7 @@ export const CodeNode = ({ id, data }) => {
     return null;
   }
 
-  const funcInfo = useStore((state) => {
+  const funcInfo = useFileSystem((state) => {
     const fileInfo = state.flatFiles[data.fullPath];
     //console.log('fileInfo changed', fileInfo);
     return fileInfo.functions.find((func) => func.id === data.functionId);
