@@ -9,7 +9,6 @@ export const useStore = create((set, get) => ({
   folderData: [],
   flatFiles: {},
   rootPath: '',
-  functions: [],
   focusNode: null,
   setFocusNode: (node) => set(() => node),
   setFunctions: (payload) =>

@@ -1,5 +1,6 @@
 import { useStore } from '../contexts/useStore'; // adjust the import path as needed
 import { getNodesForFile } from '../utils/getNodesForFile.js';
+import { parseWithRecast } from '../utils/parseWithRecast.js';
 
 import {
   hideModuleChildren,
@@ -39,26 +40,25 @@ export const useLayer = () => {
   };
 
   const onRootNodeTextChange = (fullPath, value) => {
-    // might be able to merge this with onCodeNodeTextChange below
+    // need to edit the actual rootcode ast
+    const parsed = parseWithRecast(value);
+    if (!parsed) {
+      console.error('skipping invalid code');
+      return;
+    }
     store.setFlatFiles((files) => {
       const file = files[fullPath];
       const newFile = {
         ...file,
-        rootCode: value,
+        rootCode: parsed,
       };
+      console.log('setting new file', newFile);
       return { ...files, [fullPath]: newFile };
-    });
-    store.setNodes((nodes) => {
-      return nodes.map((node) => {
-        if (node.data.fullPath === fullPath && node.type === 'module') {
-          node.data = { ...node.data, rootCode: value };
-        }
-        return node;
-      });
     });
   };
 
-  const onCodeNodeTextChange = (fullPath, functionId, value) => {
+  const onCodeNodeTextChange = (fullPath, functionId, newBodyStatements) => {
+    console.log('valud', newBodyStatements);
     // update the body of the function
 
     store.setFlatFiles((files) => {
@@ -68,7 +68,19 @@ export const useLayer = () => {
         ...file,
         functions: file.functions.map((func) => {
           if (func.id === functionId) {
-            func.body = value;
+            console.log('updating function', func);
+            const newFunc = {
+              ...func,
+              node: {
+                ...func.node,
+                body: {
+                  ...func.node.body,
+                  body: newBodyStatements,
+                },
+              },
+            };
+            console.log('after update', newFunc);
+            return newFunc;
           }
           return func;
         }),
@@ -76,14 +88,7 @@ export const useLayer = () => {
       return { ...files, [fullPath]: newFile };
     });
 
-    store.setNodes((nodes) => {
-      return nodes.map((node) => {
-        if (node.data.functionId === functionId && node.type === 'code') {
-          node.data = { ...node.data, content: value };
-        }
-        return node;
-      });
-    });
+    // also need to handle them creating a new function in code
   };
 
   const onfunctionTitledChanged = (functionId, title) => {

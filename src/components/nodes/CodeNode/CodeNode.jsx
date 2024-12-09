@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useRef } from 'react';
 import { Handle } from '@xyflow/react';
 import { loader } from '@monaco-editor/react';
@@ -10,6 +10,9 @@ import 'react-tooltip/dist/react-tooltip.css';
 
 import { useLayer } from '../../../hooks/useLayer';
 import { useNodeManager } from '../../../hooks/useNodeManager';
+import { useStore } from '../../../contexts/useStore';
+import { extractNonFunctionStatements } from '../../../utils/parser';
+import { parseWithRecast } from '../../../utils/parseWithRecast';
 
 loader.config({ monaco });
 
@@ -22,12 +25,8 @@ const codeNodeStyle = {
   boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
 };
 
-export const CodeNode = ({ id }) => {
+export const CodeNode = ({ id, data }) => {
   const editorRef = useRef(null);
-
-  const debouncedOnChange = useDebouncedCallback((newText) => {
-    onCodeNodeTextChange(id, newText);
-  }, 1);
 
   const { onCodeNodeTextChange } = useLayer();
   const { getNodeById } = useNodeManager();
@@ -38,12 +37,31 @@ export const CodeNode = ({ id }) => {
     return null;
   }
 
-  const data = node.data;
+  const funcInfo = useStore((state) => {
+    const fileInfo = state.flatFiles[data.fullPath];
+    //console.log('fileInfo changed', fileInfo);
+    return fileInfo.functions.find((func) => func.id === data.functionId);
+  });
 
-  const text = data.content || '<no root content> ';
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    console.log('getting new values for function content');
+    const functionContent = extractNonFunctionStatements(funcInfo.node);
+    setText(functionContent);
+  }, [funcInfo]);
 
   const onChange = (newText) => {
-    onCodeNodeTextChange(data.fullPath, data.functionId, newText);
+    setText(newText);
+    const wrappedCode = `${
+      funcInfo.async ? 'async ' : ''
+    }function temp() { ${newText} }`;
+    const parsed = parseWithRecast(wrappedCode);
+    if (parsed) {
+      const newBodyStatements = parsed.program.body[0].body.body;
+      console.log('new body statements', newBodyStatements);
+      onCodeNodeTextChange(data.fullPath, data.functionId, newBodyStatements);
+    }
     //debouncedOnChange(newText);
   };
 

@@ -5,7 +5,8 @@ import * as murmur from 'murmurhash-js';
 
 import { parseWithRecast } from './parseWithRecast';
 
-const extractNonFunctionStatements = (functionNode) => {
+export const extractNonFunctionStatements = (functionNode) => {
+  console.log('extracting from node', functionNode);
   const nonFunctionNodes = functionNode.body.body.filter(
     (node) =>
       !n.FunctionDeclaration.check(node) && // Exclude declared functions
@@ -35,8 +36,6 @@ const createFunction = (path, name, parentId, depth, type) => {
   const funcId = murmur.murmur3(name + parentId + body);
   const nestedFunctions = getFunctions(node.body, funcId, depth + 1);
   const contentSize = getEditorSize(body);
-  //const subtreeCode = recast.print(node).code;
-  //const newAst = parseWithRecast(body);
   const funcInfo = {
     id: funcId,
     name,
@@ -44,7 +43,6 @@ const createFunction = (path, name, parentId, depth, type) => {
     type,
     parameters,
     depth,
-    body,
     nestedFunctions,
     node,
     async: node.async,
@@ -244,11 +242,7 @@ const getRootLevelCode = (ast) => {
   // Generate the modified code with preserved formatting
   const combinedCode = recast.print(ast, { reuseWhitespace: true }).code;
 
-  return {
-    body: ast.program.body,
-    code: combinedCode,
-    node: ast.program,
-  };
+  return ast;
 };
 
 const flattenFunctions = (functions) => {

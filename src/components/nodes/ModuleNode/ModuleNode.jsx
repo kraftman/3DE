@@ -13,6 +13,12 @@ import { findFileForImport } from '../../../utils/fileUtils';
 import { TopBar } from './TopBar';
 import { EditableText } from '../../EditableText';
 import { RootCode } from './RootCode';
+import { useStore } from '../../../contexts/useStore';
+
+import { useLayer } from '../../../hooks/useLayer';
+import { useNodeManager } from '../../../hooks/useNodeManager';
+import { useFileManager } from '../../../hooks/useFileManager';
+import * as recast from 'recast';
 
 loader.config({ monaco });
 
@@ -50,10 +56,6 @@ const darkTheme = createTheme({
   },
 });
 
-import { useLayer } from '../../../hooks/useLayer';
-import { useNodeManager } from '../../../hooks/useNodeManager';
-import { useFileManager } from '../../../hooks/useFileManager';
-
 export const ModuleNode = ({ id }) => {
   //const data = props.data;
 
@@ -80,6 +82,13 @@ export const ModuleNode = ({ id }) => {
   const [fileName, setFileName] = useState(node?.data?.fullPath);
 
   const [fileNameError, setFileNameError] = useState(false);
+
+  const rootCodeAst = useStore((state) => {
+    return state.flatFiles[node?.data?.fullPath]?.rootCode;
+  });
+  console.log('rootCodeAst', rootCodeAst);
+
+  const rootContent = recast.print(rootCodeAst, { reuseWhitespace: true }).code;
 
   // ===================================================================
   // ===== ALL HOOKS NEED TO BE ABOVE THIS LINE ========================
@@ -295,7 +304,7 @@ export const ModuleNode = ({ id }) => {
           )}
           <ToggleExpand />
         </div>
-        <RootCode content={data.rootCode} onChange={onRootCodeChangeInternal} />
+        <RootCode content={rootContent} onChange={onRootCodeChangeInternal} />
 
         {data.showRaw && !isCollapsed && (
           <div className="editor-container">

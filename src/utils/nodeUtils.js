@@ -238,17 +238,17 @@ export const getImportHandles = (imports, moduleId) => {
   });
 };
 
-export const getModuleNodes = (parsed) => {
-  const maxDepth = parsed.functions.reduce((acc, func) => {
+export const getModuleNodes = (fileInfo) => {
+  const maxDepth = fileInfo.functions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
   }, 0);
 
-  const fullPath = parsed.index;
+  const fullPath = fileInfo.index;
 
   const newModuleId = uuid();
 
   const nodes = [];
-  parsed.functions.forEach((func) => {
+  fileInfo.functions.forEach((func) => {
     const frameNode = {
       id: uuid(),
       type: 'pureFunctionNode',
@@ -298,7 +298,7 @@ export const getModuleNodes = (parsed) => {
   let moduleHeight = 100;
 
   for (let i = maxDepth; i >= 0; i--) {
-    const functionsAtDepth = parsed.functions.filter(
+    const functionsAtDepth = fileInfo.functions.filter(
       (func) => func.depth === i
     );
     const nodesAtDepth = nodes.filter(
@@ -380,8 +380,8 @@ export const getModuleNodes = (parsed) => {
         }, 0);
     }
   }
-  console.log('parsed imports:', parsed.imports);
-  const imports = parsed.imports.map((imp) => {
+  console.log('parsed imports:', fileInfo.imports);
+  const imports = fileInfo.imports.map((imp) => {
     const impPath = imp.moduleSpecifier;
     const isLocal = impPath.startsWith('.') || impPath.startsWith('/');
     const impFullPath =
@@ -395,22 +395,22 @@ export const getModuleNodes = (parsed) => {
 
   const moduleHandles = getImportHandles(imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
-
-  const baseSize = getEditorSize(parsed.rootCode.code);
+  const parsedRootCode = recast.prettyPrint(fileInfo.rootCode).code;
+  console.log('parsed root code:', parsedRootCode);
+  const baseSize = getEditorSize(parsedRootCode);
   moduleWidth = Math.max(moduleWidth, baseSize.width);
   moduleHeight = Math.max(moduleHeight, baseSize.height);
 
   const moduleNode = {
     id: newModuleId,
     data: {
-      exports: parsed.exports,
+      exports: fileInfo.exports,
       imports: imports,
       handles: moduleHandles,
       moduleId: newModuleId,
       fullPath: fullPath,
       width: moduleWidth + 30,
       height: moduleHeight + 60,
-      rootCode: parsed.rootCode.code,
     },
     type: 'module',
     position: {
@@ -423,9 +423,8 @@ export const getModuleNodes = (parsed) => {
     },
   };
 
-  const rootSize = getEditorSize(parsed.rootCode.code);
-
-  const importDefinitons = parsed.rootCode.node.body.filter((node) => {
+  console.log('parsed root code:', fileInfo.rootCode);
+  const importDefinitons = fileInfo.rootCode.program.body.filter((node) => {
     return node.type === 'ImportDeclaration';
   });
 
@@ -454,28 +453,6 @@ export const getModuleNodes = (parsed) => {
     };
   });
 
-  // const rootCode = {
-  //   id: uuid(),
-  //   data: {
-  //     content: parsed.rootCode.code,
-  //     imports: parsed.imports,
-  //     exports: parsed.exports,
-  //     handles: importHandles,
-  //     moduleId: newModuleId,
-  //   },
-  //   type: 'code',
-  //   parentId: newModuleId,
-  //   extent: 'parent',
-  //   position: {
-  //     x: 10,
-  //     y: 50,
-  //   },
-  //   style: {
-  //     width: `${rootSize.width}px`,
-  //     height: `${rootSize.height}px`,
-  //   },
-  // };
-
   const sortedChildren = children.reverse();
 
   // Internal edges, needs moving out
@@ -487,6 +464,5 @@ export const getModuleNodes = (parsed) => {
     // rootCode,
     children: sortedChildren,
     edges,
-    parsedAst: parsed,
   };
 };
