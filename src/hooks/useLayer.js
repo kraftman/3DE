@@ -138,19 +138,13 @@ export const useLayer = () => {
       const file = flatFiles[fullPath];
       visit(file.fullAst, {
         visitFunctionDeclaration(path) {
-          // Find the matching function by ID
-          console.log('checking path:', path);
           if (path.node._id && path.node._id === functionId) {
-            console.log('Updating function:', path.node.id.name);
-
-            // Replace the function's body with the new statements
             path.get('body').replace({
               type: 'BlockStatement',
               body: newBodyStatements,
             });
 
-            console.log('Updated function:', path.node);
-            return false; // Stop further traversal
+            return false;
           }
 
           this.traverse(path);

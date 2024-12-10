@@ -1,5 +1,6 @@
 import { useStore } from '../contexts/useStore';
 import { useCallback } from 'react';
+const { namedTypes: n, visit } = require('ast-types');
 import {
   getRaw,
   findChildIds,
@@ -179,100 +180,135 @@ export const useNodeManager = () => {
     });
   }, []);
 
-  const handleFunctionDrag = useCallback((functionNode) => {
-    const currentNodes = getNodes();
-    const parentModule = currentNodes.find(
-      (node) => node.id === functionNode.data.moduleId
-    );
-    const isOutside = functionIsOutsideParent(parentModule, functionNode);
+  const handleFunctionDrag = useCallback(
+    (functionNode) => {
+      const currentNodes = getNodes();
+      const parentModule = currentNodes.find(
+        (node) => node.id === functionNode.data.moduleId
+      );
+      const isOutside = functionIsOutsideParent(parentModule, functionNode);
 
-    if (!isOutside) {
-      clampFunctionToModule(functionNode.id);
-      return;
-    }
+      if (!isOutside) {
+        clampFunctionToModule(functionNode.id);
+        return;
+      }
 
-    const { functionName } = functionNode.data;
+      // Get all imports for the file
+      // find any imports that the function uses
+      // remove the function from the AST
+      // check if there are imports that are no longer used by the remaining code
+      // if so, remove them
+      // add the imports that the functions uses to the new file
+      // add an import to the new filed
+      // remove the function from the functions array
+      // remove the function node and its children from the nodes array.
+      // create the new nodes and add them to the nodes array
 
-    const lines = getFunctionContent(currentNodes, functionNode);
-    const finalContent = lines.join('\n');
-
-    const parentPath = parentModule.data.fullPath;
-    const parentDir = path.dirname(parentPath);
-    const newPath = path.join(parentDir, functionName + '.js');
-    const newFileInfo = {
-      index: newPath,
-      children: [],
-      data: functionName + '.js',
-      fileData: finalContent,
-      savedData: finalContent,
-      isFolder: false,
-    };
-
-    enrichFileInfo(newFileInfo);
-
-    setFlatFiles((files) => {
-      const newFiles = {
-        ...files,
-        [newPath]: newFileInfo,
-      };
-      return newFiles;
-    });
-
-    createFile(newFileInfo);
-
-    setNodes((nodes) => {
-      const newPosition = {
-        x: parentModule.data.width + 100,
-        y: 0,
-      };
-
-      const newNodes = getNodesForFile(
-        newFileInfo,
-        newPosition,
-        functionNode.data.moduleId
+      const { functionName } = functionNode.data;
+      const functionId = functionNode.data.functionId;
+      const fileInfo = flatFiles[functionNode.data.fullPath];
+      const foundFunction = fileInfo.functions.find(
+        (func) => func.id === functionId
       );
 
-      const childNodeIds = findChildIds(nodes, functionNode.id);
+      // visit(fileInfo.fullAst, {
+      //   visitFunctionDeclaration(path) {
+      //     if (path.node._id && path.node._id === functionId) {
 
-      childNodeIds.push(functionNode.id);
-      nodes = nodes.filter((node) => !childNodeIds.includes(node.id));
+      //       return false;
+      //     }
 
-      nodes = nodes.map((node) => {
-        if (node.id === functionNode.data.moduleId) {
-          const newImport = {
-            name: functionName,
-            imported: functionName,
-            moduleSpecifier: './' + functionName,
-            type: 'local',
-            fullPath: stripExt(newPath),
-          };
-          console.log('newImport', newImport);
-          const newHandles = getImportHandles(
-            node.data.imports.concat(newImport),
-            node.id
-          );
-          console.log('newHandles', newHandles);
+      //     this.traverse(path);
+      //   },
+      // });
 
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              imports: node.data.imports.concat(newImport),
-              handles: newHandles,
-            },
-          };
-        }
-        return node;
+      const finalContent = recast.print(foundFunction.node).code;
+
+      const parentPath = parentModule.data.fullPath;
+      const parentDir = path.dirname(parentPath);
+      const newPath = path.join(parentDir, functionName + '.js');
+      const newFileInfo = {
+        index: newPath,
+        children: [],
+        data: functionName + '.js',
+        fileData: finalContent,
+        savedData: finalContent,
+        isFolder: false,
+      };
+
+      enrichFileInfo(newFileInfo);
+
+      setFlatFiles((files) => {
+        const newFiles = {
+          ...files,
+          [newPath]: newFileInfo,
+        };
+        return newFiles;
       });
-      return nodes.concat(newNodes);
-    });
-  }, []);
 
-  const onNodeDragStop = useCallback((event, node) => {
-    if (node.type === 'pureFunctionNode') {
-      handleFunctionDrag(node);
-    }
-  }, []);
+      createFile(newFileInfo);
+
+      setNodes((nodes) => {
+        const newPosition = {
+          x: parentModule.data.width + 100,
+          y: 0,
+        };
+
+        const newNodes = getNodesForFile(
+          newFileInfo,
+          newPosition,
+          functionNode.data.moduleId
+        );
+
+        const childNodeIds = findChildIds(nodes, functionNode.id);
+
+        childNodeIds.push(functionNode.id);
+
+        // remove the old function from the old module
+        // also need to remove the children
+        nodes = nodes.filter((node) => !childNodeIds.includes(node.id));
+
+        nodes = nodes.map((node) => {
+          if (node.id === functionNode.data.moduleId) {
+            const newImport = {
+              name: functionName,
+              imported: functionName,
+              moduleSpecifier: './' + functionName,
+              type: 'local',
+              fullPath: stripExt(newPath),
+            };
+            console.log('newImport', newImport);
+            const newHandles = getImportHandles(
+              node.data.imports.concat(newImport),
+              node.id
+            );
+            console.log('newHandles', newHandles);
+
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                imports: node.data.imports.concat(newImport),
+                handles: newHandles,
+              },
+            };
+          }
+          return node;
+        });
+        return nodes.concat(newNodes);
+      });
+    },
+    [flatFiles]
+  );
+
+  const onNodeDragStop = useCallback(
+    (event, node) => {
+      if (node.type === 'pureFunctionNode') {
+        handleFunctionDrag(node);
+      }
+    },
+    [flatFiles]
+  );
 
   const renameModule = useCallback((moduleId, newPath) => {
     setNodes((nodes) => {

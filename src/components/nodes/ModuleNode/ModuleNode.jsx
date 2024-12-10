@@ -73,13 +73,14 @@ export const ModuleNode = React.memo(({ id, data }) => {
     renameModule,
   } = useNodeManager();
   const editorRef = useRef(null);
-  const flatFiles = useFileSystem((state) => state.flatFiles);
+  const flatFiles = useFileSystem(useShallow((state) => state.flatFiles));
 
   const [fileName, setFileName] = useState(data?.fullPath);
   const [fileNameError, setFileNameError] = useState(false);
 
   const rootCodeAst = useFileSystem(
     useShallow((state) => {
+      console.log('getting root code for ', data?.fullPath);
       return state.flatFiles[data?.fullPath]?.rootCode;
     })
   );

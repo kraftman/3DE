@@ -49,7 +49,6 @@ const createFunction = (path, name, parentId, depth, type) => {
     node,
     async: node.async,
     path,
-    //localAst: newAst,
     contentSize,
     frameSize: {
       ...contentSize,
