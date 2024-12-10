@@ -84,20 +84,21 @@ export const useLayer = () => {
           return false;
         },
       });
-
+      console.log('old ast', recast.print(fileAst).code);
       visit(fileAst, {
         visitProgram(path) {
-          const body = path.node.body;
-
           // Separate imports and other declarations
           const importNodes = [];
           const otherNodes = [];
 
-          body.forEach((node) => {
+          path.get('body').each((nodePath) => {
+            const node = nodePath.node;
             if (node.type === 'ImportDeclaration') {
               importNodes.push(node);
             } else {
-              const isRoot = isRootLevelNode(path.node);
+              const isRoot = isRootLevelNode(nodePath);
+              console.log('==== is root', isRoot);
+              console.log('==== node', recast.print(node).code);
               if (!isRoot) {
                 otherNodes.push(node);
               }
@@ -109,6 +110,7 @@ export const useLayer = () => {
             ...parsedBody, // Inject the parsed nodes
             ...otherNodes, // Append the rest of the nodes
           ];
+          console.log('new body', path.node.body);
 
           return false; // Stop traversal
         },
