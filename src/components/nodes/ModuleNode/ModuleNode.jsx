@@ -58,9 +58,6 @@ const darkTheme = createTheme({
 });
 
 export const ModuleNode = React.memo(({ id, data }) => {
-  //const data
-  console.log('rendering module node', id, data.fullPath);
-
   const [settings, setSettings] = useState([]);
   const {
     onModuleClose,
@@ -83,15 +80,21 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const rootCodeAst = useFileSystem(
     useShallow((state) => {
-      console.log('getting root code for ', data?.fullPath);
       return state.flatFiles[data?.fullPath]?.rootCode;
     })
   );
 
-  const rootContent = useMemo(
-    () => recast.print(rootCodeAst, { reuseWhitespace: true }).code,
-    [rootCodeAst]
-  );
+  const rootContent = useMemo(() => {
+    const lines = [];
+    if (rootCodeAst) {
+      console.log('rootCodeAst in mod', rootCodeAst);
+      const converted = Array.from(rootCodeAst);
+      for (let rootCode of converted) {
+        lines.push(recast.print(rootCode.path.node).code);
+      }
+    }
+    return lines.join('\n');
+  }, [rootCodeAst]);
 
   // ===================================================================
   // ===== ALL HOOKS NEED TO BE ABOVE THIS LINE ========================
@@ -239,11 +242,11 @@ export const ModuleNode = React.memo(({ id, data }) => {
   };
 
   const onFileNameChange = (value) => {
-    // if (flatFiles[value]) {
-    //   setFileNameError('file exists');
-    // } else {
-    //   setFileNameError(false);
-    // }
+    if (flatFiles[value]) {
+      setFileNameError('file exists');
+    } else {
+      setFileNameError(false);
+    }
 
     setFileName(value);
   };

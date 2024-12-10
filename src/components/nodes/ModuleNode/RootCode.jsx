@@ -10,6 +10,12 @@ export const RootCode = ({ content, onChange }) => {
   const editorRef = useRef(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const addListeners = (editor) => {
+    // editor.onDidChangeModelContent((e) => {
+    //   console.log(e);
+    // });
+  };
+
   return (
     <div>
       <div
@@ -48,6 +54,7 @@ export const RootCode = ({ content, onChange }) => {
             theme="vs-dark"
             onMount={(editor) => {
               editorRef.current = editor;
+              addListeners(editor);
             }}
           />
         </div>

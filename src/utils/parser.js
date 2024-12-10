@@ -194,43 +194,53 @@ const getExports = (ast) => {
   return myExports;
 };
 
+export const isRootLevelNode = (nodePath) => {
+  const node = nodePath.node;
+
+  // Check if the node matches root-level conditions, excluding imports
+  const isRootLevelNode =
+    // Exclude ImportDeclaration and FunctionDeclaration nodes
+    !n.ImportDeclaration.check(node) &&
+    !n.FunctionDeclaration.check(node) &&
+    !(
+      n.VariableDeclaration.check(node) &&
+      node.declarations.some(
+        (declaration) =>
+          n.FunctionExpression.check(declaration.init) ||
+          n.ArrowFunctionExpression.check(declaration.init)
+      )
+    ) &&
+    // Exclude ExportNamedDeclarations containing FunctionDeclarations
+    !(
+      n.ExportNamedDeclaration.check(node) &&
+      (n.FunctionDeclaration.check(node.declaration) || // Handles `export function`
+        (n.VariableDeclaration.check(node.declaration) && // Handles `export const`
+          node.declaration.declarations.some(
+            (declaration) =>
+              n.FunctionExpression.check(declaration.init) ||
+              n.ArrowFunctionExpression.check(declaration.init)
+          )))
+    );
+  return isRootLevelNode;
+};
+
 const getRootLevelCode = (ast) => {
   // Traverse the AST to prune nodes
+
+  const rootPaths = [];
+
   visit(ast, {
     visitProgram(path) {
       // Traverse through the body of the program
       path.get('body').each((nodePath) => {
-        const node = nodePath.node;
-
-        // Check if the node matches root-level conditions, excluding imports
-        const isRootLevelNode =
-          // Exclude ImportDeclaration and FunctionDeclaration nodes
-          !n.ImportDeclaration.check(node) &&
-          !n.FunctionDeclaration.check(node) &&
-          !(
-            n.VariableDeclaration.check(node) &&
-            node.declarations.some(
-              (declaration) =>
-                n.FunctionExpression.check(declaration.init) ||
-                n.ArrowFunctionExpression.check(declaration.init)
-            )
-          ) &&
-          // Exclude ExportNamedDeclarations containing FunctionDeclarations
-          !(
-            n.ExportNamedDeclaration.check(node) &&
-            (n.FunctionDeclaration.check(node.declaration) || // Handles `export function`
-              (n.VariableDeclaration.check(node.declaration) && // Handles `export const`
-                node.declaration.declarations.some(
-                  (declaration) =>
-                    n.FunctionExpression.check(declaration.init) ||
-                    n.ArrowFunctionExpression.check(declaration.init)
-                )))
-          );
-
-        // Prune the node if it's an ImportDeclaration or doesn't match
-        if (n.ImportDeclaration.check(node) || !isRootLevelNode) {
-          //console.log('pruning node:', recast.print(node).code);
-          nodePath.prune();
+        const isRoot = isRootLevelNode(nodePath);
+        if (isRoot) {
+          console.log('pruning node:', recast.print(nodePath.node).code);
+          //nodePath.prune();
+          rootPaths.push({
+            line: rootPaths.length,
+            path: nodePath,
+          });
         }
       });
 
@@ -242,7 +252,7 @@ const getRootLevelCode = (ast) => {
   // Generate the modified code with preserved formatting
   const combinedCode = recast.print(ast, { reuseWhitespace: true }).code;
 
-  return ast;
+  return rootPaths;
 };
 
 const flattenFunctions = (functions) => {
@@ -282,6 +292,7 @@ export const parseCode = (code) => {
     functions,
     rootLevelCode,
     flatFunctions,
+    ast,
   };
 };
 

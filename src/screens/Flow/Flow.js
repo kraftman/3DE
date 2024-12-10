@@ -50,7 +50,6 @@ export const Flow = () => {
 
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();
 
-  const { setFocusNode } = useStore();
   const { loadFileSystem } = useFileManager();
 
   const addKeyListener = () => {
@@ -83,10 +82,6 @@ export const Flow = () => {
     };
     init();
   }, []);
-
-  const onNodeClick = (event, node) => {
-    setFocusNode(node);
-  };
 
   const onNodesChange = (changes) => {
     setNodes((prevNodes) => {
@@ -151,7 +146,6 @@ export const Flow = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
         defaultViewport={defaultViewport}
         minZoom={0.2}
         maxZoom={4}

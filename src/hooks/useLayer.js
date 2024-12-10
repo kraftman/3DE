@@ -3,12 +3,15 @@ import { useStore } from '../contexts/useStore'; // adjust the import path as ne
 
 import { parseWithRecast } from '../utils/parseWithRecast.js';
 import { useShallow } from 'zustand/react/shallow';
+const { namedTypes: n, visit } = require('ast-types');
 
 import {
   hideModuleChildren,
   showModuleChildren,
 } from '../utils/moduleUtils.js';
 import { useFileSystem } from '../stores/useFileSystem.js';
+import { isRootLevelNode } from '../utils/parser.js';
+import * as recast from 'recast';
 
 export const useLayer = () => {
   const { setNodes, setEdges } = useStore(
@@ -17,7 +20,12 @@ export const useLayer = () => {
       setEdges: state.setEdges,
     }))
   );
-  const setFlatFiles = useFileSystem(useShallow((state) => state.setFlatFiles));
+  const { flatFiles, setFlatFiles } = useFileSystem(
+    useShallow((state) => ({
+      setFlatFiles: state.setFlatFiles,
+      flatFiles: state.flatFiles,
+    }))
+  );
 
   const onModuleClose = (moduleId) => {
     setNodes((nodes) => {
@@ -48,23 +56,77 @@ export const useLayer = () => {
     []
   );
 
-  const onRootNodeTextChange = useCallback((fullPath, value) => {
-    // need to edit the actual rootcode ast
-    const parsed = parseWithRecast(value);
-    if (!parsed) {
-      console.error('skipping invalid code');
-      return;
-    }
-    setFlatFiles((files) => {
-      const file = files[fullPath];
+  const onRootNodeTextChange = useCallback(
+    (fullPath, value) => {
+      // need to edit the actual rootcode ast
+      console.log('new value', value);
+      const parsed = parseWithRecast(value);
+      console.log('parsed', parsed);
+      const parsedBody = parsed.program.body;
+      if (!parsed) {
+        console.error('skipping invalid code');
+        return;
+      }
+      const file = flatFiles[fullPath];
+      const fileAst = file.fullAst;
+
+      const newRootCode = [];
+
+      visit(parsed, {
+        visitProgram(path) {
+          // Traverse through the body of the program
+          path.get('body').each((nodePath) => {
+            newRootCode.push({
+              line: newRootCode.length,
+              path: nodePath,
+            });
+          });
+          return false;
+        },
+      });
+
+      visit(fileAst, {
+        visitProgram(path) {
+          const body = path.node.body;
+
+          // Separate imports and other declarations
+          const importNodes = [];
+          const otherNodes = [];
+
+          body.forEach((node) => {
+            if (node.type === 'ImportDeclaration') {
+              importNodes.push(node);
+            } else {
+              const isRoot = isRootLevelNode(path.node);
+              if (!isRoot) {
+                otherNodes.push(node);
+              }
+            }
+          });
+
+          path.node.body = [
+            ...importNodes, // Keep imports at the top
+            ...parsedBody, // Inject the parsed nodes
+            ...otherNodes, // Append the rest of the nodes
+          ];
+
+          return false; // Stop traversal
+        },
+      });
+      console.log('new ast', recast.print(fileAst).code);
+
       const newFile = {
         ...file,
-        rootCode: parsed,
+        fullAst: fileAst,
+        rootCode: newRootCode,
       };
-      console.log('setting new file', newFile);
-      return { ...files, [fullPath]: newFile };
-    });
-  }, []);
+
+      setFlatFiles((files) => {
+        return { ...files, [fullPath]: newFile };
+      });
+    },
+    [flatFiles]
+  );
 
   const onCodeNodeTextChange = useCallback(
     (fullPath, functionId, newBodyStatements) => {

@@ -21,6 +21,7 @@ export const enrichFileInfo = (fileInfo) => {
   fileInfo.exports = exports;
   fileInfo.functions = flatFunctions;
   fileInfo.rootCode = rootLevelCode;
+  fileInfo.fullAst = moduleCode.ast;
 };
 
 export const importWithoutExtension = (fullPath) => {

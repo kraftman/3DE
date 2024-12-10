@@ -7,6 +7,7 @@ import {
   getImportHandles,
 } from '../utils/nodeUtils';
 import { useUpdateNodeInternals } from '@xyflow/react';
+import * as recast from 'recast';
 
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import path from 'path-browserify';
@@ -60,7 +61,10 @@ export const useNodeManager = () => {
         (node) => node.id === moduleId && node.type === 'module'
       );
 
-      const newRaw = getRaw(nodes, moduleId);
+      //const newRaw = getRaw(nodes, moduleId);
+      const fullPath = moduleNode.data.fullPath;
+      const fileInfo = flatFiles[fullPath];
+      const newRaw = recast.prettyPrint(fileInfo.fullAst).code;
       console.log('got raw', newRaw);
       const newNodes = nodes.map((node) => {
         if (moduleNodeIds.includes(node.id) && node.type !== 'module') {

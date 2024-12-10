@@ -395,9 +395,11 @@ export const getModuleNodes = (fileInfo) => {
 
   const moduleHandles = getImportHandles(imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
-  const parsedRootCode = recast.prettyPrint(fileInfo.rootCode).code;
-  console.log('parsed root code:', parsedRootCode);
-  const baseSize = getEditorSize(parsedRootCode);
+
+  const baseSize = {
+    width: 200,
+    height: 100,
+  };
   moduleWidth = Math.max(moduleWidth, baseSize.width);
   moduleHeight = Math.max(moduleHeight, baseSize.height);
 
@@ -424,34 +426,34 @@ export const getModuleNodes = (fileInfo) => {
   };
 
   console.log('parsed root code:', fileInfo.rootCode);
-  const importDefinitons = fileInfo.rootCode.program.body.filter((node) => {
-    return node.type === 'ImportDeclaration';
-  });
+  // const importDefinitons = fileInfo.rootCode.program.body.filter((node) => {
+  //   return node.type === 'ImportDeclaration';
+  // });
 
-  const importHandles = importDefinitons?.map((node) => {
-    const line = node.loc.start.line;
-    let name = '';
-    if (node.specifiers) {
-      name =
-        node.specifiers[0]?.local.name || node.specifiers[0]?.imported.name;
-    }
-    return {
-      moduleId: newModuleId,
-      id: name + ':in',
-      key: name + ':in',
-      funcName: name,
-      parentId: newModuleId,
-      refType: 'import',
-      type: 'source',
-      position: 'left',
-      style: {
-        top: 14 * line,
-      },
-      data: {
-        name,
-      },
-    };
-  });
+  // const importHandles = importDefinitons?.map((node) => {
+  //   const line = node.loc.start.line;
+  //   let name = '';
+  //   if (node.specifiers) {
+  //     name =
+  //       node.specifiers[0]?.local.name || node.specifiers[0]?.imported.name;
+  //   }
+  //   return {
+  //     moduleId: newModuleId,
+  //     id: name + ':in',
+  //     key: name + ':in',
+  //     funcName: name,
+  //     parentId: newModuleId,
+  //     refType: 'import',
+  //     type: 'source',
+  //     position: 'left',
+  //     style: {
+  //       top: 14 * line,
+  //     },
+  //     data: {
+  //       name,
+  //     },
+  //   };
+  // });
 
   const sortedChildren = children.reverse();
 
