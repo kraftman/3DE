@@ -1,16 +1,29 @@
 import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
 
-// Zustand Store
-export const useFileSystem = create((set, get) => ({
-  folderData: [],
-  flatFiles: {},
-  rootPath: '',
-  setFlatFiles: (payload) =>
-    set((state) => ({
-      flatFiles:
-        typeof payload === 'function' ? payload(state.flatFiles) : payload,
-    })),
+export const useFileSystem = create(
+  immer((set) => ({
+    folderData: [],
+    flatFiles: {},
+    rootPath: '',
 
-  setFolderData: (payload) => set(() => ({ folderData: payload })),
-  setRootPath: (payload) => set(() => ({ rootPath: payload })),
-}));
+    // Set flatFiles with Immer
+    setFlatFiles: (updateFn) =>
+      set((state) => {
+        state.flatFiles =
+          typeof updateFn === 'function' ? updateFn(state.flatFiles) : updateFn;
+      }),
+
+    // Set folderData with Immer
+    setFolderData: (payload) =>
+      set((state) => {
+        state.folderData = payload;
+      }),
+
+    // Set rootPath with Immer
+    setRootPath: (payload) =>
+      set((state) => {
+        state.rootPath = payload;
+      }),
+  }))
+);

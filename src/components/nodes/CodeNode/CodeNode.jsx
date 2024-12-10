@@ -30,13 +30,6 @@ export const CodeNode = ({ id, data }) => {
   const editorRef = useRef(null);
 
   const { onCodeNodeTextChange } = useLayer();
-  const { getNodeById } = useNodeManager();
-
-  const node = getNodeById(id);
-  if (!node) {
-    console.error('could not find node with id', id);
-    return null;
-  }
 
   const funcInfo = useFileSystem((state) => {
     const fileInfo = state.flatFiles[data.fullPath];

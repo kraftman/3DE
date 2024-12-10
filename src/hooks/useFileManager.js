@@ -1,4 +1,5 @@
 import { useStore } from '../contexts/useStore';
+import { useCallback } from 'react';
 import { isValidCode } from '../screens/Flow/utils.js';
 import path from 'path-browserify';
 import { enqueueSnackbar } from 'notistack';
@@ -12,48 +13,58 @@ import {
 } from '../utils/fileUtils';
 import { useFileSystem } from '../stores/useFileSystem.js';
 import { getNodesForFile } from '../utils/getNodesForFile.js';
+import { useShallow } from 'zustand/react/shallow';
 
 export const useFileManager = () => {
-  const fileStore = useFileSystem();
-  const store = useStore();
+  const { flatFiles, setFlatFiles, setRootPath, setFolderData } = useFileSystem(
+    useShallow((state) => ({
+      setFlatFiles: state.setFlatFiles,
+      setRootPath: state.setRootPath,
+      setFolderData: state.setFolderData,
+      flatFiles: state.flatFiles,
+    }))
+  );
+  const { setNodes } = useStore(
+    useShallow((state) => ({
+      setNodes: state.setNodes,
+    }))
+  );
 
-  const handleSave = () => {
-    const fullPath = store.nodes.find((node) => node.id === store.focusNode.id)
-      .data.fullPath;
+  // const handleSave = () => {
+  //   const fullPath = store.nodes.find((node) => node.id === store.focusNode.id)
+  //     .data.fullPath;
 
-    const extension = path.extname(fullPath);
-    const jsFiles = ['.js', '.jsx', '.ts', '.tsx'];
-    const isJsFile = jsFiles.includes(extension);
+  //   const extension = path.extname(fullPath);
+  //   const jsFiles = ['.js', '.jsx', '.ts', '.tsx'];
+  //   const isJsFile = jsFiles.includes(extension);
 
-    const fileData = store.flatFiles[fullPath].fileData;
-    const isValid = isValidCode(fileData);
-    if (!isJsFile || !isValid) {
-      enqueueSnackbar({
-        message: 'Invalid code',
-        options: {
-          variant: 'error',
-        },
-      });
-      return;
-    }
+  //   const fileData = store.flatFiles[fullPath].fileData;
+  //   const isValid = isValidCode(fileData);
+  //   if (!isJsFile || !isValid) {
+  //     enqueueSnackbar({
+  //       message: 'Invalid code',
+  //       options: {
+  //         variant: 'error',
+  //       },
+  //     });
+  //     return;
+  //   }
 
-    //TODO use the result as the new file contents, as it should be formatted
-    fileStore.setFlatFiles((files) => {
-      const newFiles = {
-        ...files,
-        [fullPath]: { ...files[fullPath], savedData: fileData },
-      };
-      return newFiles;
-    });
-  };
+  //   //TODO use the result as the new file contents, as it should be formatted
+  //   setFlatFiles((files) => {
+  //     const newFiles = {
+  //       ...files,
+  //       [fullPath]: { ...files[fullPath], savedData: fileData },
+  //     };
+  //     return newFiles;
+  //   });
+  // };
 
-  const loadFileSystem = async (newRootPath) => {
-    console.log('load folder tree: ', newRootPath);
+  const loadFileSystem = useCallback(async (newRootPath) => {
     const { fullRootPath, folderTree } = await loadFolderTree(newRootPath);
-    fileStore.setRootPath(fullRootPath);
-    fileStore.setFolderData(folderTree);
+    setRootPath(fullRootPath);
+    setFolderData(folderTree);
     const flatFiles = flattenFileTree(folderTree);
-    console.log('flatFiles', flatFiles);
 
     for (const [fullPath, fileInfo] of Object.entries(flatFiles)) {
       try {
@@ -72,12 +83,12 @@ export const useFileManager = () => {
         console.error('error loading file', fullPath, error);
       }
     }
-    fileStore.setFlatFiles(flatFiles);
+    setFlatFiles(flatFiles);
 
     return fullRootPath;
-  };
+  }, []);
 
-  const ensureFolderExists = (flatFiles, folderPath) => {
+  const ensureFolderExists = useCallback((flatFiles, folderPath) => {
     if (!flatFiles[folderPath]) {
       const parentFolderPath = getFileFolder(folderPath);
       if (parentFolderPath !== folderPath) {
@@ -92,10 +103,10 @@ export const useFileManager = () => {
         isFolder: true,
       };
     }
-  };
+  }, []);
 
-  const createFile = (fileInfo) => {
-    fileStore.setFlatFiles((files) => {
+  const createFile = useCallback((fileInfo) => {
+    setFlatFiles((files) => {
       const newFiles = {
         ...files,
         [fileInfo.index]: fileInfo,
@@ -108,10 +119,10 @@ export const useFileManager = () => {
 
       return newFiles;
     });
-  };
+  }, []);
 
-  const renameFile = (fullPath, newFullPath) => {
-    fileStore.setFlatFiles((files) => {
+  const renameFile = useCallback((fullPath, newFullPath) => {
+    setFlatFiles((files) => {
       const newFiles = { ...files };
       const file = newFiles[fullPath];
 
@@ -138,20 +149,23 @@ export const useFileManager = () => {
 
       return newFiles;
     });
-  };
+  }, []);
 
-  const onFileSelected = (newPos, fullPath) => {
-    console.log('fileselected', fullPath);
-    const fileInfo = fileStore.flatFiles[fullPath];
+  const onFileSelected = useCallback(
+    (newPos, fullPath) => {
+      console.log('fileselected', fullPath);
+      const fileInfo = flatFiles[fullPath];
 
-    const newNodes = getNodesForFile(fileInfo, newPos, null);
-    console.log('newNodes', newNodes);
-    store.setNodes((nodes) => nodes.concat(newNodes));
-  };
+      const newNodes = getNodesForFile(fileInfo, newPos, null);
+      console.log('newNodes', newNodes);
+      setNodes((nodes) => nodes.concat(newNodes));
+    },
+    [flatFiles]
+  );
 
   return {
-    flatFiles: store.flatFiles,
-    handleSave,
+    flatFiles,
+    //handleSave,
     loadFileSystem,
     renameFile,
     createFile,

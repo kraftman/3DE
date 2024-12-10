@@ -19,6 +19,8 @@ import { useNodeManager } from '../../../hooks/useNodeManager';
 import { useFileSystem } from '../../../stores/useFileSystem';
 import * as recast from 'recast';
 
+import { useShallow } from 'zustand/react/shallow';
+
 loader.config({ monaco });
 
 const handleTextStyle = {
@@ -55,13 +57,13 @@ const darkTheme = createTheme({
   },
 });
 
-export const ModuleNode = ({ id, data }) => {
-  //const data = props.data;
+export const ModuleNode = React.memo(({ id, data }) => {
+  //const data
+  console.log('rendering module node', id, data.fullPath);
 
   const [settings, setSettings] = useState([]);
   const {
     onModuleClose,
-    layoutNodes,
     toggleChildren,
     toggleHideEdges,
     onRootNodeTextChange,
@@ -73,16 +75,18 @@ export const ModuleNode = ({ id, data }) => {
     toggleChildModule,
     renameModule,
   } = useNodeManager();
-  const { flatFiles } = useFileSystem();
   const editorRef = useRef(null);
+  const flatFiles = useFileSystem((state) => state.flatFiles);
 
   const [fileName, setFileName] = useState(data?.fullPath);
-
   const [fileNameError, setFileNameError] = useState(false);
 
-  const rootCodeAst = useFileSystem((state) => {
-    return state.flatFiles[data?.fullPath]?.rootCode;
-  });
+  const rootCodeAst = useFileSystem(
+    useShallow((state) => {
+      console.log('getting root code for ', data?.fullPath);
+      return state.flatFiles[data?.fullPath]?.rootCode;
+    })
+  );
 
   const rootContent = useMemo(
     () => recast.print(rootCodeAst, { reuseWhitespace: true }).code,
@@ -182,7 +186,7 @@ export const ModuleNode = ({ id, data }) => {
 
   const allHandles = data?.handles.map((handle, index) => {
     if (handle.refType === 'import') {
-      return getImportHandles(handle);
+      //return getImportHandles(handle);
     }
 
     return (
@@ -235,11 +239,11 @@ export const ModuleNode = ({ id, data }) => {
   };
 
   const onFileNameChange = (value) => {
-    if (flatFiles[value]) {
-      setFileNameError('file exists');
-    } else {
-      setFileNameError(false);
-    }
+    // if (flatFiles[value]) {
+    //   setFileNameError('file exists');
+    // } else {
+    //   setFileNameError(false);
+    // }
 
     setFileName(value);
   };
@@ -329,4 +333,6 @@ export const ModuleNode = ({ id, data }) => {
       {allHandles}
     </ThemeProvider>
   );
-};
+});
+
+ModuleNode.displayName = 'ModuleNode';

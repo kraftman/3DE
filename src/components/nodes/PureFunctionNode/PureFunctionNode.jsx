@@ -3,27 +3,15 @@ import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { EditableText } from '../../EditableText';
 import { useLayer } from '../../../hooks/useLayer';
-import { useNodeManager } from '../../../hooks/useNodeManager';
 
 loader.config({ monaco });
 
-export const PureFunctionNode = ({ id }) => {
+export const PureFunctionNode = ({ id, data }) => {
   const editorRef = useRef(null);
 
   const { onfunctionTitledChanged } = useLayer();
-  const { getNodeById } = useNodeManager();
 
-  const node = getNodeById(id);
-
-  const [functionName, setFunctionName] = useState(
-    node?.data?.functionName || ''
-  );
-  if (!node) {
-    console.error('could not find node with id', id);
-    return null;
-  }
-
-  const data = node.data;
+  const [functionName, setFunctionName] = useState(data?.functionName || '');
 
   const text = data.content || '<no root content> ';
 

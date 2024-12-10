@@ -1,4 +1,5 @@
 import { useStore } from '../contexts/useStore';
+import { useCallback } from 'react';
 import {
   getRaw,
   findChildIds,
@@ -22,6 +23,9 @@ import {
   enrichFileInfo,
 } from '../utils/fileUtils';
 
+import { useShallow } from 'zustand/react/shallow';
+import { useFileSystem } from '../stores/useFileSystem.js';
+
 const functionIsOutsideParent = (parent, functionNode) => {
   return (
     functionNode.position.x > parent.data.width ||
@@ -36,11 +40,18 @@ const stripExt = (filename) => {
 };
 
 export const useNodeManager = () => {
-  const store = useStore();
+  const { setNodes, getNodes } = useStore(
+    useShallow((state) => ({
+      setNodes: state.setNodes,
+      setEdges: state.setEdges,
+      getNodes: state.getNodes,
+    }))
+  );
+  const { setFlatFiles, flatFiles } = useFileSystem();
   const { renameFile, createFile } = useFileManager();
 
-  const toggleShowRawCode = (moduleId) => {
-    store.setNodes((nodes) => {
+  const toggleShowRawCode = useCallback((moduleId) => {
+    setNodes((nodes) => {
       const moduleNodes = nodes.filter(
         (node) => node.data.moduleId === moduleId
       );
@@ -69,11 +80,11 @@ export const useNodeManager = () => {
       });
       return newNodes;
     });
-  };
+  }, []);
 
-  const toggleCollapseModule = (moduleId, isCollapsed) => {
+  const toggleCollapseModule = useCallback((moduleId, isCollapsed) => {
     console.log('toggleCollapseModule', moduleId, isCollapsed);
-    store.setNodes((nodes) => {
+    setNodes((nodes) => {
       let newNodes;
       if (isCollapsed) {
         console.log('expanding');
@@ -84,55 +95,58 @@ export const useNodeManager = () => {
       }
       return newNodes;
     });
-  };
+  }, []);
 
-  const createMissingImport = (moduleId, importPath) => {
-    // we dont know the extension so assume js for now
-    const fullPath = importPath + '.js';
-    if (store.flatFiles[fullPath]) {
-      return;
-    }
-    const newFile = {
-      index: fullPath,
-      children: [],
-      data: fullPath,
-      fileData: '',
-      isFolder: false,
-      rootCode: [],
-      functions: [],
-    };
-    store.setFlatFiles((files) => {
-      const newFiles = {
-        ...files,
-        [fullPath]: newFile,
+  const createMissingImport = useCallback(
+    (moduleId, importPath) => {
+      // we dont know the extension so assume js for now
+      const fullPath = importPath + '.js';
+      if (flatFiles[fullPath]) {
+        return;
+      }
+      const newFile = {
+        index: fullPath,
+        children: [],
+        data: fullPath,
+        fileData: '',
+        isFolder: false,
+        rootCode: [],
+        functions: [],
       };
-      return newFiles;
-    });
+      setFlatFiles((files) => {
+        const newFiles = {
+          ...files,
+          [fullPath]: newFile,
+        };
+        return newFiles;
+      });
 
-    store.setNodes((nodes) => {
-      const parentModule = nodes.find(
-        (node) => node.id === moduleId && node.type === 'module'
-      );
-      const newPosition = {
-        x: parentModule.data.width + 100,
-        y: 0,
-      };
-      const newNodes = getNodesForFile(newFile, newPosition, moduleId);
-      return nodes.concat(newNodes);
-    });
-  };
+      setNodes((nodes) => {
+        const parentModule = nodes.find(
+          (node) => node.id === moduleId && node.type === 'module'
+        );
+        const newPosition = {
+          x: parentModule.data.width + 100,
+          y: 0,
+        };
+        const newNodes = getNodesForFile(newFile, newPosition, moduleId);
+        return nodes.concat(newNodes);
+      });
+    },
+    [flatFiles]
+  );
 
-  const onNodeDragStart = (event, node) => {
+  const onNodeDragStart = useCallback((event, node) => {
     if (!event.shiftKey) {
       return;
     }
     if (node.type === 'pureFunctionNode') {
       unclampFunction(node.id);
     }
-  };
+  }, []);
 
-  const clampFunctionToModule = (functionNodeId) => {
-    store.setNodes((nodes) => {
+  const clampFunctionToModule = useCallback((functionNodeId) => {
+    setNodes((nodes) => {
       const newNodes = nodes.map((search) => {
         if (search.id === functionNodeId) {
           return {
@@ -144,10 +158,10 @@ export const useNodeManager = () => {
       });
       return newNodes;
     });
-  };
+  }, []);
 
-  const unclampFunction = (functionNodeId) => {
-    store.setNodes((nodes) => {
+  const unclampFunction = useCallback((functionNodeId) => {
+    setNodes((nodes) => {
       const newNodes = nodes.map((search) => {
         if (search.id === functionNodeId) {
           return {
@@ -159,10 +173,10 @@ export const useNodeManager = () => {
       });
       return newNodes;
     });
-  };
+  }, []);
 
-  const handleFunctionDrag = (functionNode) => {
-    const currentNodes = store.getNodes();
+  const handleFunctionDrag = useCallback((functionNode) => {
+    const currentNodes = getNodes();
     const parentModule = currentNodes.find(
       (node) => node.id === functionNode.data.moduleId
     );
@@ -192,7 +206,7 @@ export const useNodeManager = () => {
 
     enrichFileInfo(newFileInfo);
 
-    store.setFlatFiles((files) => {
+    setFlatFiles((files) => {
       const newFiles = {
         ...files,
         [newPath]: newFileInfo,
@@ -202,7 +216,7 @@ export const useNodeManager = () => {
 
     createFile(newFileInfo);
 
-    store.setNodes((nodes) => {
+    setNodes((nodes) => {
       const newPosition = {
         x: parentModule.data.width + 100,
         y: 0,
@@ -248,16 +262,16 @@ export const useNodeManager = () => {
       });
       return nodes.concat(newNodes);
     });
-  };
+  }, []);
 
-  const onNodeDragStop = (event, node) => {
+  const onNodeDragStop = useCallback((event, node) => {
     if (node.type === 'pureFunctionNode') {
       handleFunctionDrag(node);
     }
-  };
+  }, []);
 
-  const renameModule = (moduleId, newPath) => {
-    store.setNodes((nodes) => {
+  const renameModule = useCallback((moduleId, newPath) => {
+    setNodes((nodes) => {
       const moduleNode = nodes.find(
         (node) => node.id === moduleId && node.type === 'module'
       );
@@ -282,55 +296,52 @@ export const useNodeManager = () => {
     // should ths be here or filemanager?
     // need to change the fullpath in the module
     // and in the filesystem
-  };
+  }, []);
 
-  const toggleChildModule = (moduleId, fullPath) => {
-    console.log('toggle child module', fullPath);
-    // if the child module exists, remove it
-    // if the child module doesnt exist, create it
+  const toggleChildModule = useCallback(
+    (moduleId, fullPath) => {
+      console.log('toggle child module', fullPath);
+      // if the child module exists, remove it
+      // if the child module doesnt exist, create it
 
-    // const fileInfo = store.flatFiles[fullPath];
+      // const fileInfo = store.flatFiles[fullPath];
 
-    // const newNodes = getNodesForFile(fileInfo, newPos, null);
-    // console.log('newNodes', newNodes);
-    // store.setNodes((nodes) => nodes.concat(newNodes));
+      // const newNodes = getNodesForFile(fileInfo, newPos, null);
+      // console.log('newNodes', newNodes);
+      // setNodes((nodes) => nodes.concat(newNodes));
 
-    // find modules where the path is the fullPath, and the parentId is this module
-    // recursively remove it and its children
-    store.setNodes((nodes) => {
-      const children = findChildModules(nodes, moduleId);
-      console.log('children', children);
-      const foundChild = children.find(
-        (child) =>
-          importWithoutExtension(child.data.fullPath) ===
-          importWithoutExtension(fullPath)
-      );
-      if (foundChild) {
-        const childrenOfChild = findChildNodes(nodes, foundChild.id);
-        const childIds = childrenOfChild.map((child) => child.id);
-        childIds.push(foundChild.id);
-        return nodes.filter((node) => !childIds.includes(node.id));
-      } else {
-        const parentModule = nodes.find(
-          (node) => node.id === moduleId && node.type === 'module'
+      // find modules where the path is the fullPath, and the parentId is this module
+      // recursively remove it and its children
+      setNodes((nodes) => {
+        const children = findChildModules(nodes, moduleId);
+        console.log('children', children);
+        const foundChild = children.find(
+          (child) =>
+            importWithoutExtension(child.data.fullPath) ===
+            importWithoutExtension(fullPath)
         );
-        const newPos = {
-          x: parentModule.position.x + 500,
-          y: 0,
-        };
-        const resolvedFile = findFileForImport(store.flatFiles, fullPath);
+        if (foundChild) {
+          const childrenOfChild = findChildNodes(nodes, foundChild.id);
+          const childIds = childrenOfChild.map((child) => child.id);
+          childIds.push(foundChild.id);
+          return nodes.filter((node) => !childIds.includes(node.id));
+        } else {
+          const parentModule = nodes.find(
+            (node) => node.id === moduleId && node.type === 'module'
+          );
+          const newPos = {
+            x: parentModule.position.x + 500,
+            y: 0,
+          };
+          const resolvedFile = findFileForImport(flatFiles, fullPath);
 
-        const newNodes = getNodesForFile(resolvedFile, newPos, moduleId);
-        return nodes.concat(newNodes);
-      }
-    });
-  };
-
-  const getNodeById = (id) => {
-    return store.layers[store.currentLayer]?.nodes.find(
-      (node) => node.id === id
-    );
-  };
+          const newNodes = getNodesForFile(resolvedFile, newPos, moduleId);
+          return nodes.concat(newNodes);
+        }
+      });
+    },
+    [flatFiles]
+  );
 
   return {
     toggleShowRawCode,
@@ -340,6 +351,5 @@ export const useNodeManager = () => {
     onNodeDragStop,
     renameModule,
     toggleChildModule,
-    getNodeById,
   };
 };

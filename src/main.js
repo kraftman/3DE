@@ -5,6 +5,10 @@ const { exec } = require('child_process');
 const util = require('util');
 const runTest = require('./run-tests');
 const { ESLint } = require('eslint');
+const {
+  default: installExtension,
+  REACT_DEVELOPER_TOOLS,
+} = require('electron-devtools-installer');
 
 const eslintConfig = require('../eslint.config.mjs');
 
@@ -28,6 +32,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     fullscreen: true,
     webPreferences: {
+      devTools: true,
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
@@ -44,6 +49,9 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  installExtension(REACT_DEVELOPER_TOOLS)
+    .then((name) => console.log(`Added Extension:  ${name}`))
+    .catch((err) => console.log('An error occurred: ', err));
   ipcMain.on('run-node-process', async (event, arg) => {
     console.log(`Received data from renderer: ${arg}`);
     try {
