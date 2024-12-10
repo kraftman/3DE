@@ -106,6 +106,7 @@ function decFunc2Depth1() {
   anonDepth1()  
   return 'test return'
 }
+  
 
 export function exportDepth1(param1, param2) {
   const a = '1 '

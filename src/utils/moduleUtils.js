@@ -11,6 +11,13 @@ export const findChildNodes = (nodes, moduleId) => {
   return foundNodes;
 };
 
+export const findChildModules = (nodes, moduleId) => {
+  const foundModules = nodes.filter(
+    (node) => node.parentId === moduleId && node.type === 'module'
+  );
+  return foundModules;
+};
+
 export const collapseModule = (nodes, moduleId) => {
   const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
 

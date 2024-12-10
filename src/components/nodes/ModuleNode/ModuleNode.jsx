@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Handle } from '@xyflow/react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Pip } from '../../Pip';
@@ -12,6 +12,14 @@ import * as monaco from 'monaco-editor';
 import { findFileForImport } from '../../../utils/fileUtils';
 import { TopBar } from './TopBar';
 import { EditableText } from '../../EditableText';
+import { RootCode } from './RootCode';
+
+import { useLayer } from '../../../hooks/useLayer';
+import { useNodeManager } from '../../../hooks/useNodeManager';
+import { useFileSystem } from '../../../stores/useFileSystem';
+import * as recast from 'recast';
+
+import { useShallow } from 'zustand/react/shallow';
 
 loader.config({ monaco });
 
@@ -49,40 +57,45 @@ const darkTheme = createTheme({
   },
 });
 
-import { useLayer } from '../../../hooks/useLayer';
-import { useNodeManager } from '../../../hooks/useNodeManager';
-import { useFileManager } from '../../../hooks/useFileManager';
-
-export const ModuleNode = ({ id }) => {
-  //const data = props.data;
+export const ModuleNode = React.memo(({ id, data }) => {
+  //const data
+  console.log('rendering module node', id, data.fullPath);
 
   const [settings, setSettings] = useState([]);
-  const { onModuleClose, layoutNodes, toggleChildren, toggleHideEdges } =
-    useLayer();
   const {
-    getNodeById,
-    toggleHideImmediateChildren,
+    onModuleClose,
+    toggleChildren,
+    toggleHideEdges,
+    onRootNodeTextChange,
+  } = useLayer();
+  const {
+    toggleShowRawCode,
     createMissingImport,
     toggleCollapseModule,
     toggleChildModule,
     renameModule,
   } = useNodeManager();
-  const { flatFiles } = useFileManager();
   const editorRef = useRef(null);
+  const flatFiles = useFileSystem((state) => state.flatFiles);
+
+  const [fileName, setFileName] = useState(data?.fullPath);
+  const [fileNameError, setFileNameError] = useState(false);
+
+  const rootCodeAst = useFileSystem(
+    useShallow((state) => {
+      console.log('getting root code for ', data?.fullPath);
+      return state.flatFiles[data?.fullPath]?.rootCode;
+    })
+  );
+
+  const rootContent = useMemo(
+    () => recast.print(rootCodeAst, { reuseWhitespace: true }).code,
+    [rootCodeAst]
+  );
 
   // ===================================================================
   // ===== ALL HOOKS NEED TO BE ABOVE THIS LINE ========================
   // ===================================================================
-  const node = getNodeById(id);
-  if (!node) {
-    console.error('could not find node with id', id);
-    return null;
-  }
-  const [fileName, setFileName] = useState(node.data.fullPath);
-
-  const [fileNameError, setFileNameError] = useState(false);
-
-  const data = node.data;
 
   // Toggle button state
   const toggleHideEdgesInternal = (event, newSettings) => {
@@ -173,7 +186,7 @@ export const ModuleNode = ({ id }) => {
 
   const allHandles = data?.handles.map((handle, index) => {
     if (handle.refType === 'import') {
-      return getImportHandles(handle);
+      //return getImportHandles(handle);
     }
 
     return (
@@ -189,8 +202,8 @@ export const ModuleNode = ({ id }) => {
     );
   });
 
-  const toggleHideImmediateChildrenInternal = () => {
-    toggleHideImmediateChildren(data.moduleId);
+  const toggleShowRawCodeInternal = () => {
+    toggleShowRawCode(data.moduleId);
   };
 
   const toggleChildrenInternal = (value, value2) => {
@@ -226,11 +239,11 @@ export const ModuleNode = ({ id }) => {
   };
 
   const onFileNameChange = (value) => {
-    if (flatFiles[value]) {
-      setFileNameError('file exists');
-    } else {
-      setFileNameError(false);
-    }
+    // if (flatFiles[value]) {
+    //   setFileNameError('file exists');
+    // } else {
+    //   setFileNameError(false);
+    // }
 
     setFileName(value);
   };
@@ -241,6 +254,10 @@ export const ModuleNode = ({ id }) => {
       return;
     }
     renameModule(data.moduleId, fileName);
+  };
+
+  const onRootCodeChangeInternal = (newCode) => {
+    onRootNodeTextChange(data.fullPath, newCode);
   };
 
   return (
@@ -270,20 +287,22 @@ export const ModuleNode = ({ id }) => {
             onChange={onFileNameChange}
             error={fileNameError}
           />
+          {!isCollapsed && (
+            <TopBar
+              showRaw={data.showRaw}
+              toggleShowRawCode={toggleShowRawCodeInternal}
+              settings={settings}
+              handleToggle={toggleHideEdgesInternal}
+              toggleChildren={toggleChildrenInternal}
+              showChildren={data.showChildren}
+              layoutChildren={layoutChildrenInternal}
+            />
+          )}
           <ToggleExpand />
         </div>
-        {!isCollapsed && (
-          <TopBar
-            showRaw={data.showRaw}
-            toggleHidden={toggleHideImmediateChildren}
-            settings={settings}
-            handleToggle={toggleHideEdgesInternal}
-            toggleChildren={toggleChildrenInternal}
-            showChildren={data.showChildren}
-            layoutChildren={layoutChildrenInternal}
-          />
-        )}
-        {data.showRaw && isCollapsed && (
+        <RootCode content={rootContent} onChange={onRootCodeChangeInternal} />
+
+        {data.showRaw && !isCollapsed && (
           <div className="editor-container">
             <Editor
               className="editor nodrag"
@@ -314,4 +333,6 @@ export const ModuleNode = ({ id }) => {
       {allHandles}
     </ThemeProvider>
   );
-};
+});
+
+ModuleNode.displayName = 'ModuleNode';

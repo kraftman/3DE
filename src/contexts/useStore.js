@@ -1,72 +1,58 @@
 import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
 
-// Zustand Store
-export const useStore = create((set, get) => ({
-  layers: {
-    0: { nodes: [], edges: [], color: '#11441166' },
-  },
-  currentLayer: 0,
-  folderData: [],
-  flatFiles: {},
-  rootPath: '',
-  functions: [],
-  focusNode: null,
-  setFocusNode: (node) => set(() => node),
-  setFunctions: (payload) =>
-    set((state) => ({
-      functions:
-        typeof payload === 'function' ? payload(state.functions) : payload,
-    })),
-  setState: (newState) => set(() => newState),
-  setLayers: (payload) =>
-    set((state) => ({
-      layers: typeof payload === 'function' ? payload(state.layers) : payload,
-    })),
-  setCurrentLayer: (layerId) =>
-    set((state) => {
-      if (!state.layers[layerId]) {
-        return {
-          layers: {
-            ...state.layers,
-            [layerId]: { nodes: [], edges: [] },
-          },
-          currentLayer: layerId,
-        };
-      }
-      return { currentLayer: layerId };
-    }),
-  setNodes: (payload) =>
-    set((state) => ({
-      layers: {
-        ...state.layers,
-        [state.currentLayer]: {
-          ...state.layers[state.currentLayer],
-          nodes:
-            typeof payload === 'function'
-              ? payload(state.layers[state.currentLayer].nodes)
-              : payload,
-        },
-      },
-    })),
-  setEdges: (payload) =>
-    set((state) => ({
-      layers: {
-        ...state.layers,
-        [state.currentLayer]: {
-          ...state.layers[state.currentLayer],
-          edges:
-            typeof payload === 'function'
-              ? payload(state.layers[state.currentLayer].edges)
-              : payload,
-        },
-      },
-    })),
-  setFlatFiles: (payload) =>
-    set((state) => ({
-      flatFiles:
-        typeof payload === 'function' ? payload(state.flatFiles) : payload,
-    })),
+export const useStore = create(
+  immer((set, get) => ({
+    // Layers and Current Layer State
+    layers: {
+      0: { nodes: [], edges: [], color: '#11441166' },
+    },
+    currentLayer: 0,
 
-  setFolderData: (payload) => set(() => ({ folderData: payload })),
-  setRootPath: (payload) => set(() => ({ rootPath: payload })),
-}));
+    // Set functions using Immer
+    setLayers: (updateFn) =>
+      set((state) => {
+        state.layers =
+          typeof updateFn === 'function' ? updateFn(state.layers) : updateFn;
+      }),
+    setCurrentLayer: (layerId) =>
+      set((state) => {
+        if (!state.layers[layerId]) {
+          state.layers[layerId] = { nodes: [], edges: [], color: '#11441166' };
+        }
+        state.currentLayer = layerId;
+      }),
+    setNodes: (updateFn) =>
+      set((state) => {
+        const currentLayer = state.currentLayer;
+        state.layers[currentLayer].nodes =
+          typeof updateFn === 'function'
+            ? updateFn(state.layers[currentLayer].nodes)
+            : updateFn;
+      }),
+    setEdges: (updateFn) =>
+      set((state) => {
+        const currentLayer = state.currentLayer;
+        state.layers[currentLayer].edges =
+          typeof updateFn === 'function'
+            ? updateFn(state.layers[currentLayer].edges)
+            : updateFn;
+      }),
+
+    // Selectors for optimized access
+    getNodes: () => get().layers[get().currentLayer].nodes,
+    getEdges: () => get().layers[get().currentLayer].edges,
+
+    // Additional State Management
+    folderData: null,
+    setFolderData: (payload) =>
+      set((state) => {
+        state.folderData = payload;
+      }),
+    rootPath: null,
+    setRootPath: (payload) =>
+      set((state) => {
+        state.rootPath = payload;
+      }),
+  }))
+);

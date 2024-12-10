@@ -5,7 +5,8 @@ import * as murmur from 'murmurhash-js';
 
 import { parseWithRecast } from './parseWithRecast';
 
-const extractNonFunctionStatements = (functionNode) => {
+export const extractNonFunctionStatements = (functionNode) => {
+  console.log('extracting from node', functionNode);
   const nonFunctionNodes = functionNode.body.body.filter(
     (node) =>
       !n.FunctionDeclaration.check(node) && // Exclude declared functions
@@ -35,8 +36,6 @@ const createFunction = (path, name, parentId, depth, type) => {
   const funcId = murmur.murmur3(name + parentId + body);
   const nestedFunctions = getFunctions(node.body, funcId, depth + 1);
   const contentSize = getEditorSize(body);
-  //const subtreeCode = recast.print(node).code;
-  //const newAst = parseWithRecast(body);
   const funcInfo = {
     id: funcId,
     name,
@@ -44,7 +43,6 @@ const createFunction = (path, name, parentId, depth, type) => {
     type,
     parameters,
     depth,
-    body,
     nestedFunctions,
     node,
     async: node.async,
@@ -244,11 +242,7 @@ const getRootLevelCode = (ast) => {
   // Generate the modified code with preserved formatting
   const combinedCode = recast.print(ast, { reuseWhitespace: true }).code;
 
-  return {
-    body: ast.program.body,
-    code: combinedCode,
-    node: ast.program,
-  };
+  return ast;
 };
 
 const flattenFunctions = (functions) => {
@@ -289,4 +283,41 @@ export const parseCode = (code) => {
     rootLevelCode,
     flatFunctions,
   };
+};
+
+export const findReferences = (raw) => {
+  const references = [];
+
+  const ast = parseWithRecast(raw);
+
+  // Traverse the AST
+  recast.types.visit(ast, {
+    visitIdentifier(path) {
+      // Skip declarations
+      if (
+        path.parentPath.node.type !== 'VariableDeclarator' && // Not in `const x = ...`
+        path.parentPath.node.type !== 'FunctionDeclaration' && // Not in `function example`
+        path.parentPath.node.type !== 'FunctionExpression' && // Not in `const x = function() {}`
+        path.parentPath.node.type !== 'ArrowFunctionExpression' // Not in `const x = () => {}`
+      ) {
+        references.push(path.node.name);
+      }
+      this.traverse(path);
+    },
+    visitCallExpression(path) {
+      // Record function invocations
+      const callee = path.node.callee;
+      if (callee.type === 'Identifier') {
+        references.push(callee.name); // Simple function calls
+      } else if (callee.type === 'MemberExpression') {
+        // Handle calls like `object.method()`
+        const objectName = callee.object.name || '(unknown)';
+        const propertyName = callee.property.name || '(unknown)';
+        references.push(`${objectName}.${propertyName}`);
+      }
+      this.traverse(path);
+    },
+  });
+
+  return references;
 };

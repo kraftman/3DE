@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { findCallExpressions } from './astUtils.js';
 
 import * as recast from 'recast';
+import { findReferences } from './parser.js';
 
 import { parseWithRecast } from './parseWithRecast';
 
@@ -24,6 +25,7 @@ export const findChildIds = (nodes, parentId) => {
 function generateFunctionSignature(
   frameNodeData // default to false for backward compatibility
 ) {
+  console.log('frameNodeData:', frameNodeData);
   const { functionName, functionType, functionArgs, functionAsync } =
     frameNodeData;
   const args = functionArgs.join(', ');
@@ -44,44 +46,91 @@ function generateFunctionSignature(
   }
 }
 
-export const getFunctionContent = (codeStrings, nodes, parentId) => {
+export const getFunctionContent = (nodes, functionNode) => {
+  const lines = [];
+  const signature = generateFunctionSignature(functionNode.data);
+  lines.push(signature);
+  lines.push(functionNode.data.content);
+
   const frameNodes = nodes.filter(
-    (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
+    (node) =>
+      node.parentId === functionNode.id && node.type === 'pureFunctionNode'
   );
-  console.log('found nodes:', frameNodes);
   frameNodes.forEach((codeNode) => {
-    const signature = generateFunctionSignature(codeNode.data);
-    codeStrings.push(signature);
-    codeStrings.push(codeNode.data.content);
-    getFunctionContent(codeStrings, nodes, codeNode.id);
-    codeStrings.push('}');
+    const subLines = getFunctionContent(nodes, codeNode);
+    lines.push(...subLines);
   });
+  lines.push('}');
+  return lines;
 };
 
-export const getRaw = (moduleId, moduleNodes) => {
-  // need to decide if this should be raw or asts
+// export const getFunctionContent = (codeStrings, nodes, nodeId) => {
+//   const lines = [];
+//   const thisNode = nodes.find((node) => node.id === nodeId);
+//   const newLines = functionNodeToString(thisNode);
+//   const frameNodes = nodes.filter(
+//     (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
+//   );
+//   console.log('found nodes:', frameNodes);
+//   frameNodes.forEach((codeNode) => {
+//     const signature = generateFunctionSignature(codeNode.data);
+//     codeStrings.push(signature);
+//     codeStrings.push(codeNode.data.content);
+//     getFunctionContent(codeStrings, nodes, codeNode.id);
+//     codeStrings.push('}');
+//   });
+// };
 
-  const codeStrings = [];
+export const getRaw = (nodes, moduleId) => {
+  // start with the imports
+  // get the root functions
+  // ensure they are ordered correctly if hey call each other
+  //
+  const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
 
   const moduleNode = moduleNodes.find(
-    (node) => node.id === moduleId && node.type === 'module'
+    (node) => node.type === 'module' && node.id === moduleId
   );
 
+  let lines = [];
+
+  // add the imports
   moduleNode.data.imports.forEach((imp) => {
-    codeStrings.push(recast.print(imp.node).code);
+    lines.push(recast.print(imp.node).code);
+  });
+  // add the root level code
+  // TODO: any root level code that invokes a function needs to be after the function
+  lines.push(moduleNode.data.rootCode);
+
+  // order the functions
+
+  // add the functions and sub functions
+  const children = moduleNodes.filter(
+    (node) => node.type === 'pureFunctionNode' && node.parentId === moduleId
+  );
+
+  const parsedFunctions = children.map((child) => {
+    const newLines = getFunctionContent(nodes, child);
+    return {
+      id: child.id,
+      functionName: child.data.functionName,
+      rawCode: newLines.join('\n'),
+    };
   });
 
-  getFunctionContent(codeStrings, moduleNodes, moduleId);
+  // for each function, check if any other functionn references it
+  // if so, move it after that function
 
-  const rootCode = moduleNodes.find(
-    (node) => node.type === 'code' && node.parentId === moduleId
-  );
-  codeStrings.push(rootCode.data.content);
+  children.forEach((child) => {
+    const newLines = getFunctionContent(nodes, child);
+    const references = findReferences(newLines.join('\n'));
+    console.log('found references:', references);
+    lines.push(...newLines);
+  });
 
-  const code = codeStrings.join('\n');
+  const code = lines.join('\n');
   const newAst = parseWithRecast(code);
 
-  //return codeStrings.join('\n');
   return recast.prettyPrint(newAst).code;
 };
 
@@ -189,17 +238,17 @@ export const getImportHandles = (imports, moduleId) => {
   });
 };
 
-export const getModuleNodes = (parsed) => {
-  const maxDepth = parsed.functions.reduce((acc, func) => {
+export const getModuleNodes = (fileInfo) => {
+  const maxDepth = fileInfo.functions.reduce((acc, func) => {
     return Math.max(acc, func.depth);
   }, 0);
 
-  const fullPath = parsed.index;
+  const fullPath = fileInfo.index;
 
   const newModuleId = uuid();
 
   const nodes = [];
-  parsed.functions.forEach((func) => {
+  fileInfo.functions.forEach((func) => {
     const frameNode = {
       id: uuid(),
       type: 'pureFunctionNode',
@@ -249,7 +298,7 @@ export const getModuleNodes = (parsed) => {
   let moduleHeight = 100;
 
   for (let i = maxDepth; i >= 0; i--) {
-    const functionsAtDepth = parsed.functions.filter(
+    const functionsAtDepth = fileInfo.functions.filter(
       (func) => func.depth === i
     );
     const nodesAtDepth = nodes.filter(
@@ -331,8 +380,8 @@ export const getModuleNodes = (parsed) => {
         }, 0);
     }
   }
-  console.log('parsed imports:', parsed.imports);
-  const imports = parsed.imports.map((imp) => {
+  console.log('parsed imports:', fileInfo.imports);
+  const imports = fileInfo.imports.map((imp) => {
     const impPath = imp.moduleSpecifier;
     const isLocal = impPath.startsWith('.') || impPath.startsWith('/');
     const impFullPath =
@@ -346,15 +395,16 @@ export const getModuleNodes = (parsed) => {
 
   const moduleHandles = getImportHandles(imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
-
-  const baseSize = getEditorSize(parsed.rootCode.code);
+  const parsedRootCode = recast.prettyPrint(fileInfo.rootCode).code;
+  console.log('parsed root code:', parsedRootCode);
+  const baseSize = getEditorSize(parsedRootCode);
   moduleWidth = Math.max(moduleWidth, baseSize.width);
   moduleHeight = Math.max(moduleHeight, baseSize.height);
 
   const moduleNode = {
     id: newModuleId,
     data: {
-      exports: parsed.exports,
+      exports: fileInfo.exports,
       imports: imports,
       handles: moduleHandles,
       moduleId: newModuleId,
@@ -373,9 +423,8 @@ export const getModuleNodes = (parsed) => {
     },
   };
 
-  const rootSize = getEditorSize(parsed.rootCode.code);
-
-  const importDefinitons = parsed.rootCode.node.body.filter((node) => {
+  console.log('parsed root code:', fileInfo.rootCode);
+  const importDefinitons = fileInfo.rootCode.program.body.filter((node) => {
     return node.type === 'ImportDeclaration';
   });
 
@@ -404,28 +453,6 @@ export const getModuleNodes = (parsed) => {
     };
   });
 
-  const rootCode = {
-    id: uuid(),
-    data: {
-      content: parsed.rootCode.code,
-      imports: parsed.imports,
-      exports: parsed.exports,
-      handles: importHandles,
-      moduleId: newModuleId,
-    },
-    type: 'code',
-    parentId: newModuleId,
-    extent: 'parent',
-    position: {
-      x: 10,
-      y: 50,
-    },
-    style: {
-      width: `${rootSize.width}px`,
-      height: `${rootSize.height}px`,
-    },
-  };
-
   const sortedChildren = children.reverse();
 
   // Internal edges, needs moving out
@@ -434,9 +461,8 @@ export const getModuleNodes = (parsed) => {
   return {
     id: newModuleId,
     moduleNode,
-    rootCode,
+    // rootCode,
     children: sortedChildren,
     edges,
-    parsedAst: parsed,
   };
 };
