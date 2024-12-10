@@ -126,6 +126,8 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('save-file', async (event, { filePath, fileData }) => {
+    console.log('writing file', filePath);
+    console.log('writing file data', fileData);
     fs.writeFileSync(filePath, fileData);
     return '';
   });

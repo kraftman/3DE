@@ -135,36 +135,39 @@ export const useLayer = () => {
       console.log('valud', newBodyStatements);
       // update the body of the function
 
-      setFlatFiles((files) => {
-        const file = files[fullPath];
+      const file = flatFiles[fullPath];
+      visit(file.fullAst, {
+        visitFunctionDeclaration(path) {
+          // Find the matching function by ID
+          console.log('checking path:', path);
+          if (path.node._id && path.node._id === functionId) {
+            console.log('Updating function:', path.node.id.name);
 
+            // Replace the function's body with the new statements
+            path.get('body').replace({
+              type: 'BlockStatement',
+              body: newBodyStatements,
+            });
+
+            console.log('Updated function:', path.node);
+            return false; // Stop further traversal
+          }
+
+          this.traverse(path);
+        },
+      });
+
+      setFlatFiles((files) => {
         const newFile = {
           ...file,
-          functions: file.functions.map((func) => {
-            if (func.id === functionId) {
-              console.log('updating function', func);
-              const newFunc = {
-                ...func,
-                node: {
-                  ...func.node,
-                  body: {
-                    ...func.node.body,
-                    body: newBodyStatements,
-                  },
-                },
-              };
-              console.log('after update', newFunc);
-              return newFunc;
-            }
-            return func;
-          }),
+          functions: [...file.functions],
         };
         return { ...files, [fullPath]: newFile };
       });
 
       // also need to handle them creating a new function in code
     },
-    []
+    [flatFiles]
   );
 
   const onfunctionTitledChanged = useCallback((functionId, title) => {

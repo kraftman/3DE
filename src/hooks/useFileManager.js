@@ -5,6 +5,7 @@ import path from 'path-browserify';
 import { enqueueSnackbar } from 'notistack';
 import { loadFolderTree, loadFile } from '../electronHelpers';
 import { flattenFileTree } from '../screens/Flow/utils';
+import * as recast from 'recast';
 import {
   isCodeFile,
   getFileNameFromPath,
@@ -14,6 +15,7 @@ import {
 import { useFileSystem } from '../stores/useFileSystem.js';
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import { useShallow } from 'zustand/react/shallow';
+import { saveFile } from '../electronHelpers';
 
 export const useFileManager = () => {
   const { flatFiles, setFlatFiles, setRootPath, setFolderData } = useFileSystem(
@@ -24,41 +26,30 @@ export const useFileManager = () => {
       flatFiles: state.flatFiles,
     }))
   );
-  const { setNodes } = useStore(
+  const { setNodes, getNodes } = useStore(
     useShallow((state) => ({
       setNodes: state.setNodes,
+      getNodes: state.getNodes,
     }))
   );
 
-  // const handleSave = () => {
-  //   const fullPath = store.nodes.find((node) => node.id === store.focusNode.id)
-  //     .data.fullPath;
+  const handleSave = useCallback(() => {
+    const selectedNode = getNodes().find((node) => node.selected);
+    if (!selectedNode) {
+      return;
+    }
 
-  //   const extension = path.extname(fullPath);
-  //   const jsFiles = ['.js', '.jsx', '.ts', '.tsx'];
-  //   const isJsFile = jsFiles.includes(extension);
+    // TODO: make sure its a code node here
 
-  //   const fileData = store.flatFiles[fullPath].fileData;
-  //   const isValid = isValidCode(fileData);
-  //   if (!isJsFile || !isValid) {
-  //     enqueueSnackbar({
-  //       message: 'Invalid code',
-  //       options: {
-  //         variant: 'error',
-  //       },
-  //     });
-  //     return;
-  //   }
+    const fullPath = selectedNode.data.fullPath;
+    console.log('saving', fullPath);
+    const fileInfo = flatFiles[fullPath];
+    console.log('fileInfo', fileInfo);
+    const newRaw = recast.prettyPrint(fileInfo.fullAst).code;
 
-  //   //TODO use the result as the new file contents, as it should be formatted
-  //   setFlatFiles((files) => {
-  //     const newFiles = {
-  //       ...files,
-  //       [fullPath]: { ...files[fullPath], savedData: fileData },
-  //     };
-  //     return newFiles;
-  //   });
-  // };
+    console.log('saving file', fullPath, newRaw);
+    saveFile(fullPath, newRaw);
+  }, [flatFiles]);
 
   const loadFileSystem = useCallback(async (newRootPath) => {
     const { fullRootPath, folderTree } = await loadFolderTree(newRootPath);
@@ -165,7 +156,7 @@ export const useFileManager = () => {
 
   return {
     flatFiles,
-    //handleSave,
+    handleSave,
     loadFileSystem,
     renameFile,
     createFile,

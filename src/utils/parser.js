@@ -34,6 +34,8 @@ const createFunction = (path, name, parentId, depth, type) => {
   const body = extractNonFunctionStatements(node);
 
   const funcId = murmur.murmur3(name + parentId + body);
+  node._id = funcId;
+
   const nestedFunctions = getFunctions(node.body, funcId, depth + 1);
   const contentSize = getEditorSize(body);
   const funcInfo = {

@@ -37,7 +37,6 @@ export const Flow = () => {
   const {
     setEdges,
     //functions,
-    handleSave,
     shiftLayerUp,
     shiftLayerDown,
   } = useLayer();
@@ -50,9 +49,20 @@ export const Flow = () => {
 
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();
 
-  const { loadFileSystem } = useFileManager();
+  const { loadFileSystem, handleSave } = useFileManager();
 
-  const addKeyListener = () => {
+  useEffect(() => {
+    const init = async () => {
+      const loadSessions = async () => {
+        return;
+      };
+      loadSessions();
+      await onFolderSelected('/home/chris/marvel-app');
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = async (e) => {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
@@ -68,20 +78,7 @@ export const Flow = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  };
-
-  useEffect(() => {
-    const init = async () => {
-      const loadSessions = async () => {
-        return;
-      };
-      loadSessions();
-      await onFolderSelected('/home/chris/marvel-app');
-
-      addKeyListener();
-    };
-    init();
-  }, []);
+  }, [handleSave]);
 
   const onNodesChange = (changes) => {
     setNodes((prevNodes) => {

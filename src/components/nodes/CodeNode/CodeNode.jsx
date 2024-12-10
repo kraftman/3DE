@@ -31,11 +31,13 @@ export const CodeNode = ({ id, data }) => {
 
   const { onCodeNodeTextChange } = useLayer();
 
-  const funcInfo = useFileSystem((state) => {
-    const fileInfo = state.flatFiles[data.fullPath];
-    //console.log('fileInfo changed', fileInfo);
-    return fileInfo.functions.find((func) => func.id === data.functionId);
+  const fileInfo = useFileSystem((state) => {
+    return state.flatFiles[data.fullPath];
   });
+
+  const funcInfo = fileInfo.functions.find(
+    (func) => func.id === data.functionId
+  );
 
   const [text, setText] = useState('');
 
@@ -43,7 +45,7 @@ export const CodeNode = ({ id, data }) => {
     console.log('getting new values for function content');
     const functionContent = extractNonFunctionStatements(funcInfo.node);
     setText(functionContent);
-  }, [funcInfo]);
+  }, [fileInfo]);
 
   const onChange = (newText) => {
     setText(newText);
