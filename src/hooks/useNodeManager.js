@@ -24,17 +24,26 @@ import {
   importWithoutExtension,
   enrichFileInfo,
 } from '../utils/fileUtils';
+import { removeFunctionFromAst, addFunctionToAst } from '../utils/codeUtils';
 
 import { useShallow } from 'zustand/react/shallow';
 import { useFileSystem } from '../stores/useFileSystem.js';
 
-const functionIsOutsideParent = (parent, functionNode) => {
+const functionIsInsideParent = (parent, functionNode) => {
   return (
-    functionNode.position.x > parent.data.width ||
-    functionNode.position.y > parent.data.height ||
-    functionNode.position.x + functionNode.data.width < 0 ||
-    functionNode.position.y + functionNode.data.height < 0
+    functionNode.position.x > parent.position.x &&
+    functionNode.position.y > parent.position.y &&
+    functionNode.position.x < parent.position.x + parent.data.width &&
+    functionNode.position.y < parent.position.y + parent.data.height
   );
+};
+
+const functionLandedOnModule = (nodes, functionNode) => {
+  const moduleNodes = nodes.filter((node) => node.type === 'module');
+  const foundModule = moduleNodes.find((module) =>
+    functionIsInsideParent(module, functionNode)
+  );
+  return foundModule;
 };
 
 const stripExt = (filename) => {
@@ -180,131 +189,166 @@ export const useNodeManager = () => {
     });
   }, []);
 
-  const handleFunctionDrag = useCallback(
-    (functionNode) => {
-      const currentNodes = getNodes();
-      const parentModule = currentNodes.find(
-        (node) => node.id === functionNode.data.moduleId
-      );
-      const isOutside = functionIsOutsideParent(parentModule, functionNode);
+  const moveFunctionToNewParent = (newParent, oldParent, functionNode) => {
+    // remove the function from the old module ast
+    // remove the function from the old module functions list
+    // add the function to the new module ast
+    // add the function to the new module functions list
+    // create a new node for the function
+    const fileInfo = flatFiles[functionNode.data.fullPath];
+    removeFunctionFromAst(fileInfo.fullAst, functionNode.data.functionId);
+    const foundFunction = fileInfo.functions.find(
+      (func) => func.id === functionNode.data.functionId
+    );
+    fileInfo.functions = fileInfo.functions.filter(
+      (func) => func.id !== functionNode.data.functionId
+    );
+    setFlatFiles((files) => {
+      const newFiles = {
+        ...files,
+        [functionNode.data.fullPath]: { ...fileInfo },
+      };
+      return newFiles;
+    });
+    // also remove modues
 
-      if (!isOutside) {
-        clampFunctionToModule(functionNode.id);
-        return;
-      }
+    const newFileInfo = flatFiles[newParent.data.fullPath];
+    newFileInfo.functions.push(foundFunction);
+    addFunctionToAst(newFileInfo.fullAst, foundFunction.node);
 
-      // Get all imports for the file
-      // find any imports that the function uses
-      // remove the function from the AST
-      // check if there are imports that are no longer used by the remaining code
-      // if so, remove them
-      // add the imports that the functions uses to the new file
-      // add an import to the new filed
-      // remove the function from the functions array
-      // remove the function node and its children from the nodes array.
-      // create the new nodes and add them to the nodes array
+    setNodes((nodes) => {
+      return nodes.map((node) => {
+        if (node.id === oldParent.id) {
+          return {
+            ...node,
+            parentId: newParent.id,
+            data: {
+              ...node.data,
+              moduleId: newParent.id,
+            },
+          };
+        }
+        return node;
+      });
+    });
+  };
 
-      const { functionName } = functionNode.data;
-      const functionId = functionNode.data.functionId;
-      const fileInfo = flatFiles[functionNode.data.fullPath];
-      const foundFunction = fileInfo.functions.find(
-        (func) => func.id === functionId
-      );
+  const createModuleForFunction = (functionNode, parentModule) => {
+    // Get all imports for the file
+    // find any imports that the function uses
+    // remove the function from the AST
+    // check if there are imports that are no longer used by the remaining code
+    // if so, remove them
+    // add the imports that the functions uses to the new file
+    // add an import to the new filed
+    // remove the function from the functions array
+    // remove the function node and its children from the nodes array.
+    // create the new nodes and add them to the nodes array
+    const { functionId, functionName } = functionNode.data;
 
-      // visit(fileInfo.fullAst, {
-      //   visitFunctionDeclaration(path) {
-      //     if (path.node._id && path.node._id === functionId) {
+    const fileInfo = flatFiles[functionNode.data.fullPath];
+    const foundFunction = fileInfo.functions.find(
+      (func) => func.id === functionId
+    );
 
-      //       return false;
-      //     }
+    console.log('foundFunction', foundFunction);
+    const finalContent = recast.print(foundFunction.node).code;
 
-      //     this.traverse(path);
-      //   },
-      // });
+    removeFunctionFromAst(fileInfo.fullAst, functionId);
 
-      const finalContent = recast.print(foundFunction.node).code;
+    const parentPath = parentModule.data.fullPath;
+    const parentDir = path.dirname(parentPath);
+    const newPath = path.join(parentDir, functionName + '.js');
+    const newFileInfo = {
+      index: newPath,
+      children: [],
+      data: functionName + '.js',
+      fileData: finalContent,
+      savedData: finalContent,
+      isFolder: false,
+    };
 
-      const parentPath = parentModule.data.fullPath;
-      const parentDir = path.dirname(parentPath);
-      const newPath = path.join(parentDir, functionName + '.js');
-      const newFileInfo = {
-        index: newPath,
-        children: [],
-        data: functionName + '.js',
-        fileData: finalContent,
-        savedData: finalContent,
-        isFolder: false,
+    enrichFileInfo(newFileInfo);
+    createFile(newFileInfo);
+
+    setFlatFiles((files) => {
+      const newFiles = {
+        ...files,
+        [functionNode.data.fullPath]: { ...fileInfo },
+      };
+      return newFiles;
+    });
+
+    setNodes((nodes) => {
+      const newPosition = {
+        x: parentModule.data.width + 100,
+        y: 0,
       };
 
-      enrichFileInfo(newFileInfo);
+      const newNodes = getNodesForFile(
+        newFileInfo,
+        newPosition,
+        functionNode.data.moduleId
+      );
 
-      setFlatFiles((files) => {
-        const newFiles = {
-          ...files,
-          [newPath]: newFileInfo,
-        };
-        return newFiles;
+      const childNodeIds = findChildIds(nodes, functionNode.id);
+
+      childNodeIds.push(functionNode.id);
+
+      // remove the old function from the old module
+      // also need to remove the children
+      nodes = nodes.filter((node) => !childNodeIds.includes(node.id));
+
+      nodes = nodes.map((node) => {
+        if (node.id === functionNode.data.moduleId) {
+          const newImport = {
+            name: functionName,
+            imported: functionName,
+            moduleSpecifier: './' + functionName,
+            type: 'local',
+            fullPath: stripExt(newPath),
+          };
+          const newHandles = getImportHandles(
+            node.data.imports.concat(newImport),
+            node.id
+          );
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              imports: node.data.imports.concat(newImport),
+              handles: newHandles,
+            },
+          };
+        }
+        return node;
       });
-
-      createFile(newFileInfo);
-
-      setNodes((nodes) => {
-        const newPosition = {
-          x: parentModule.data.width + 100,
-          y: 0,
-        };
-
-        const newNodes = getNodesForFile(
-          newFileInfo,
-          newPosition,
-          functionNode.data.moduleId
-        );
-
-        const childNodeIds = findChildIds(nodes, functionNode.id);
-
-        childNodeIds.push(functionNode.id);
-
-        // remove the old function from the old module
-        // also need to remove the children
-        nodes = nodes.filter((node) => !childNodeIds.includes(node.id));
-
-        nodes = nodes.map((node) => {
-          if (node.id === functionNode.data.moduleId) {
-            const newImport = {
-              name: functionName,
-              imported: functionName,
-              moduleSpecifier: './' + functionName,
-              type: 'local',
-              fullPath: stripExt(newPath),
-            };
-            console.log('newImport', newImport);
-            const newHandles = getImportHandles(
-              node.data.imports.concat(newImport),
-              node.id
-            );
-            console.log('newHandles', newHandles);
-
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                imports: node.data.imports.concat(newImport),
-                handles: newHandles,
-              },
-            };
-          }
-          return node;
-        });
-        return nodes.concat(newNodes);
-      });
-    },
-    [flatFiles]
-  );
+      return nodes.concat(newNodes);
+    });
+  };
 
   const onNodeDragStop = useCallback(
     (event, node) => {
       if (node.type === 'pureFunctionNode') {
-        handleFunctionDrag(node);
+        const currentNodes = getNodes();
+        const functionNode = node;
+        const parentModule = currentNodes.find(
+          (node) => node.id === functionNode.data.moduleId
+        );
+
+        const newParent = functionLandedOnModule(currentNodes, functionNode);
+
+        if (!newParent) {
+          return createModuleForFunction(functionNode, parentModule);
+        }
+
+        if (newParent.id === parentModule.id) {
+          clampFunctionToModule(functionNode.id);
+          return;
+        }
+        // TODO: handle dragging function into another function
+        return moveFunctionToNewParent(newParent, parentModule, functionNode);
       }
     },
     [flatFiles]
