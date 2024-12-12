@@ -2,7 +2,7 @@ import path from 'path-browserify';
 import { getNodesForFile } from './getNodesForFile';
 import { findFileForImport } from './fileUtils';
 
-const getChildPaths = (flatFiles, fileInfo) => {
+export const getChildFiles = (flatFiles, fileInfo) => {
   const thisPath = fileInfo.index;
 
   console.log('cecing imports', fileInfo.imports);
@@ -27,16 +27,15 @@ const getChildPaths = (flatFiles, fileInfo) => {
   return pathsWithExtension;
 };
 
-export const createChildNodes = (nodes, moduleId, localFlatFiles, fileInfo) => {
+export const createChildNodes = (nodes, moduleId, childFiles) => {
   const moduleNode = nodes.find(
     (node) => node.type === 'module' && node.id === moduleId
   );
 
-  const resolvedFiles = getChildPaths(localFlatFiles, fileInfo);
-  console.log('got child paths', resolvedFiles);
   let offset = 0;
 
-  resolvedFiles.forEach((file) => {
+  const newNodes = [];
+  childFiles.forEach((file) => {
     const existingNode = nodes.find(
       (node) => node.data.fullPath === file.index && node.parentId === moduleId
     );
@@ -50,18 +49,8 @@ export const createChildNodes = (nodes, moduleId, localFlatFiles, fileInfo) => {
     };
     offset += 200;
     const myNodes = getNodesForFile(file, newPos, moduleId);
-    nodes = nodes.concat(myNodes);
-    myNodes.forEach((node) => {
-      if (node.type === 'module') {
-        //const children = getChildNodes(nodes, node.id, localFlatFiles);
-        //nodes = nodes.concat(children);
-      }
-    });
+    newNodes.push(...myNodes);
   });
 
-  // need to get the imports
-  // filter them by local files not modules
-  // load the files
-  // create modules for them
-  return nodes;
+  return newNodes;
 };

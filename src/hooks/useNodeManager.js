@@ -9,6 +9,7 @@ import {
 } from '../utils/nodeUtils/nodeUtils.js';
 import { useUpdateNodeInternals } from '@xyflow/react';
 import * as recast from 'recast';
+import { createChildNodes } from '../utils/createChildNodes.js';
 
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import path from 'path-browserify';
@@ -25,6 +26,7 @@ import {
   enrichFileInfo,
 } from '../utils/fileUtils';
 import { removeFunctionFromAst, addFunctionToAst } from '../utils/codeUtils';
+import { findHandleEdges } from '../utils/moduleUtils';
 
 import { useShallow } from 'zustand/react/shallow';
 import { useFileSystem } from '../stores/useFileSystem.js';
@@ -53,11 +55,12 @@ const stripExt = (filename) => {
 };
 
 export const useNodeManager = () => {
-  const { setNodes, getNodes } = useStore(
+  const { setNodes, getNodes, setEdges, getEdges } = useStore(
     useShallow((state) => ({
       setNodes: state.setNodes,
       setEdges: state.setEdges,
       getNodes: state.getNodes,
+      getEdges: state.getEdges,
     }))
   );
   const { setFlatFiles, flatFiles } = useFileSystem();
@@ -417,45 +420,40 @@ export const useNodeManager = () => {
 
   const toggleChildModule = useCallback(
     (moduleId, fullPath) => {
-      console.log('toggle child module', fullPath);
-      // if the child module exists, remove it
-      // if the child module doesnt exist, create it
-
-      // const fileInfo = store.flatFiles[fullPath];
-
-      // const newNodes = getNodesForFile(fileInfo, newPos, null);
-      // console.log('newNodes', newNodes);
-      // setNodes((nodes) => nodes.concat(newNodes));
-
-      // find modules where the path is the fullPath, and the parentId is this module
-      // recursively remove it and its children
-      setNodes((nodes) => {
-        const children = findChildModules(nodes, moduleId);
-        console.log('children', children);
-        const foundChild = children.find(
-          (child) =>
-            importWithoutExtension(child.data.fullPath) ===
-            importWithoutExtension(fullPath)
-        );
-        if (foundChild) {
-          const childrenOfChild = findChildNodes(nodes, foundChild.id);
-          const childIds = childrenOfChild.map((child) => child.id);
-          childIds.push(foundChild.id);
-          return nodes.filter((node) => !childIds.includes(node.id));
-        } else {
-          const parentModule = nodes.find(
-            (node) => node.id === moduleId && node.type === 'module'
-          );
-          const newPos = {
-            x: parentModule.position.x + 500,
-            y: 0,
-          };
-          const resolvedFile = findFileForImport(flatFiles, fullPath);
-
-          const newNodes = getNodesForFile(resolvedFile, newPos, moduleId);
-          return nodes.concat(newNodes);
-        }
-      });
+      const nodes = getNodes();
+      const children = findChildModules(nodes, moduleId);
+      const foundChild = children.find(
+        (child) =>
+          importWithoutExtension(child.data.fullPath) ===
+          importWithoutExtension(fullPath)
+      );
+      if (foundChild) {
+        const foundNodes = [
+          foundChild,
+          ...findChildNodes(nodes, foundChild.id),
+        ];
+        const childIds = foundNodes.map((child) => child.id);
+        setNodes((nodes) => {
+          return nodes.map((node) => {
+            if (childIds.includes(node.id)) {
+              return {
+                ...node,
+                hidden: !foundChild.hidden,
+              };
+            }
+            return node;
+          });
+        });
+      } else {
+        // create the chil
+        const fileInfo = findFileForImport(flatFiles, fullPath);
+        const newNodes = createChildNodes(nodes, moduleId, [fileInfo]);
+        const moduleNodes = newNodes.filter((node) => node.type === 'module');
+        const edges = getEdges();
+        const newEdges = findHandleEdges(edges, nodes, moduleNodes);
+        setNodes((nodes) => nodes.concat(newNodes));
+        setEdges((edges) => [...edges, ...newEdges]);
+      }
     },
     [flatFiles]
   );

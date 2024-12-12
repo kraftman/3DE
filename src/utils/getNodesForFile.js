@@ -70,6 +70,7 @@ const createMarkdownNode = (fullPath, fileContents, newPos) => {
 export const getNodesForFile = (fileInfo, newPos, parentId) => {
   const fullPath = fileInfo.index;
   const fileContents = fileInfo.fileData;
+  console.log('getting extension for', fullPath);
   const extension = fullPath.split('.').pop();
   if (codeExtensions.includes(extension)) {
     const codeNodes = createCodeNodes(fileInfo, newPos, parentId);

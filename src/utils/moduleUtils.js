@@ -1,6 +1,7 @@
 import { createChildNodes } from './createChildNodes';
 
 import { importWithoutExtension } from './fileUtils';
+import { getChildFiles } from './createChildNodes';
 
 export const findChildNodes = (nodes, moduleId) => {
   const childNodes = nodes.filter((node) => node.parentId === moduleId);
@@ -75,13 +76,13 @@ export const expandModule = (nodes, moduleId) => {
   return newNodes;
 };
 
-export const findHandleEdges = (oldEdge, moduleNodes) => {
+export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
   const edges = [];
 
   // for each new node, check if there is an old node that references the new node
   console.log('new nodes:', moduleNodes);
   moduleNodes.forEach((newModule) => {
-    moduleNodes.find((oldModule) => {
+    oldNodes.find((oldModule) => {
       if (oldModule.id !== newModule.parentId) {
         return;
       }
@@ -157,10 +158,11 @@ export const showModuleChildren = (
   fileInfo
 ) => {
   // need to only create new ones if they dont already exist
-  const newNodes = createChildNodes(nodes, moduleId, flatFiles, fileInfo);
+  const childFiles = getChildFiles(flatFiles, fileInfo);
+  const newNodes = createChildNodes(nodes, moduleId, childFiles);
   const children = findChildNodes(nodes, moduleId);
   const childIds = children.map((child) => child.id);
-  const newNewNodes = newNodes.map((node) => {
+  const updatedNodes = nodes.map((node) => {
     if (node.type === 'module' && node.id === moduleId) {
       //console.log('found module node:', node);
       return {
@@ -178,10 +180,10 @@ export const showModuleChildren = (
   });
 
   // TODO/WARNING newNewNodes includes all nodes, not just the new ones
-  const moduleNodes = newNewNodes.filter((node) => node.type === 'module');
-  const newEdges = findHandleEdges(edges, moduleNodes);
+  const moduleNodes = newNodes.filter((node) => node.type === 'module');
+  const newEdges = findHandleEdges(edges, nodes, moduleNodes);
   return {
-    newNodes: newNewNodes,
+    newNodes: updatedNodes.concat(newNodes),
     newEdges: newEdges,
   };
 };
