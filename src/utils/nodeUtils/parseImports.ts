@@ -19,6 +19,7 @@ export const parseImports = (imports, fullPath): Imports[] => {
       ...imp,
       importType: isLocal ? 'local' : 'module',
       fullPath: impFullPath,
+      moduleSpecifier: imp.source.value,
     };
   });
 };

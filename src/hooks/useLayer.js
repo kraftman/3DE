@@ -14,10 +14,12 @@ import { isRootLevelNode } from '../utils/parser.js';
 import * as recast from 'recast';
 
 export const useLayer = () => {
-  const { setNodes, setEdges } = useStore(
+  const { setNodes, setEdges, getNodes, getEdges } = useStore(
     useShallow((state) => ({
       setNodes: state.setNodes,
       setEdges: state.setEdges,
+      getNodes: state.getNodes,
+      getEdges: state.getEdges,
     }))
   );
   const { flatFiles, setFlatFiles } = useFileSystem(
@@ -36,24 +38,27 @@ export const useLayer = () => {
     });
   };
 
-  const toggleChildren = useCallback(
-    (localFlatFiles, moduleId, showChildren) => {
+  const toggleShowChildModules = useCallback(
+    (moduleId, fullPath, showChildren) => {
       // later need to make sure the children arent already open
       if (showChildren) {
         return setNodes((nodes) => hideModuleChildren(nodes, moduleId));
       }
+      const nodes = getNodes();
+      const edges = getEdges();
+      const fileInfo = flatFiles[fullPath];
+      const { newNodes, newEdges } = showModuleChildren(
+        nodes,
+        edges,
+        moduleId,
+        flatFiles,
+        fileInfo
+      );
 
-      setNodes((nodes) => {
-        const { newNodes, newEdges } = showModuleChildren(
-          nodes,
-          moduleId,
-          localFlatFiles
-        );
-        setEdges(newEdges);
-        return newNodes;
-      });
+      setNodes(newNodes);
+      setEdges((edges) => [...edges, ...newEdges]);
     },
-    []
+    [flatFiles]
   );
 
   const onRootNodeTextChange = useCallback(
@@ -185,7 +190,7 @@ export const useLayer = () => {
 
   return {
     onModuleClose,
-    toggleChildren,
+    toggleShowChildModules,
     onCodeNodeTextChange,
     onfunctionTitledChanged,
     onRootNodeTextChange,

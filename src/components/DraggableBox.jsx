@@ -100,15 +100,11 @@ export const DraggableBox = memo(function DraggableBox(props) {
 
   const changeDetails = () => {
     setShowDetails(!showDetails);
-
-    console.log('showDetails:', showDetails);
   };
 
   const changeTests = () => {
     setShowTests(!showTests);
-    console.log('==== showing test for parent', id);
     onShowTest(id);
-    console.log('showTests:', showTests);
   };
 
   const [showTests, setShowTests] = useState(false);

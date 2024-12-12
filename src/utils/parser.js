@@ -154,7 +154,6 @@ const getImports = (ast) => {
       this.traverse(path);
     },
   });
-  console.log('imports:', imports);
   return imports;
 };
 

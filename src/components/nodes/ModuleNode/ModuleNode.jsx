@@ -61,7 +61,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
   const [settings, setSettings] = useState([]);
   const {
     onModuleClose,
-    toggleChildren,
+    toggleShowChildModules,
     toggleHideEdges,
     onRootNodeTextChange,
   } = useLayer();
@@ -190,7 +190,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const allHandles = data?.handles.map((handle, index) => {
     if (handle.refType === 'import') {
-      //return getImportHandles(handle);
+      return getImportHandles(handle);
     }
 
     return (
@@ -211,7 +211,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
   };
 
   const toggleChildrenInternal = (value, value2) => {
-    toggleChildren(flatFiles, data.moduleId, data.showChildren);
+    toggleShowChildModules(id, data.fullPath, data.showChildren);
   };
 
   const layoutChildrenInternal = () => {

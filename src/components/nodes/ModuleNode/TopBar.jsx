@@ -54,7 +54,7 @@ export const TopBar = ({
 
       <ToggleButton
         value="check"
-        aria-label="justified"
+        aria-label="show childrem"
         selected={showChildren}
         onChange={toggleChildren}
       >

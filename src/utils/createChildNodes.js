@@ -1,33 +1,39 @@
 import path from 'path-browserify';
 import { getNodesForFile } from './getNodesForFile';
+import { findFileForImport } from './fileUtils';
 
-export const createChildNodes = (nodes, moduleId, localFlatFiles) => {
-  const moduleNode = nodes.find(
-    (node) => node.type === 'module' && node.id === moduleId
-  );
-  const thisPath = moduleNode.data.fullPath;
-  const childrelativePaths = moduleNode.data.imports
+const getChildPaths = (flatFiles, fileInfo) => {
+  const thisPath = fileInfo.index;
+
+  console.log('cecing imports', fileInfo.imports);
+  const childrelativePaths = fileInfo.imports
     .filter((imp) => imp.importType === 'local')
     .map((imp) => {
       return imp.moduleSpecifier;
     });
 
+  console.log('got child relative paths', childrelativePaths);
+
   const childResolvedPaths = childrelativePaths.map((relPath) => {
     return path.resolve(path.dirname(thisPath), relPath);
   });
-  const resolvedFiles = childResolvedPaths
-    .map((relPath) => {
-      const found =
-        localFlatFiles[relPath + '.js'] ||
-        localFlatFiles[relPath + '.ts'] ||
-        localFlatFiles[relPath + '.tsx'] ||
-        localFlatFiles[relPath + '.jsx'];
-      if (!found) {
-        console.error('could not find  file:', relPath);
-      }
-      return found;
-    })
+  console.log('got child resolved paths', childResolvedPaths);
+
+  const pathsWithExtension = childResolvedPaths
+    .map((fullPath) => findFileForImport(flatFiles, fullPath))
     .filter((file) => file);
+  console.log('got paths with extension', pathsWithExtension);
+
+  return pathsWithExtension;
+};
+
+export const createChildNodes = (nodes, moduleId, localFlatFiles, fileInfo) => {
+  const moduleNode = nodes.find(
+    (node) => node.type === 'module' && node.id === moduleId
+  );
+
+  const resolvedFiles = getChildPaths(localFlatFiles, fileInfo);
+  console.log('got child paths', resolvedFiles);
   let offset = 0;
 
   resolvedFiles.forEach((file) => {

@@ -1,5 +1,7 @@
 import { createChildNodes } from './createChildNodes';
 
+import { importWithoutExtension } from './fileUtils';
+
 export const findChildNodes = (nodes, moduleId) => {
   const childNodes = nodes.filter((node) => node.parentId === moduleId);
   let foundNodes = [];
@@ -73,29 +75,46 @@ export const expandModule = (nodes, moduleId) => {
   return newNodes;
 };
 
-export const findHandleEdges = (moduleNodes) => {
+export const findHandleEdges = (oldEdge, moduleNodes) => {
   const edges = [];
-  moduleNodes.forEach((moduleNode) => {
-    // for each import, check if there is a module with the path
-    moduleNode.data.imports.forEach((imp) => {
-      const targetModule = moduleNodes.find(
-        (node) =>
-          node.data.fullPath === imp.fullPath + '.js' ||
-          node.data.fullPath === imp.fullPath + '.ts' ||
-          node.data.fullPath === imp.fullPath + '.tsx' ||
-          node.data.fullPath === imp.fullPath + '.jsx'
-      );
-      if (targetModule) {
-        edges.push({
-          id: `${moduleNode.id}-${targetModule.id}}-${imp.name}`,
-          source: moduleNode.id,
-          target: targetModule.id,
-          targetHandle: targetModule.id + '-handle',
-          sourceHandle: moduleNode.id + '-' + imp.name + ':out',
-        });
+
+  // for each new node, check if there is an old node that references the new node
+  console.log('new nodes:', moduleNodes);
+  moduleNodes.forEach((newModule) => {
+    moduleNodes.find((oldModule) => {
+      if (oldModule.id !== newModule.parentId) {
+        return;
       }
+      oldModule.data.handles.forEach((handle) => {
+        console.log(
+          'checking handle:',
+          handle.data.fullPath,
+          newModule.data.fullPath
+        );
+        if (
+          handle.data.fullPath ===
+          importWithoutExtension(newModule.data.fullPath)
+        ) {
+          console.log('found handle:', handle);
+          const sourceName = oldModule.id + '-' + handle.data.fullPath + ':out';
+          const targetName = newModule.id + '-handle';
+          const edgeId = `${oldModule.id}-${newModule.id}}-${handle.data.name}`;
+          if (oldEdge.find((edge) => edge.id === edgeId)) {
+            return;
+          }
+          edges.push({
+            id: edgeId,
+            source: oldModule.id,
+            target: newModule.id,
+            targetHandle: targetName,
+            sourceHandle: sourceName,
+          });
+        }
+      });
     });
   });
+
+  console.log('edges', edges);
   return edges;
 };
 
@@ -130,9 +149,15 @@ export const hideModuleChildren = (nodes, moduleId) => {
   return newNodes;
 };
 
-export const showModuleChildren = (nodes, moduleId, localFlatFiles) => {
+export const showModuleChildren = (
+  nodes,
+  edges,
+  moduleId,
+  flatFiles,
+  fileInfo
+) => {
   // need to only create new ones if they dont already exist
-  const newNodes = createChildNodes(nodes, moduleId, localFlatFiles);
+  const newNodes = createChildNodes(nodes, moduleId, flatFiles, fileInfo);
   const children = findChildNodes(nodes, moduleId);
   const childIds = children.map((child) => child.id);
   const newNewNodes = newNodes.map((node) => {
@@ -152,8 +177,9 @@ export const showModuleChildren = (nodes, moduleId, localFlatFiles) => {
     return node;
   });
 
-  const newModules = newNewNodes.filter((node) => node.type === 'module');
-  const newEdges = findHandleEdges(newModules);
+  // TODO/WARNING newNewNodes includes all nodes, not just the new ones
+  const moduleNodes = newNewNodes.filter((node) => node.type === 'module');
+  const newEdges = findHandleEdges(edges, moduleNodes);
   return {
     newNodes: newNewNodes,
     newEdges: newEdges,

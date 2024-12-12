@@ -97,7 +97,6 @@ export const Container = ({}) => {
   );
 
   const onTest = (id) => {
-    console.log('==== id', id);
     const thisBox = boxes[id];
     const parentBox = boxes[thisBox.parent];
     window.electronAPI.sendToMain('run-node-process', {
@@ -108,11 +107,8 @@ export const Container = ({}) => {
   };
 
   window.electronAPI.receiveFromMain('process-response', (response) => {
-    console.log('==== response', response);
-
     const id = response.id;
     const testBox = boxes[id];
-    console.log('==== set passing to ', response.status === 'success');
     const newBox = {
       ...boxes[id],
       passing: response.status === 'success',

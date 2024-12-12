@@ -218,10 +218,10 @@ export const getImportHandles = (imports, moduleId) => {
     return {
       moduleId: moduleId,
       parentId: moduleId,
-      funcName: imp.source.value,
+      funcName: imp.moduleSpecifier,
       refType: 'import',
-      id: moduleId + '-' + imp.source.value + ':out',
-      key: imp.source.value + ':out',
+      id: moduleId + '-' + imp.fullPath + ':out',
+      key: imp.fullPath + ':out',
       type: 'source',
       position: 'right',
       style: {
@@ -230,7 +230,7 @@ export const getImportHandles = (imports, moduleId) => {
         borderColor: imp.importType === 'local' ? 'blue' : 'green',
       },
       data: {
-        name: imp.source.value,
+        name: imp.moduleSpecifier,
         fullPath: imp.fullPath,
         importType: imp.importType,
       },
@@ -258,9 +258,8 @@ export const getModuleNodes = (fileInfo) => {
   );
 
   // need to do this here and not in parser because parser doesnt have fullPath
-  const imports = parseImports(fileInfo.imports, fullPath);
 
-  const moduleHandles = getImportHandles(imports, newModuleId);
+  const moduleHandles = getImportHandles(fileInfo.imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
 
   const baseSize = {
@@ -274,7 +273,7 @@ export const getModuleNodes = (fileInfo) => {
     id: newModuleId,
     data: {
       exports: fileInfo.exports,
-      imports: imports,
+      imports: fileInfo.imports,
       handles: moduleHandles,
       moduleId: newModuleId,
       fullPath: fullPath,
