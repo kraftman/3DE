@@ -332,7 +332,16 @@ export const ModuleNode = React.memo(({ id, data }) => {
             />
           </div>
         )}
+        {/* <div
+          id="node-container"
+          style={{
+            height: '100%',
+            width: '100%',
+            background: 'darkgrey',
+          }}
+        ></div> */}
       </div>
+
       <Handle type="source" position={'left'} id={id + '-handle'} />
       {allHandles}
     </ThemeProvider>

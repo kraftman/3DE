@@ -2,7 +2,6 @@ import { useStore } from '../contexts/useStore';
 import { useCallback } from 'react';
 const { namedTypes: n, visit } = require('ast-types');
 import {
-  getRaw,
   findChildIds,
   getFunctionContent,
   getImportHandles,
@@ -32,6 +31,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useFileSystem } from '../stores/useFileSystem.js';
 
 import { useReactFlow } from '@xyflow/react';
+import { checkAndFixFunctionHoisting } from '../utils/checkAndFixFunctionHoisting.js';
 
 const positionIsInsideModule = (parent, newPos) => {
   return (
@@ -81,6 +81,7 @@ export const useNodeManager = () => {
       //const newRaw = getRaw(nodes, moduleId);
       const fullPath = moduleNode.data.fullPath;
       const fileInfo = flatFiles[fullPath];
+      checkAndFixFunctionHoisting(fileInfo.fullAst);
       const newRaw = recast.prettyPrint(fileInfo.fullAst).code;
       console.log('got raw', newRaw);
       const newNodes = nodes.map((node) => {
