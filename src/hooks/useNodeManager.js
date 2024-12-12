@@ -246,7 +246,10 @@ export const useNodeManager = () => {
             },
           };
         }
-        if (node.data.fullPath === functionNode.data.fullPath) {
+        if (
+          node.data.fullPath === functionNode.data.fullPath &&
+          node.type !== 'module'
+        ) {
           return {
             ...node,
             data: {

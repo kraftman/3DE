@@ -207,7 +207,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
   });
 
   const toggleShowRawCodeInternal = () => {
-    toggleShowRawCode(data.moduleId);
+    toggleShowRawCode(id);
   };
 
   const toggleChildrenInternal = (value, value2) => {
