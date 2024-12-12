@@ -199,36 +199,60 @@ export const useNodeManager = () => {
     // add the function to the new module ast
     // add the function to the new module functions list
     // create a new node for the function
-    const fileInfo = flatFiles[functionNode.data.fullPath];
+    let fileInfo = flatFiles[functionNode.data.fullPath];
     removeFunctionFromAst(fileInfo.fullAst, functionNode.data.functionId);
     const foundFunction = fileInfo.functions.find(
       (func) => func.id === functionNode.data.functionId
     );
-    fileInfo.functions = fileInfo.functions.filter(
-      (func) => func.id !== functionNode.data.functionId
-    );
+    console.log('founnd function', foundFunction);
+
+    const newFileInfo = flatFiles[newParent.data.fullPath];
+    addFunctionToAst(newFileInfo.fullAst, foundFunction.node);
+
     setFlatFiles((files) => {
       const newFiles = {
         ...files,
-        [functionNode.data.fullPath]: { ...fileInfo },
+        [functionNode.data.fullPath]: {
+          ...fileInfo,
+          functions: fileInfo.functions.filter(
+            (func) => func.id !== functionNode.data.functionId
+          ),
+        },
+        [newParent.data.fullPath]: {
+          ...files[newParent.data.fullPath],
+          functions:
+            files[newParent.data.fullPath].functions.concat(foundFunction),
+        },
       };
       return newFiles;
     });
-    // also remove modues
-
-    const newFileInfo = flatFiles[newParent.data.fullPath];
-    newFileInfo.functions.push(foundFunction);
-    addFunctionToAst(newFileInfo.fullAst, foundFunction.node);
 
     setNodes((nodes) => {
       return nodes.map((node) => {
         if (node.id === functionNode.id) {
+          console.log('updating node to new parent', newParent.id);
+          console.log('node location', node.position.x, node.position.y);
           return {
             ...node,
             parentId: newParent.id,
+            position: {
+              x: 100,
+              y: 100,
+            },
             data: {
               ...node.data,
               moduleId: newParent.id,
+              fullPath: newParent.data.fullPath,
+            },
+          };
+        }
+        if (node.data.fullPath === functionNode.data.fullPath) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              moduleId: newParent.id,
+              fullPath: newParent.data.fullPath,
             },
           };
         }
@@ -345,11 +369,10 @@ export const useNodeManager = () => {
           y: event.clientY,
         });
         const newParent = getModulesUnderPosition(currentNodes, rPos);
-        console.log('newParent', newParent);
 
-        // if (!newParent) {
-        //   return createModuleForFunction(functionNode, parentModule);
-        // }
+        if (!newParent) {
+          return createModuleForFunction(functionNode, parentModule);
+        }
 
         if (newParent?.id === parentModule.id) {
           console.log('clamping');
@@ -357,7 +380,7 @@ export const useNodeManager = () => {
           return;
         }
         // // TODO: handle dragging function into another function
-        // return moveFunctionToNewParent(newParent, parentModule, functionNode);
+        return moveFunctionToNewParent(newParent, parentModule, functionNode);
       }
     },
     [flatFiles]
