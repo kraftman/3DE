@@ -42,7 +42,7 @@ export const CodeNode = ({ id, data }) => {
   const [text, setText] = useState('');
 
   useEffect(() => {
-    console.log('getting new values for function content');
+    //console.log('getting new values for function content');
     const functionContent = extractNonFunctionStatements(funcInfo.node);
     setText(functionContent);
   }, [fileInfo]);

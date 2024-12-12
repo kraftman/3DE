@@ -80,7 +80,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const rootCodeAst = useFileSystem(
     useShallow((state) => {
-      console.log('getting root code for ', data?.fullPath);
+      //console.log('getting root code for ', data?.fullPath);
       return state.flatFiles[data?.fullPath]?.rootCode;
     })
   );

@@ -29,19 +29,21 @@ import { removeFunctionFromAst, addFunctionToAst } from '../utils/codeUtils';
 import { useShallow } from 'zustand/react/shallow';
 import { useFileSystem } from '../stores/useFileSystem.js';
 
-const functionIsInsideParent = (parent, functionNode) => {
+import { useReactFlow } from '@xyflow/react';
+
+const positionIsInsideModule = (parent, newPos) => {
   return (
-    functionNode.position.x > parent.position.x &&
-    functionNode.position.y > parent.position.y &&
-    functionNode.position.x < parent.position.x + parent.data.width &&
-    functionNode.position.y < parent.position.y + parent.data.height
+    newPos.x > parent.position.x &&
+    newPos.y > parent.position.y &&
+    newPos.x < parent.position.x + parent.data.width &&
+    newPos.y < parent.position.y + parent.data.height
   );
 };
 
-const functionLandedOnModule = (nodes, functionNode) => {
+const getModulesUnderPosition = (nodes, newPos) => {
   const moduleNodes = nodes.filter((node) => node.type === 'module');
   const foundModule = moduleNodes.find((module) =>
-    functionIsInsideParent(module, functionNode)
+    positionIsInsideModule(module, newPos)
   );
   return foundModule;
 };
@@ -60,6 +62,8 @@ export const useNodeManager = () => {
   );
   const { setFlatFiles, flatFiles } = useFileSystem();
   const { renameFile, createFile } = useFileManager();
+
+  const { screenToFlowPosition } = useReactFlow();
 
   const toggleShowRawCode = useCallback((moduleId) => {
     setNodes((nodes) => {
@@ -218,7 +222,7 @@ export const useNodeManager = () => {
 
     setNodes((nodes) => {
       return nodes.map((node) => {
-        if (node.id === oldParent.id) {
+        if (node.id === functionNode.id) {
           return {
             ...node,
             parentId: newParent.id,
@@ -336,19 +340,24 @@ export const useNodeManager = () => {
         const parentModule = currentNodes.find(
           (node) => node.id === functionNode.data.moduleId
         );
+        const rPos = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        const newParent = getModulesUnderPosition(currentNodes, rPos);
+        console.log('newParent', newParent);
 
-        const newParent = functionLandedOnModule(currentNodes, functionNode);
+        // if (!newParent) {
+        //   return createModuleForFunction(functionNode, parentModule);
+        // }
 
-        if (!newParent) {
-          return createModuleForFunction(functionNode, parentModule);
-        }
-
-        if (newParent.id === parentModule.id) {
+        if (newParent?.id === parentModule.id) {
+          console.log('clamping');
           clampFunctionToModule(functionNode.id);
           return;
         }
-        // TODO: handle dragging function into another function
-        return moveFunctionToNewParent(newParent, parentModule, functionNode);
+        // // TODO: handle dragging function into another function
+        // return moveFunctionToNewParent(newParent, parentModule, functionNode);
       }
     },
     [flatFiles]
