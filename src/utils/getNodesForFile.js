@@ -1,6 +1,6 @@
 const codeExtensions = ['js', 'jsx', 'ts', 'tsx'];
 const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg'];
-import { getModuleNodes } from './nodeUtils';
+import { getModuleNodes } from './nodeUtils/nodeUtils';
 import { v4 as uuid } from 'uuid';
 
 const createCodeNodes = (fileInfo, newPos, parentId) => {

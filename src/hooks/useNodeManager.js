@@ -6,7 +6,7 @@ import {
   findChildIds,
   getFunctionContent,
   getImportHandles,
-} from '../utils/nodeUtils';
+} from '../utils/nodeUtils/nodeUtils.js';
 import { useUpdateNodeInternals } from '@xyflow/react';
 import * as recast from 'recast';
 
@@ -230,8 +230,6 @@ export const useNodeManager = () => {
     setNodes((nodes) => {
       return nodes.map((node) => {
         if (node.id === functionNode.id) {
-          console.log('updating node to new parent', newParent.id);
-          console.log('node location', node.position.x, node.position.y);
           return {
             ...node,
             parentId: newParent.id,

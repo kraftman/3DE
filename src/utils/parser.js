@@ -6,7 +6,7 @@ import * as murmur from 'murmurhash-js';
 import { parseWithRecast } from './parseWithRecast';
 
 export const extractNonFunctionStatements = (functionNode) => {
-  console.log('extracting from node', functionNode);
+  //console.log('extracting from node', functionNode);
   const nonFunctionNodes = functionNode.body.body.filter(
     (node) =>
       !n.FunctionDeclaration.check(node) && // Exclude declared functions
@@ -148,34 +148,13 @@ const getImports = (ast) => {
   visit(ast, {
     visitImportDeclaration(path) {
       const importNode = path.node;
-      importNode.specifiers.forEach((spec) => {
-        if (spec.type === 'ImportSpecifier') {
-          // Named import
-          imports.push({
-            node: importNode,
-            moduleSpecifier: importNode.source.value,
-            name: spec.local.name, // Local name
-            imported: spec.imported.name, // Original name
-          });
-        } else if (spec.type === 'ImportDefaultSpecifier') {
-          // Default import
-          imports.push({
-            node: importNode,
-            moduleSpecifier: importNode.source.value,
-            name: spec.local.name, // Local name
-          });
-        } else if (spec.type === 'ImportNamespaceSpecifier') {
-          // Namespace import
-          imports.push({
-            node: importNode,
-            moduleSpecifier: importNode.source.value,
-            name: spec.local.name, // Local name
-          });
-        }
-      });
+
+      imports.push(importNode);
+
       this.traverse(path);
     },
   });
+  console.log('imports:', imports);
   return imports;
 };
 
@@ -236,7 +215,7 @@ const getRootLevelCode = (ast) => {
       path.get('body').each((nodePath) => {
         const isRoot = isRootLevelNode(nodePath);
         if (isRoot) {
-          console.log('pruning node:', recast.print(nodePath.node).code);
+          //console.log('pruning node:', recast.print(nodePath.node).code);
           //nodePath.prune();
           rootPaths.push({
             line: rootPaths.length,
@@ -282,15 +261,15 @@ export const parseCode = (code) => {
   const imports = getImports(ast);
   const myExports = getExports(ast);
 
-  const functions = getFunctions(ast.program);
-  const flatFunctions = flattenFunctions(functions);
+  const nestedFunctions = getFunctions(ast.program);
+  const flatFunctions = flattenFunctions(nestedFunctions);
 
   const rootLevelCode = getRootLevelCode(ast);
 
   return {
     imports,
     exports: myExports,
-    functions,
+    functions: flatFunctions,
     rootLevelCode,
     flatFunctions,
     ast,

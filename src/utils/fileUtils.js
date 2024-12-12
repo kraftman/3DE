@@ -16,10 +16,11 @@ export const findFileForImport = (flatFiles, importPath) => {
 
 export const enrichFileInfo = (fileInfo) => {
   const moduleCode = parseCode(fileInfo.fileData);
-  const { imports, exports, flatFunctions, rootLevelCode } = moduleCode;
+  const { imports, exports, functions, rootLevelCode } = moduleCode;
   fileInfo.imports = imports;
   fileInfo.exports = exports;
-  fileInfo.functions = flatFunctions;
+  console.log('functions', functions);
+  fileInfo.functions = functions;
   fileInfo.rootCode = rootLevelCode;
   fileInfo.fullAst = moduleCode.ast;
 };

@@ -102,7 +102,15 @@ export const Flow = () => {
       image: ImageNode,
       preview: PreviewNode,
     }),
-    [TextNode, MarkdownNode, CodeNode, ModuleNode, PureFunctionNode, ImageNode, PreviewNode]
+    [
+      TextNode,
+      MarkdownNode,
+      CodeNode,
+      ModuleNode,
+      PureFunctionNode,
+      ImageNode,
+      PreviewNode,
+    ]
   );
 
   const nodeClassName = (node) => node.type;

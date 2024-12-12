@@ -144,7 +144,6 @@ export const useFileManager = () => {
 
   const onFileSelected = useCallback(
     (newPos, fullPath) => {
-      console.log('fileselected', fullPath);
       const fileInfo = flatFiles[fullPath];
 
       const newNodes = getNodesForFile(fileInfo, newPos, null);

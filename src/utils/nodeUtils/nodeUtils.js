@@ -1,13 +1,12 @@
-import { mockModule } from '../screens/Flow/mocks';
 import { v4 as uuid } from 'uuid';
-import { findCallExpressions } from './astUtils.js';
 
 import * as recast from 'recast';
-import { findReferences } from './parser.js';
+import { findReferences } from '../parser.js';
 
-import { parseWithRecast } from './parseWithRecast';
+import { parseWithRecast } from '../parseWithRecast.js';
 
-import { getEditorSize } from './codeUtils.js';
+import { getNodesForFunctions } from './getNodesForFunctions.js';
+import { layoutChildren } from './layoutChildren.js';
 
 import path from 'path-browserify';
 
@@ -218,10 +217,10 @@ export const getImportHandles = (imports, moduleId) => {
     return {
       moduleId: moduleId,
       parentId: moduleId,
-      funcName: imp.name,
+      funcName: imp.source.value,
       refType: 'import',
-      id: moduleId + '-' + imp.name + ':out',
-      key: imp.name + ':out',
+      id: moduleId + '-' + imp.source.value + ':out',
+      key: imp.source.value + ':out',
       type: 'source',
       position: 'right',
       style: {
@@ -230,7 +229,7 @@ export const getImportHandles = (imports, moduleId) => {
         borderColor: imp.importType === 'local' ? 'blue' : 'green',
       },
       data: {
-        name: imp.name,
+        name: imp.source.value,
         fullPath: imp.fullPath,
         importType: imp.importType,
       },
@@ -239,150 +238,25 @@ export const getImportHandles = (imports, moduleId) => {
 };
 
 export const getModuleNodes = (fileInfo) => {
-  const maxDepth = fileInfo.functions.reduce((acc, func) => {
-    return Math.max(acc, func.depth);
-  }, 0);
-
   const fullPath = fileInfo.index;
 
   const newModuleId = uuid();
 
   const nodes = [];
   fileInfo.functions.forEach((func) => {
-    const frameNode = {
-      id: uuid(),
-      type: 'pureFunctionNode',
-      extent: 'parent',
-      data: {
-        functionName: func.name,
-        functionType: func.type,
-        functionArgs: func.parameters,
-        functionAsync: func.async,
-        content: func.body,
-        depth: func.depth,
-        functionId: func.id,
-        moduleId: newModuleId,
-        fullPath: fullPath,
-        frameSize: { ...func.contentSize },
-      },
-    };
-    const codeNode = {
-      id: frameNode.id + 'code',
-      extent: 'parent',
-      type: 'code',
-      parentId: frameNode.id,
-      data: {
-        depth: func.depth,
-        content: func.body,
-        functionId: func.id,
-        moduleId: newModuleId,
-        fullPath: fullPath,
-      },
-      position: {
-        x: 10,
-        y: 30,
-      },
-      style: {
-        width: `${func.contentSize.width}px`,
-        height: `${func.contentSize.height}px`,
-      },
-    };
-    nodes.push(frameNode);
-    nodes.push(codeNode);
+    const newNodes = getNodesForFunctions(func, fullPath, newModuleId);
+    nodes.push(...newNodes);
   });
 
-  const children = [];
   let allHandles = [];
 
-  let moduleWidth = 100;
-  let moduleHeight = 100;
-
-  for (let i = maxDepth; i >= 0; i--) {
-    const functionsAtDepth = fileInfo.functions.filter(
-      (func) => func.depth === i
-    );
-    const nodesAtDepth = nodes.filter(
-      (node) => node.data.depth === i && node.type === 'pureFunctionNode'
-    );
-    let currentHeight = 50;
-    // increase width by the widest child at this depth
-    moduleWidth =
-      moduleWidth +
-      30 +
-      nodesAtDepth.reduce((acc, node) => {
-        return Math.max(acc, node.data.frameSize.width);
-      }, 0);
-
-    functionsAtDepth.forEach((func) => {
-      let frameNode = nodes.find(
-        (node) =>
-          node.data.functionId === func.id && node.type === 'pureFunctionNode'
-      );
-      const localChildren = nodes.filter(
-        (node) =>
-          node.parentId === frameNode.id && node.type === 'pureFunctionNode'
-      );
-      // get widest child of this specific function
-      const childWidth = localChildren.reduce((acc, child) => {
-        return Math.max(acc, child.data.frameSize.width);
-      }, 0);
-
-      // accumulate heights of children of this function
-      const height = localChildren.reduce((acc, child) => {
-        return Math.max(acc, acc + child.data.frameSize.height);
-      }, frameNode.data.frameSize.height);
-      // update the frameSize to include the children, for use in the parent
-
-      const frameWidth =
-        localChildren.length > 0
-          ? func.contentSize.width + childWidth
-          : func.contentSize.width;
-      frameNode.data.frameSize = {
-        width: frameWidth + 30,
-        height: height + 50,
-      };
-
-      const parentNode = nodes.find(
-        (node) => node.data.functionId === func.parentId
-      );
-      frameNode.data.handles = [];
-      frameNode.parentId = parentNode ? parentNode.id : newModuleId;
-      frameNode.position = {
-        x: parentNode ? parentNode.data.frameSize.width : 20,
-        y:
-          30 +
-          currentHeight +
-          (parentNode ? parentNode.data.frameSize.height : 20),
-      };
-      frameNode.style = {
-        width: `${frameWidth + 20}px`,
-        height: `${height + 30}px`,
-      };
-
-      // let handles = createHandles();
-
-      let codeFrame = nodes.find(
-        (node) => node.data.functionId === func.id && node.type === 'code'
-      );
-      codeFrame.handles = [];
-
-      children.push(codeFrame);
-      children.push(frameNode);
-
-      currentHeight += height + 50;
-    });
-    if (i === 0) {
-      moduleHeight =
-        moduleHeight +
-        50 +
-        nodesAtDepth.reduce((acc, node) => {
-          return Math.max(acc, acc + node.data.frameSize.height);
-        }, 0);
-    }
-  }
-  console.log('parsed imports:', fileInfo.imports);
+  let { children, moduleWidth, moduleHeight } = layoutChildren(
+    fileInfo,
+    nodes,
+    newModuleId
+  );
   const imports = fileInfo.imports.map((imp) => {
-    const impPath = imp.moduleSpecifier;
+    const impPath = imp.source.value;
     const isLocal = impPath.startsWith('.') || impPath.startsWith('/');
     const impFullPath =
       isLocal && path.resolve(path.dirname(fullPath), impPath);
@@ -425,37 +299,7 @@ export const getModuleNodes = (fileInfo) => {
     },
   };
 
-  console.log('parsed root code:', fileInfo.rootCode);
-  // const importDefinitons = fileInfo.rootCode.program.body.filter((node) => {
-  //   return node.type === 'ImportDeclaration';
-  // });
-
-  // const importHandles = importDefinitons?.map((node) => {
-  //   const line = node.loc.start.line;
-  //   let name = '';
-  //   if (node.specifiers) {
-  //     name =
-  //       node.specifiers[0]?.local.name || node.specifiers[0]?.imported.name;
-  //   }
-  //   return {
-  //     moduleId: newModuleId,
-  //     id: name + ':in',
-  //     key: name + ':in',
-  //     funcName: name,
-  //     parentId: newModuleId,
-  //     refType: 'import',
-  //     type: 'source',
-  //     position: 'left',
-  //     style: {
-  //       top: 14 * line,
-  //     },
-  //     data: {
-  //       name,
-  //     },
-  //   };
-  // });
-
-  const sortedChildren = children.reverse();
+  children = children.reverse();
 
   // Internal edges, needs moving out
   const edges = getEdges(allHandles);
@@ -464,7 +308,7 @@ export const getModuleNodes = (fileInfo) => {
     id: newModuleId,
     moduleNode,
     // rootCode,
-    children: sortedChildren,
+    children,
     edges,
   };
 };
