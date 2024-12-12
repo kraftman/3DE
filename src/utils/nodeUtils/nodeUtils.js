@@ -7,6 +7,7 @@ import { parseWithRecast } from '../parseWithRecast.js';
 
 import { getNodesForFunctions } from './getNodesForFunctions.js';
 import { layoutChildren } from './layoutChildren.js';
+import { parseImports } from './parseImports.ts';
 
 import path from 'path-browserify';
 
@@ -255,17 +256,9 @@ export const getModuleNodes = (fileInfo) => {
     nodes,
     newModuleId
   );
-  const imports = fileInfo.imports.map((imp) => {
-    const impPath = imp.source.value;
-    const isLocal = impPath.startsWith('.') || impPath.startsWith('/');
-    const impFullPath =
-      isLocal && path.resolve(path.dirname(fullPath), impPath);
-    return {
-      ...imp,
-      importType: isLocal ? 'local' : 'module',
-      fullPath: impFullPath,
-    };
-  });
+
+  // need to do this here and not in parser because parser doesnt have fullPath
+  const imports = parseImports(fileInfo.imports, fullPath);
 
   const moduleHandles = getImportHandles(imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
