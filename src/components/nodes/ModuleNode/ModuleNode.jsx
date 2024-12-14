@@ -91,11 +91,8 @@ export const ModuleNode = React.memo(({ id, data }) => {
   });
 
   const hasMultipleFunctions = fileInfo && fileInfo.functions.length > 1;
-  console.log('has children', hasMultipleFunctions);
 
   const firstChild = fileInfo && fileInfo.functions[0];
-  console.log('first child', firstChild);
-
   const rootContent = useMemo(() => {
     const lines = [];
     if (rootCodeAst) {

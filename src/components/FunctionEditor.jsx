@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { useFileSystem } from '../stores/useFileSystem';
@@ -7,19 +7,25 @@ import { useLayer } from '../hooks/useLayer';
 import { extractNonFunctionStatements } from '../utils/parser';
 
 import { parseWithRecast } from '../utils/parseWithRecast';
+import * as recast from 'recast';
 
 loader.config({ monaco });
 
 export const FunctionEditor = ({ fullPath, functionId }) => {
   const editorRef = useRef(null);
 
-  const funcInfo = useFileSystem((state) => {
+  const fileInfo = useFileSystem((state) => {
     const fileInfo = state.flatFiles[fullPath];
     if (!fileInfo) {
       return null;
     }
-    return fileInfo.functions.find((func) => func.id === functionId);
+    return fileInfo;
   });
+
+  const funcInfo = useMemo(
+    () => fileInfo?.functions.find((func) => func.id === functionId),
+    [fileInfo]
+  );
 
   const { onFunctionTextChange } = useLayer((store) => ({
     onFunctionTextChange: store.onFunctionTextChange,
@@ -28,12 +34,11 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
   const [text, setText] = useState(funcInfo?.code || '');
 
   useEffect(() => {
-    //console.log('getting new values for function content');
     const functionContent = funcInfo
       ? extractNonFunctionStatements(funcInfo.node)
       : '';
     setText(functionContent);
-  }, [funcInfo]);
+  }, [fileInfo]);
 
   const onChange = (newText) => {
     setText(newText);
@@ -44,7 +49,6 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     const parsed = parseWithRecast(wrappedCode);
     if (parsed) {
       const newBodyStatements = parsed.program.body[0].body.body;
-      console.log('new body statements', newBodyStatements);
       onFunctionTextChange(fullPath, functionId, newBodyStatements);
     }
     //debouncedOnChange(newText);

@@ -136,23 +136,38 @@ export const useLayer = () => {
     [flatFiles]
   );
 
+  function handleFunctionNode(path, functionId, newBodyStatements) {
+    if (path.node._id && path.node._id === functionId) {
+      path.get('body').replace({
+        type: 'BlockStatement',
+        body: newBodyStatements,
+      });
+
+      return false;
+    }
+  }
+
   const onFunctionTextChange = useCallback(
     (fullPath, functionId, newBodyStatements) => {
-      console.log('valud', newBodyStatements);
-      // update the body of the function
-
       const file = flatFiles[fullPath];
       visit(file.fullAst, {
         visitFunctionDeclaration(path) {
-          if (path.node._id && path.node._id === functionId) {
-            path.get('body').replace({
-              type: 'BlockStatement',
-              body: newBodyStatements,
-            });
-
-            return false;
-          }
-
+          handleFunctionNode(path, functionId, newBodyStatements);
+        },
+        visitFunctionExpression(path) {
+          handleFunctionNode(path, functionId, newBodyStatements);
+          this.traverse(path);
+        },
+        visitArrowFunctionExpression(path) {
+          handleFunctionNode(path, functionId, newBodyStatements);
+          this.traverse(path);
+        },
+        visitObjectMethod(path) {
+          handleFunctionNode(path, functionId, newBodyStatements);
+          this.traverse(path);
+        },
+        visitClassMethod(path) {
+          handleFunctionNode(path, functionId, newBodyStatements);
           this.traverse(path);
         },
       });
