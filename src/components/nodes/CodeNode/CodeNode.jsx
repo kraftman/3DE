@@ -4,13 +4,10 @@ import { Handle } from '@xyflow/react';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import { useDebouncedCallback } from 'use-debounce';
 
 import 'react-tooltip/dist/react-tooltip.css';
 
 import { useLayer } from '../../../hooks/useLayer';
-import { useNodeManager } from '../../../hooks/useNodeManager';
-import { useStore } from '../../../contexts/useStore';
 import { extractNonFunctionStatements } from '../../../utils/parser';
 import { parseWithRecast } from '../../../utils/parseWithRecast';
 import { useFileSystem } from '../../../stores/useFileSystem';

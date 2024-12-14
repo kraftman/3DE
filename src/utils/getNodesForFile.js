@@ -31,14 +31,13 @@ const createImageNode = (fullPath, newPos) => {
   ];
 };
 
-const createTextNode = (fullPath, fileContents, newPos) => {
+const createTextNode = (fullPath, newPos) => {
   return [
     {
       id: uuid(),
       type: 'text',
       data: {
         fullPath: fullPath,
-        content: fileContents,
       },
       position: newPos,
       style: {
@@ -87,7 +86,9 @@ export const getNodesForFile = (fileInfo, newPos, parentId) => {
     markDownNode.parentId = parentId;
     return markDownNode;
   }
-  const textNode = createTextNode(fullPath, fileContents, newPos);
+
+  console.log('creating text node');
+  const textNode = createTextNode(fullPath, newPos);
   textNode.parentId = parentId;
   return textNode;
 };

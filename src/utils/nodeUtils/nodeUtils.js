@@ -214,7 +214,9 @@ const getEdges = (handles) => {
 // };
 
 export const getImportHandles = (imports, moduleId) => {
-  return imports.map((imp, index) => {
+  const localImports = imports.filter((imp) => imp.importType === 'local');
+
+  return localImports.map((imp, index) => {
     return {
       moduleId: moduleId,
       parentId: moduleId,
@@ -259,6 +261,7 @@ export const getModuleNodes = (fileInfo) => {
 
   // need to do this here and not in parser because parser doesnt have fullPath
 
+  console.log('imports:', fileInfo.imports);
   const moduleHandles = getImportHandles(fileInfo.imports, newModuleId);
   allHandles = allHandles.concat(moduleHandles);
 

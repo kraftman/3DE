@@ -97,11 +97,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
     return lines.join('\n');
   }, [rootCodeAst]);
 
-  // ===================================================================
-  // ===== ALL HOOKS NEED TO BE ABOVE THIS LINE ========================
-  // ===================================================================
-
-  // Toggle button state
+  console.log('re-rendering module node', data.moduleId);
   const toggleHideEdgesInternal = (event, newSettings) => {
     setSettings((oldSettings) => {
       toggleHideEdges(id, newSettings.showEdges);

@@ -1,11 +1,11 @@
 import React from 'react';
-import path from 'path-browserify';
-
-import { useFileSystem } from '../../contexts/FileSystemContext';
+const { useFileSystem } = require('../../stores/useFileSystem');
 
 export const ImageNode = ({ id, data }) => {
-  const { flatFiles } = useFileSystem();
-  const fileData = flatFiles[data.fullPath]?.fileData;
+  const fileInfo = useFileSystem((state) => {
+    return state.flatFiles[data.fullPath];
+  });
+  const fileData = fileInfo?.fileData;
 
   return (
     <div className="text-updater-node">

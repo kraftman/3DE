@@ -35,16 +35,16 @@ const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
   const {
-    setEdges,
     //functions,
     shiftLayerUp,
     shiftLayerDown,
   } = useLayer();
-  const { setNodes } = useStore();
+  const { setNodes, setEdges } = useStore();
 
   const layers = useStore((store) => store.layers);
   const nodes = useStore((store) => store.getNodes());
   const edges = useStore((store) => store.getEdges());
+
   const currentLayer = useStore((store) => store.currentLayer);
 
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();

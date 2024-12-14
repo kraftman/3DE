@@ -4,6 +4,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+import { useFileSystem } from '../../../stores/useFileSystem';
 
 loader.config({ monaco });
 
@@ -24,8 +25,12 @@ const darkTheme = createTheme({
   },
 });
 
-export const TextNode = ({ data }) => {
+export const TextNode = ({ id, data }) => {
   const editorRef = useRef(null);
+
+  const fileInfo = useFileSystem((state) => {
+    return state.flatFiles[data.fullPath];
+  });
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -40,7 +45,7 @@ export const TextNode = ({ data }) => {
             width="100%"
             defaultLanguage={'javascript'}
             automaticLayout="true"
-            value={data.content}
+            value={fileInfo.fileData}
             options={{
               fontSize: 10,
               lineNumbersMinChars: 2,

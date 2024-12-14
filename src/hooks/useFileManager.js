@@ -62,12 +62,13 @@ export const useFileManager = () => {
         if (fileInfo.isFolder) {
           continue;
         }
-        if (!isCodeFile(fullPath)) {
-          continue;
-        }
 
         fileInfo.fileData = await loadFile(fullPath);
         fileInfo.savedData = fileInfo.fileData;
+
+        if (!isCodeFile(fullPath)) {
+          continue;
+        }
 
         enrichFileInfo(fileInfo);
       } catch (error) {
