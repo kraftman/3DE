@@ -26,7 +26,7 @@ export const collapseModule = (nodes, moduleId) => {
 
   const moduleNodeIds = moduleNodes.map((node) => node.id);
 
-  const collapsedHeight = 100;
+  const collapsedHeight = 50;
 
   const newNodes = nodes.map((node) => {
     if (moduleNodeIds.includes(node.id) && node.type !== 'module') {

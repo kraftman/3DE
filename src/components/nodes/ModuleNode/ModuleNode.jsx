@@ -239,11 +239,16 @@ export const ModuleNode = React.memo(({ id, data }) => {
         aria-label="justified"
         selected={data.isCollapsed}
         onChange={toggleExpandModuleInternal}
+        sx={{
+          minWidth: '30px', // Reduce button size
+          height: '30px', // Reduce height
+          padding: 0, // Remove extra padding
+        }}
       >
         {data.isCollapsed ? (
-          <ExpandLessIcon fontSize="small" />
+          <ExpandLessIcon fontSize="inherit" /> // Use "inherit" to scale with button size
         ) : (
-          <ExpandMoreIcon fontSize="small" />
+          <ExpandMoreIcon fontSize="inherit" />
         )}
       </ToggleButton>
     );
@@ -275,7 +280,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
     <ThemeProvider theme={darkTheme}>
       <div
         className="text-updater-node"
-        style={{ background: '#121212', padding: '16px', borderRadius: '8px' }}
+        style={{ background: '#121212', padding: '2px', borderRadius: '8px' }}
       >
         <div className="pip-container">
           <Pip
@@ -311,38 +316,46 @@ export const ModuleNode = React.memo(({ id, data }) => {
           )}
           <ToggleExpand />
         </div>
-        <RootCode content={rootContent} onChange={onRootCodeChangeInternal} />
-        {!hasMultipleFunctions && !data.showRaw && !isCollapsed && (
-          <FunctionEditor fullPath={data.fullPath} functionId={firstChild.id} />
-        )}
-
-        {data.showRaw && !isCollapsed && (
-          <div className="editor-container">
-            <Editor
-              className="editor nodrag"
-              height="100%"
-              width="100%"
-              defaultLanguage={'javascript'}
-              automaticLayout="true"
-              value={data.raw}
-              options={{
-                fontSize: 10,
-                lineNumbersMinChars: 2,
-                automaticLayout: true,
-                scrollBeyondLastLine: false,
-                minimap: {
-                  enabled: false,
-                },
-                lineNumbers: 'off',
-              }}
-              theme="vs-dark"
-              onMount={(editor) => {
-                editorRef.current = editor;
-              }}
+        {!isCollapsed && (
+          <>
+            <RootCode
+              content={rootContent}
+              onChange={onRootCodeChangeInternal}
             />
-          </div>
-        )}
-        {/* <div
+            {!hasMultipleFunctions && !data.showRaw && (
+              <FunctionEditor
+                fullPath={data.fullPath}
+                functionId={firstChild.id}
+              />
+            )}
+
+            {data.showRaw && (
+              <div className="editor-container">
+                <Editor
+                  className="editor nodrag"
+                  height="100%"
+                  width="100%"
+                  defaultLanguage={'javascript'}
+                  automaticLayout="true"
+                  value={data.raw}
+                  options={{
+                    fontSize: 10,
+                    lineNumbersMinChars: 2,
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    minimap: {
+                      enabled: false,
+                    },
+                    lineNumbers: 'off',
+                  }}
+                  theme="vs-dark"
+                  onMount={(editor) => {
+                    editorRef.current = editor;
+                  }}
+                />
+              </div>
+            )}
+            {/* <div
           id="node-container"
           style={{
             height: '100%',
@@ -350,6 +363,8 @@ export const ModuleNode = React.memo(({ id, data }) => {
             background: 'darkgrey',
           }}
         ></div> */}
+          </>
+        )}
       </div>
 
       <Handle type="source" position={'left'} id={id + '-handle'} />
