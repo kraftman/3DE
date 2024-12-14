@@ -3,8 +3,16 @@ export const layoutChildren = (fileInfo, nodes, newModuleId) => {
     return Math.max(acc, func.depth);
   }, 0);
 
-  let moduleWidth = 100;
-  let moduleHeight = 100;
+  let moduleWidth = 500;
+  let moduleHeight = 200;
+
+  if (fileInfo.functions.length === 1) {
+    return {
+      children: [],
+      moduleWidth,
+      moduleHeight,
+    };
+  }
 
   const children = [];
 
@@ -75,9 +83,11 @@ export const layoutChildren = (fileInfo, nodes, newModuleId) => {
       let codeFrame = nodes.find(
         (node) => node.data.functionId === func.id && node.type === 'code'
       );
-      codeFrame.handles = [];
+      if (codeFrame) {
+        codeFrame.handles = [];
 
-      children.push(codeFrame);
+        children.push(codeFrame);
+      }
       children.push(frameNode);
 
       currentHeight += height + 50;

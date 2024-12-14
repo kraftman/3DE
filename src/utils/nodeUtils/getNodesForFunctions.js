@@ -20,6 +20,12 @@ export const getNodesForFunctions = (func, fullPath, moduleId) => {
       frameSize: { ...func.contentSize },
     },
   };
+
+  // if there are no other children, dont make a code node
+  if (func.nestedFunctions.length === 0) {
+    return [frameNode];
+  }
+
   const codeNode = {
     id: frameNode.id + 'code',
     extent: 'parent',

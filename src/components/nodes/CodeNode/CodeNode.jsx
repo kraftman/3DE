@@ -1,16 +1,11 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { useRef } from 'react';
+import React from 'react';
+
 import { Handle } from '@xyflow/react';
 import { loader } from '@monaco-editor/react';
-import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
 import 'react-tooltip/dist/react-tooltip.css';
-
-import { useLayer } from '../../../hooks/useLayer';
-import { extractNonFunctionStatements } from '../../../utils/parser';
-import { parseWithRecast } from '../../../utils/parseWithRecast';
-import { useFileSystem } from '../../../stores/useFileSystem';
+import { FunctionEditor } from '../../FunctionEditor';
 
 loader.config({ monaco });
 
@@ -24,42 +19,6 @@ const codeNodeStyle = {
 };
 
 export const CodeNode = ({ id, data }) => {
-  const editorRef = useRef(null);
-
-  const { onCodeNodeTextChange } = useLayer();
-
-  const fileInfo = useFileSystem((state) => {
-    return state.flatFiles[data.fullPath];
-  });
-
-  const funcInfo = fileInfo.functions.find(
-    (func) => func.id === data.functionId
-  );
-
-  const [text, setText] = useState('');
-
-  useEffect(() => {
-    //console.log('getting new values for function content');
-    const functionContent = funcInfo
-      ? extractNonFunctionStatements(funcInfo.node)
-      : '';
-    setText(functionContent);
-  }, [fileInfo]);
-
-  const onChange = (newText) => {
-    setText(newText);
-    const wrappedCode = `${
-      funcInfo.async ? 'async ' : ''
-    }function temp() { ${newText} }`;
-    const parsed = parseWithRecast(wrappedCode);
-    if (parsed) {
-      const newBodyStatements = parsed.program.body[0].body.body;
-      console.log('new body statements', newBodyStatements);
-      onCodeNodeTextChange(data.fullPath, data.functionId, newBodyStatements);
-    }
-    //debouncedOnChange(newText);
-  };
-
   const newHandles = data.handles?.map((handle, index) => {
     return (
       <Handle
@@ -83,31 +42,7 @@ export const CodeNode = ({ id, data }) => {
       <div style={{ ...codeNodeStyle }}>
         {newHandles}
 
-        <div className="editor-container">
-          <Editor
-            className="editor nodrag"
-            onChange={onChange}
-            height="100%"
-            width="100%"
-            defaultLanguage={'javascript'}
-            automaticLayout="true"
-            value={text}
-            options={{
-              fontSize: 10,
-              lineNumbersMinChars: 2,
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              minimap: {
-                enabled: false,
-              },
-              lineNumbers: 'off',
-            }}
-            theme="vs-dark"
-            onMount={(editor) => {
-              editorRef.current = editor;
-            }}
-          />
-        </div>
+        <FunctionEditor fullPath={data.fullPath} functionId={data.functionId} />
       </div>
     </>
   );

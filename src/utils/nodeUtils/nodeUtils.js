@@ -246,12 +246,12 @@ export const getModuleNodes = (fileInfo) => {
   const newModuleId = uuid();
 
   const nodes = [];
-  fileInfo.functions.forEach((func) => {
-    const newNodes = getNodesForFunctions(func, fullPath, newModuleId);
-    nodes.push(...newNodes);
-  });
-
-  let allHandles = [];
+  if (fileInfo.functions.length > 1) {
+    fileInfo.functions.forEach((func) => {
+      const newNodes = getNodesForFunctions(func, fullPath, newModuleId);
+      nodes.push(...newNodes);
+    });
+  }
 
   let { children, moduleWidth, moduleHeight } = layoutChildren(
     fileInfo,
@@ -259,11 +259,9 @@ export const getModuleNodes = (fileInfo) => {
     newModuleId
   );
 
-  // need to do this here and not in parser because parser doesnt have fullPath
+  children = children.reverse();
 
-  console.log('imports:', fileInfo.imports);
   const moduleHandles = getImportHandles(fileInfo.imports, newModuleId);
-  allHandles = allHandles.concat(moduleHandles);
 
   const baseSize = {
     width: 200,
@@ -294,10 +292,8 @@ export const getModuleNodes = (fileInfo) => {
     },
   };
 
-  children = children.reverse();
-
   // Internal edges, needs moving out
-  const edges = getEdges(allHandles);
+  const edges = getEdges(moduleHandles);
 
   return {
     id: newModuleId,

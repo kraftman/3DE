@@ -144,8 +144,14 @@ app.whenReady().then(() => {
       const items = fs.readdirSync(directory);
       const basePath = path.resolve(directory);
       return items
-        .filter((item) => item !== '.git' && item !== 'node_modules')
+        .filter(
+          (item) =>
+            item !== '.git' &&
+            item !== 'node_modules' &&
+            !item.includes('.webpack')
+        )
         .map((item) => {
+          console.log('loading', item);
           const fullPath = path.join(basePath, item);
           const isDirectory = fs.statSync(fullPath).isDirectory();
           const newData = {

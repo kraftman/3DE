@@ -1,30 +1,31 @@
-import React, { useRef, useState } from 'react';
-import { loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
+import React, { useState } from 'react';
 import { EditableText } from '../../EditableText';
 import { useLayer } from '../../../hooks/useLayer';
-
-loader.config({ monaco });
+import { FunctionEditor } from '../../FunctionEditor';
+import { useFileSystem } from '../../../stores/useFileSystem';
 
 export const PureFunctionNode = ({ id, data }) => {
-  const editorRef = useRef(null);
-
   const { onfunctionTitledChanged } = useLayer();
 
   const [functionName, setFunctionName] = useState(data?.functionName || '');
 
-  const text = data.content || '<no root content> ';
+  const funcInfo = useFileSystem((state) => {
+    const fileInfo = state.flatFiles[data.fullPath];
+    if (!fileInfo) {
+      return null;
+    }
+    return fileInfo.functions.find((func) => func.id === data.functionId);
+  });
 
   const onTitleChange = (value) => {
-    // this needs to eventually check for name conflicts and prevent them
-    //onfunctionTitledChanged(data.functionId, value);
-    //onFinishEditing()
     setFunctionName(value);
   };
 
   const onfunctionTitledChangedInternal = () => {
     onfunctionTitledChanged(data.functionId, functionName);
   };
+
+  const hasChildren = funcInfo?.nestedFunctions.length > 0;
 
   return (
     <>
@@ -35,31 +36,12 @@ export const PureFunctionNode = ({ id, data }) => {
           onChange={onTitleChange}
           onFinishEditing={onfunctionTitledChangedInternal}
         />
-        {/* <div className="editor-container">
-          <Editor
-            className="editor nodrag"
-            onChange={onChange}
-            height="100%"
-            width="100%"
-            defaultLanguage={'javascript'}
-            automaticLayout="true"
-            value={data.content}
-            options={{
-              fontSize: 10,
-              lineNumbersMinChars: 2,
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              minimap: {
-                enabled: false,
-              },
-              lineNumbers: 'off',
-            }}
-            theme="vs-dark"
-            onMount={(editor) => {
-              editorRef.current = editor;
-            }}
+        {!hasChildren && (
+          <FunctionEditor
+            fullPath={data.fullPath}
+            functionId={data.functionId}
           />
-        </div> */}
+        )}
       </div>
     </>
   );

@@ -136,7 +136,7 @@ export const useLayer = () => {
     [flatFiles]
   );
 
-  const onCodeNodeTextChange = useCallback(
+  const onFunctionTextChange = useCallback(
     (fullPath, functionId, newBodyStatements) => {
       console.log('valud', newBodyStatements);
       // update the body of the function
@@ -192,7 +192,7 @@ export const useLayer = () => {
   return {
     onModuleClose,
     toggleShowChildModules,
-    onCodeNodeTextChange,
+    onFunctionTextChange,
     onfunctionTitledChanged,
     onRootNodeTextChange,
   };

@@ -20,6 +20,7 @@ import { useFileSystem } from '../../../stores/useFileSystem';
 import * as recast from 'recast';
 
 import { useShallow } from 'zustand/react/shallow';
+import { FunctionEditor } from '../../FunctionEditor';
 
 loader.config({ monaco });
 
@@ -84,6 +85,16 @@ export const ModuleNode = React.memo(({ id, data }) => {
       return state.flatFiles[data?.fullPath]?.rootCode;
     })
   );
+
+  const fileInfo = useFileSystem((state) => {
+    return state.flatFiles[data?.fullPath];
+  });
+
+  const hasMultipleFunctions = fileInfo && fileInfo.functions.length > 1;
+  console.log('has children', hasMultipleFunctions);
+
+  const firstChild = fileInfo && fileInfo.functions[0];
+  console.log('first child', firstChild);
 
   const rootContent = useMemo(() => {
     const lines = [];
@@ -301,6 +312,9 @@ export const ModuleNode = React.memo(({ id, data }) => {
           <ToggleExpand />
         </div>
         <RootCode content={rootContent} onChange={onRootCodeChangeInternal} />
+        {!hasMultipleFunctions && !data.showRaw && !isCollapsed && (
+          <FunctionEditor fullPath={data.fullPath} functionId={firstChild.id} />
+        )}
 
         {data.showRaw && !isCollapsed && (
           <div className="editor-container">

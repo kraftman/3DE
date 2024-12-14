@@ -57,7 +57,7 @@ export const Flow = () => {
         return;
       };
       loadSessions();
-      await onFolderSelected('/home/chris/marvel-app');
+      await onFolderSelected('/home/chris/3DE');
     };
     init();
   }, []);
