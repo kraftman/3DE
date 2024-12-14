@@ -40,7 +40,7 @@ export const RootCode = ({ content, onChange }) => {
             width="100%"
             defaultLanguage={'javascript'}
             automaticLayout="true"
-            value={content || 'no content'}
+            value={content || ''}
             options={{
               fontSize: 10,
               lineNumbersMinChars: 2,

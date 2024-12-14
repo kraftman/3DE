@@ -151,7 +151,6 @@ app.whenReady().then(() => {
             !item.includes('.webpack')
         )
         .map((item) => {
-          console.log('loading', item);
           const fullPath = path.join(basePath, item);
           const isDirectory = fs.statSync(fullPath).isDirectory();
           const newData = {

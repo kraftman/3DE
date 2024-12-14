@@ -67,12 +67,11 @@ export const useLayer = () => {
       // need to edit the actual rootcode ast
       console.log('new value', value);
       const parsed = parseWithRecast(value);
-      console.log('parsed', parsed);
-      const parsedBody = parsed.program.body;
       if (!parsed) {
         console.error('skipping invalid code');
         return;
       }
+      const parsedBody = parsed.program.body;
       const file = flatFiles[fullPath];
       const fileAst = file.fullAst;
 
