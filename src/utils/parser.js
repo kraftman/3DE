@@ -7,7 +7,11 @@ import { parseWithRecast } from './parseWithRecast';
 
 export const extractNonFunctionStatements = (functionNode) => {
   //console.log('extracting from node', functionNode);
-  const nonFunctionNodes = functionNode.body.body.filter(
+  if (!functionNode.body.body) {
+    console.log('no body found in function node:', functionNode);
+  }
+  const body = functionNode.body?.body || [functionNode.body];
+  const nonFunctionNodes = body.filter(
     (node) =>
       !n.FunctionDeclaration.check(node) && // Exclude declared functions
       !(

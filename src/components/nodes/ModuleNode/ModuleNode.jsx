@@ -319,7 +319,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
               content={rootContent}
               onChange={onRootCodeChangeInternal}
             />
-            {!hasMultipleFunctions && !data.showRaw && (
+            {!hasMultipleFunctions && firstChild && !data.showRaw && (
               <FunctionEditor
                 fullPath={data.fullPath}
                 functionId={firstChild.id}

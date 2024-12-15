@@ -244,7 +244,7 @@ export const getModuleNodes = (fileInfo) => {
   const fullPath = fileInfo.index;
 
   const newModuleId = uuid();
-
+  console.log('filinfo:', fileInfo);
   const nodes = [];
   if (fileInfo.functions.length > 1) {
     fileInfo.functions.forEach((func) => {
@@ -255,7 +255,7 @@ export const getModuleNodes = (fileInfo) => {
 
   let { children, moduleWidth, moduleHeight } = layoutChildren(
     fileInfo,
-    nodes,
+    nodes, //t
     newModuleId
   );
 
