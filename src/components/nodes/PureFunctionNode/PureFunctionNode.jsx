@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FunctionEditor } from '../../FunctionEditor';
+import { FunctionEditor } from '../../FunctionEditor.old';
 import { useFileSystem } from '../../../stores/useFileSystem';
 import { FunctionBar } from '../../FunctionBar';
 

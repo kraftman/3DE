@@ -20,7 +20,7 @@ import { useFileSystem } from '../../../stores/useFileSystem';
 import * as recast from 'recast';
 
 import { useShallow } from 'zustand/react/shallow';
-import { FunctionEditor } from '../../FunctionEditor';
+import { FunctionEditor } from '../../FunctionEditor.old';
 
 loader.config({ monaco });
 

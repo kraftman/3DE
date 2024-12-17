@@ -5,7 +5,7 @@ import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
 import 'react-tooltip/dist/react-tooltip.css';
-import { FunctionEditor } from '../../FunctionEditor';
+import { FunctionEditor } from '../../FunctionEditor.old';
 
 loader.config({ monaco });
 

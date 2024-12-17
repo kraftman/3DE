@@ -255,7 +255,7 @@ export const getModuleNodes = (fileInfo) => {
 
   let { children, moduleWidth, moduleHeight } = layoutChildren(
     fileInfo,
-    nodes, //t
+    nodes, //s
     newModuleId
   );
 
