@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FunctionEditor } from '../../FunctionEditor.old';
+import { FunctionEditor } from '../../FunctionEditor';
 import { useFileSystem } from '../../../stores/useFileSystem';
 import { FunctionBar } from '../../FunctionBar';
 
@@ -18,7 +18,7 @@ export const PureFunctionNode = ({ id, data }) => {
     <>
       {/* {renderedHandles} */}
       <div className="text-updater-node" style={{ border: '2px solid black' }}>
-        <FunctionBar funcInfo={funcInfo} />
+        <FunctionBar fullPath={data.fullPath} funcInfo={funcInfo} />
         {!hasChildren && (
           <FunctionEditor
             fullPath={data.fullPath}

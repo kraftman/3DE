@@ -1,63 +1,41 @@
 import React, { useState } from 'react';
-import { EditableText } from './EditableText';
 import { useLayer } from '../hooks/useLayer';
-import { IconButton } from '@mui/material';
-import Box from '@mui/material/Box';
-import SettingsIcon from '@mui/icons-material/Settings';
 import './FunctionBar.css'; // Import the CSS file
-import { FunctionEditor } from './FunctionEditor/FunctionEditor';
+import { EditableText } from './EditableText';
 
-import Modal from '@mui/material/Modal';
+import { generateFunctionSignature } from '../utils/astUtils';
+import { parseWithRecast } from '../utils/parseWithRecast';
 
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-};
+export const FunctionBar = ({ fullPath, funcInfo }) => {
+  const { onFunctionSignatureChange } = useLayer((store) => ({
+    onFunctionSignatureChange: store.onFunctionSignatureChange,
+  }));
 
-export const FunctionBar = ({ funcInfo }) => {
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  console.log('FunctionBar:', funcInfo);
+  const functionSignature = generateFunctionSignature(funcInfo);
+  const [text, setText] = useState(functionSignature);
 
-  const [functionName, setFunctionName] = useState(funcInfo?.name || '');
-
-  const handleSettingsClick = () => {
-    console.log('Settings clicked for:', funcInfo);
-    // Add your settings logic here
+  const onFinish = () => {
+    console.log('parsing text', text);
+    const ast = parseWithRecast('function ' + text + ' {}');
+    if (ast) {
+      return onFunctionSignatureChange(fullPath, funcInfo.id, ast);
+    }
+    console.error('Failed to parse function signature for text:', text);
   };
 
-  const FunctionArgs = funcInfo.parameters.map((param) => (
-    <div className="editable-container" key={param}>
-      <span>{param}</span>
-    </div>
-  ));
+  const onChange = (newText) => {
+    setText(newText);
+  };
 
   return (
     <div className="function-bar">
       <div className="editable-container">
-        <span>{functionName}</span>
+        <EditableText
+          text={text}
+          onChange={onChange}
+          onFinishEditing={onFinish}
+        />
       </div>
-      <div className="args-container">{FunctionArgs}</div>
-      <button onClick={handleOpen} className="settings-button">
-        <SettingsIcon fontSize="small" />
-      </button>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <FunctionEditor initialFuncInfo={funcInfo} />
-        </Box>
-      </Modal>
     </div>
   );
 };

@@ -152,6 +152,7 @@ export const useLayer = () => {
       visit(file.fullAst, {
         visitFunctionDeclaration(path) {
           handleFunctionNode(path, functionId, newBodyStatements);
+          this.traverse(path);
         },
         visitFunctionExpression(path) {
           handleFunctionNode(path, functionId, newBodyStatements);
@@ -185,14 +186,6 @@ export const useLayer = () => {
   );
 
   const onfunctionTitledChanged = useCallback((functionId, title) => {
-    // store.setFunctions((functions) =>
-    //   functions.map((func) => {
-    //     if (func.id === functionId) {
-    //       func.name = title;
-    //     }
-    //     return func;
-    //   })
-    // );
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.data.functionId === functionId) {
@@ -203,11 +196,61 @@ export const useLayer = () => {
     );
   }, []);
 
+  function handleFunctionSignatureChange(path, functionId, newAst) {
+    if (path.node._id && path.node._id === functionId) {
+      const newFunction = newAst.program.body[0]; // Assuming a single function node
+      console.log('new function', newFunction);
+      // Update the function parameters
+      path.node.params = newFunction.params;
+    }
+  }
+
+  const onFunctionSignatureChange = useCallback(
+    (fullPath, functionId, newAst) => {
+      console.log('new funcInfo', newAst);
+      const file = flatFiles[fullPath];
+      visit(file.fullAst, {
+        visitFunctionDeclaration(path) {
+          handleFunctionSignatureChange(path, functionId, newAst);
+          this.traverse(path);
+        },
+        visitFunctionExpression(path) {
+          handleFunctionSignatureChange(path, functionId, newAst);
+          this.traverse(path);
+        },
+        visitArrowFunctionExpression(path) {
+          handleFunctionSignatureChange(path, functionId, newAst);
+          this.traverse(path);
+        },
+        visitObjectMethod(path) {
+          handleFunctionSignatureChange(path, functionId, newAst);
+          this.traverse(path);
+        },
+        visitClassMethod(path) {
+          handleFunctionSignatureChange(path, functionId, newAst);
+          this.traverse(path);
+        },
+      });
+      console.log('new ast', recast.print(file.fullAst).code);
+
+      setFlatFiles((files) => {
+        const newFile = {
+          ...file,
+          functions: [...file.functions],
+          fullAst: { ...file.fullAst },
+        };
+        return { ...files, [fullPath]: newFile };
+      });
+    },
+    [flatFiles]
+  );
+
   return {
     onModuleClose,
     toggleShowChildModules,
     onFunctionTextChange,
     onfunctionTitledChanged,
     onRootNodeTextChange,
+    onFunctionSignatureChange,
   };
 };

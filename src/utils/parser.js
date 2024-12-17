@@ -47,7 +47,6 @@ const createFunction = (path, name, parentId, depth, type) => {
     name,
     parentId,
     type,
-    parameters,
     depth,
     nestedFunctions,
     node,
