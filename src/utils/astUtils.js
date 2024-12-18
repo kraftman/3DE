@@ -72,8 +72,24 @@ export const generateFunctionSignature = (funcInfo) => {
   // Generate the function parameters signature
   const paramsSignature = node.params.map(paramToString).join(', ');
 
-  // Determine the function name (if it exists)
-  const functionName = node.id && node.id.name ? node.id.name : 'anonymous';
+  // Determine the function name
+  let functionName = 'anonymous';
+
+  if (node.id && node.id.name) {
+    functionName = node.id.name;
+  } else if (funcInfo.type === 'arrowFunctionExpression') {
+    // Check if the parent node is a VariableDeclarator
+    const parent = funcInfo.path.parentPath.node;
+    console.log('parent:', parent);
+    if (
+      parent &&
+      parent.type === 'VariableDeclarator' &&
+      parent.id &&
+      parent.id.type === 'Identifier'
+    ) {
+      functionName = parent.id.name;
+    }
+  }
 
   // Handle the type of function
   let prefix = '';
