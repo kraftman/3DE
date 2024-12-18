@@ -234,9 +234,15 @@ export const useLayer = () => {
       console.log('new ast', recast.print(file.fullAst).code);
 
       setFlatFiles((files) => {
+        const newFunctions = file.functions.map((func) => {
+          if (func.id === functionId) {
+            return { ...func };
+          }
+          return func;
+        });
         const newFile = {
           ...file,
-          functions: [...file.functions],
+          functions: newFunctions,
           fullAst: { ...file.fullAst },
         };
         return { ...files, [fullPath]: newFile };

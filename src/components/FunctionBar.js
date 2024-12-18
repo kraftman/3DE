@@ -14,13 +14,17 @@ export const FunctionBar = ({ fullPath, funcInfo }) => {
   const functionSignature = generateFunctionSignature(funcInfo);
   const [text, setText] = useState(functionSignature);
 
+  React.useEffect(() => {
+    setText(functionSignature);
+  }, [functionSignature]);
+
   const onFinish = () => {
     console.log('parsing text', text);
     const ast = parseWithRecast('function ' + text + ' {}');
     if (ast) {
       return onFunctionSignatureChange(fullPath, funcInfo.id, ast);
     }
-    console.error('Failed to parse function signature for text:', text);
+    console.error('Failed to parse function ignature for text:', text);
   };
 
   const onChange = (newText) => {
