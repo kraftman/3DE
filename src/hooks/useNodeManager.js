@@ -1,5 +1,5 @@
 import { useStore } from '../contexts/useStore';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 const { namedTypes: n, visit } = require('ast-types');
 import {
   findChildIds,
@@ -63,46 +63,56 @@ export const useNodeManager = () => {
       getEdges: state.getEdges,
     }))
   );
-  const { setFlatFiles, flatFiles } = useFileSystem();
+  const { setFlatFiles } = useFileSystem((state) => state.setFlatFiles);
+  const flatFiles = useFileSystem((state) => state.flatFiles);
   const { renameFile, createFile } = useFileManager();
 
   const { screenToFlowPosition } = useReactFlow();
 
-  const toggleShowRawCode = useCallback((moduleId) => {
-    setNodes((nodes) => {
-      const moduleNodes = nodes.filter(
-        (node) => node.data.moduleId === moduleId
-      );
-      const moduleNodeIds = moduleNodes.map((node) => node.id);
-      const moduleNode = moduleNodes.find(
-        (node) => node.id === moduleId && node.type === 'module'
-      );
+  useEffect(() => {
+    console.log('useNodeManager mounted');
+    console.log('flatFiles updated', flatFiles);
+  }, [flatFiles]);
 
-      //const newRaw = getRaw(nodes, moduleId);
-      const fullPath = moduleNode.data.fullPath;
-      const fileInfo = flatFiles[fullPath];
-      checkAndFixFunctionHoisting(fileInfo.fullAst);
-      const newRaw = recast.prettyPrint(fileInfo.fullAst).code;
-      console.log('got raw', newRaw);
-      const newNodes = nodes.map((node) => {
-        if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
-          return {
-            ...node,
-            hidden: moduleNode.data.showRaw,
-          };
-        }
-        if (node.type === 'module' && node.id === moduleId) {
-          node.data = {
-            ...node.data,
-            showRaw: !node.data.showRaw,
-            raw: newRaw,
-          };
-        }
-        return node;
+  const toggleShowRawCode = useCallback(
+    (moduleId) => {
+      setNodes((nodes) => {
+        const moduleNodes = nodes.filter(
+          (node) => node.data.moduleId === moduleId
+        );
+        const moduleNodeIds = moduleNodes.map((node) => node.id);
+        const moduleNode = moduleNodes.find(
+          (node) => node.id === moduleId && node.type === 'module'
+        );
+
+        const fullPath = moduleNode.data.fullPath;
+        const fileInfo = flatFiles[fullPath];
+        console.log('got fileinfo for path', fullPath);
+        console.log('got fileinfo', fileInfo.fullAst);
+        //checkAndFixFunctionHoisting(fileInfo.fullAst);
+        const newRaw = recast.prettyPrint(fileInfo.fullAst).code;
+        console.log('got raw', newRaw);
+        const newNodes = nodes.map((node) => {
+          if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
+            return {
+              ...node,
+              hidden: moduleNode.data.showRaw,
+            };
+          }
+          if (node.type === 'module' && node.id === moduleId) {
+            node.data = {
+              ...node.data,
+              showRaw: !node.data.showRaw,
+              raw: newRaw,
+            };
+          }
+          return node;
+        });
+        return newNodes;
       });
-      return newNodes;
-    });
-  }, []);
+    },
+    [flatFiles]
+  );
 
   const toggleCollapseModule = useCallback((moduleId, isCollapsed) => {
     console.log('toggleCollapseModule', moduleId, isCollapsed);

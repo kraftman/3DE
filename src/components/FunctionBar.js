@@ -19,7 +19,6 @@ export const FunctionBar = ({ fullPath, funcInfo }) => {
   }, [functionSignature]);
 
   const onFinish = () => {
-    console.log('parsing text', text);
     const ast = parseWithRecast('function ' + text + ' {}');
     if (ast) {
       return onFunctionSignatureChange(fullPath, funcInfo.id, ast);

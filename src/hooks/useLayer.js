@@ -199,17 +199,19 @@ export const useLayer = () => {
   function handleFunctionSignatureChange(path, newAst) {
     const newFunction = newAst.program.body[0];
     path.node.params = newFunction.params;
-
+    const node = path.node;
     if (
-      newFunction.type === 'FunctionDeclaration' ||
-      newFunction.type === 'FunctionExpression'
+      node.type === 'FunctionDeclaration' ||
+      node.type === 'FunctionExpression'
     ) {
       path.node.id = newFunction.id; // Update function name
-    } else if (newFunction.type === 'ArrowFunctionExpression') {
+    } else if (node.type === 'ArrowFunctionExpression') {
       // For arrow functions, update the variable name
-      const variableDeclarator = path.parent; // Assuming parent is VariableDeclarator
+      const variableDeclarator = path.parentPath.value; // Assuming parent is VariableDeclarator
+      console.log('variable declarator', variableDeclarator);
       if (variableDeclarator.type === 'VariableDeclarator') {
-        variableDeclarator.id = newFunction.id;
+        console.log('updating node', variableDeclarator);
+        variableDeclarator.id.name = newFunction.id.name;
       } else {
         console.error(
           'Failed to update variable name for arrow function',
@@ -221,10 +223,10 @@ export const useLayer = () => {
 
   const onFunctionSignatureChange = useCallback(
     (fullPath, functionId, newAst) => {
-      console.log('new funcInfo', newAst);
       const file = flatFiles[fullPath];
       const funcInfo = file.functions.find((func) => func.id === functionId);
       handleFunctionSignatureChange(funcInfo.path, newAst);
+      console.log('new ast after sig change:', file.fullAst);
 
       setFlatFiles((files) => {
         const newFunctions = file.functions.map((func) => {
@@ -233,11 +235,13 @@ export const useLayer = () => {
           }
           return func;
         });
+        console.log('update file', fullPath);
         const newFile = {
           ...file,
           functions: newFunctions,
           fullAst: { ...file.fullAst },
         };
+        console.log('new file ast:', recast.print(newFile.fullAst).code);
         return { ...files, [fullPath]: newFile };
       });
     },

@@ -80,7 +80,6 @@ export const generateFunctionSignature = (funcInfo) => {
   } else if (funcInfo.type === 'arrowFunctionExpression') {
     // Check if the parent node is a VariableDeclarator
     const parent = funcInfo.path.parentPath.node;
-    console.log('parent:', parent);
     if (
       parent &&
       parent.type === 'VariableDeclarator' &&
@@ -94,15 +93,15 @@ export const generateFunctionSignature = (funcInfo) => {
   // Handle the type of function
   let prefix = '';
   if (funcInfo.type === 'functionDeclaration') {
-    prefix = 'function ';
+    prefix = '';
   } else if (funcInfo.type === 'functionExpression') {
-    prefix = 'function ';
+    prefix = '';
   } else if (funcInfo.type === 'arrowFunctionExpression') {
     prefix = '';
   }
 
   // Construct the final signature
-  const signature = `${prefix}${functionName}(${paramsSignature})`;
+  const signature = `${prefix}${functionName} (${paramsSignature})`;
 
   return signature;
 };
