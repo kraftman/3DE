@@ -137,10 +137,10 @@ export const useLayer = () => {
 
   function handleFunctionNode(path, functionId, newBodyStatements) {
     if (path.node._id && path.node._id === functionId) {
-      path.get('body').replace({
-        type: 'BlockStatement',
-        body: newBodyStatements,
-      });
+      console.log('old path', path);
+      console.log('new body statements', newBodyStatements);
+      path.node.body = newBodyStatements;
+      console.log('new path', path);
 
       return false;
     }
@@ -171,6 +171,10 @@ export const useLayer = () => {
           this.traverse(path);
         },
       });
+      console.log(
+        'new ast after text change:',
+        recast.print(file.fullAst).code
+      );
 
       setFlatFiles((files) => {
         const newFile = {

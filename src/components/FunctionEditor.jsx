@@ -31,12 +31,14 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     onFunctionTextChange: store.onFunctionTextChange,
   }));
 
-  const [text, setText] = useState(funcInfo?.code || '');
+  const [text, setText] = useState('not loaded');
 
   useEffect(() => {
+    console.log('befre parsing:', recast.print(funcInfo.node).code);
     const functionContent = funcInfo
       ? extractNonFunctionStatements(funcInfo.node)
       : '';
+    console.log('after parsing:', functionContent);
     setText(functionContent);
   }, [fileInfo]);
 
@@ -44,14 +46,15 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     setText(newText);
     const wrappedCode = `${
       funcInfo.async ? 'async ' : ''
-    }function temp() { ${newText} }`;
-    // maybe this should be moved to iinside the onFunctionTextChange
+    }function temp()  ${newText} `;
+    // maybe this should be moved to iinside the onFunctonTextChange
     const parsed = parseWithRecast(wrappedCode);
     if (parsed) {
-      const newBodyStatements = parsed.program.body[0].body.body;
+      console.log('parsed:', recast.print(parsed.program.body[0].body).code);
+      const newBodyStatements = parsed.program.body[0].body;
+      console.log('new body:', newBodyStatements);
       onFunctionTextChange(fullPath, functionId, newBodyStatements);
     }
-    //debouncedOnChange(newText);
   };
 
   return (

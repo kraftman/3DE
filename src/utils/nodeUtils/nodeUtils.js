@@ -96,7 +96,7 @@ export const getRaw = (nodes, moduleId) => {
 
   // add the imports
   moduleNode.data.imports.forEach((imp) => {
-    lines.push(recast.print(imp.node).code);
+    lines.push(recast.print(imp.node, { reuseWhitespace: true }).code);
   });
   // add the root level code
   // TODO: any root level code that invokes a function needs to be after the function

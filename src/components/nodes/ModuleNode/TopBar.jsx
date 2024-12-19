@@ -33,7 +33,7 @@ export const TopBar = ({
           <PolylineIcon fontSize="small" />
         </ToggleButton>
       </ToggleButtonGroup>
-      <ToggleButtonGroup
+      {/*  <ToggleButtonGroup
         value={settings}
         onChange={handleToggle}
         size="small"
@@ -42,7 +42,7 @@ export const TopBar = ({
         <ToggleButton value="showEdges" aria-label="justified">
           <CommitIcon fontSize="small" />
         </ToggleButton>
-      </ToggleButtonGroup>
+      </ToggleButtonGroup> */}
 
       <ToggleButton
         value="check"

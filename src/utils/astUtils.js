@@ -15,7 +15,9 @@ export function findCallExpressions(ast) {
         functionName = node.callee.name; // e.g., `myFunction()`
       } else if (node.callee.type === 'MemberExpression') {
         // For member expressions like `console.log` or `Math.max`
-        functionName = recast.print(node.callee).code;
+        functionName = recast.print(node.callee, {
+          reuseWhitespace: true,
+        }).code;
       }
 
       if (!ignoreList.includes(functionName)) {
@@ -44,7 +46,9 @@ export const generateFunctionSignature = (funcInfo) => {
       return param.name;
     } else if (param.type === 'AssignmentPattern') {
       // Default values (e.g., x = 10)
-      return `${paramToString(param.left)} = ${recast.print(param.right).code}`;
+      return `${paramToString(param.left)} = ${
+        recast.print(param.right, { reuseWhitespace: true }).code
+      }`;
     } else if (param.type === 'RestElement') {
       // Rest parameters (e.g., ...args)
       return `...${paramToString(param.argument)}`;
@@ -52,9 +56,12 @@ export const generateFunctionSignature = (funcInfo) => {
       // Destructured object (e.g., { a, b })
       const properties = param.properties.map((prop) => {
         if (prop.type === 'Property') {
-          return `${prop.key.name || recast.print(prop.key).code}`;
+          return `${
+            prop.key.name ||
+            recast.print(prop.key, { reuseWhitespace: true }).code
+          }`;
         }
-        return recast.print(prop).code;
+        return recast.print(prop, { reuseWhitespace: true }).code;
       });
       return `{ ${properties.join(', ')} }`;
     } else if (param.type === 'ArrayPattern') {
@@ -65,7 +72,7 @@ export const generateFunctionSignature = (funcInfo) => {
       return `[${elements.join(', ')}]`;
     } else {
       // Catch-all: print the node as-is
-      return recast.print(param).code;
+      return recast.print(param, { reuseWhitespace: true }).code;
     }
   }
 

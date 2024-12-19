@@ -62,7 +62,6 @@ export const useFileManager = () => {
         if (fileInfo.isFolder) {
           continue;
         }
-        console.log('loading file', fullPath);
         fileInfo.fileData = await loadFile(fullPath);
         fileInfo.savedData = fileInfo.fileData;
 

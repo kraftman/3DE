@@ -99,7 +99,9 @@ export const ModuleNode = React.memo(({ id, data }) => {
       console.log('rootCodeAst in mod', rootCodeAst);
       const converted = Array.from(rootCodeAst);
       for (let rootCode of converted) {
-        lines.push(recast.print(rootCode.path.node).code);
+        lines.push(
+          recast.print(rootCode.path.node, { reuseWhitespace: true }).code
+        );
       }
     }
     return lines.join('\n');
@@ -220,7 +222,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const layoutChildrenInternal = () => {
     console.log('layout children with ', data.moduleId);
-    layoutNodes(data.moduleId);
+    //layoutNodes(data.moduleId);
   };
 
   const toggleExpandModuleInternal = () => {

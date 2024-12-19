@@ -6,14 +6,31 @@ import * as murmur from 'murmurhash-js';
 import { parseWithRecast } from './parseWithRecast';
 
 export const extractNonFunctionStatements = (functionNode) => {
-  //console.log('extracting from node', functionNode);
-  if (!functionNode.body.body) {
-    console.log('no body found in function node:', functionNode);
+  // If the function node already has a BlockStatement body, use it directly.
+  // Otherwise, convert the expression body to a BlockStatement with one ExpressionStatement.
+  if (functionNode.body.type !== 'BlockStatement') {
+    functionNode.body = {
+      type: 'BlockStatement',
+      body: [
+        {
+          type: 'ExpressionStatement',
+          expression: functionNode.body,
+          // If location or comments info is available, you can copy them over:
+          loc: functionNode.body.loc,
+          comments: functionNode.body.comments,
+        },
+      ],
+      loc: functionNode.body.loc,
+      comments: functionNode.body.comments,
+    };
   }
-  const body = functionNode.body?.body || [functionNode.body];
-  const nonFunctionNodes = body.filter(
+
+  const bodyNodes = functionNode.body.body;
+
+  // Filter out function declarations and variable declarations of functions
+  const filteredNodes = bodyNodes.filter(
     (node) =>
-      !n.FunctionDeclaration.check(node) && // Exclude declared functions
+      !n.FunctionDeclaration.check(node) &&
       !(
         n.VariableDeclaration.check(node) &&
         node.declarations.some(
@@ -22,11 +39,17 @@ export const extractNonFunctionStatements = (functionNode) => {
             (n.FunctionExpression.check(declaration.init) ||
               n.ArrowFunctionExpression.check(declaration.init))
         )
-      ) // Exclude function expressions
+      )
   );
-  const extractedCode = nonFunctionNodes
-    .map((node) => recast.print(node, { reuseWhitespace: true }).code)
-    .join('\n');
+
+  // Now replace the original body with the filtered list
+  functionNode.body.body = filteredNodes;
+
+  // Print with reuseWhitespace to try to preserve original formatting
+  const extractedCode = recast.print(functionNode.body, {
+    reuseWhitespace: true,
+  }).code;
+
   return extractedCode;
 };
 

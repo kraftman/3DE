@@ -63,16 +63,10 @@ export const useNodeManager = () => {
       getEdges: state.getEdges,
     }))
   );
-  const { setFlatFiles } = useFileSystem((state) => state.setFlatFiles);
-  const flatFiles = useFileSystem((state) => state.flatFiles);
+  const { setFlatFiles, flatFiles } = useFileSystem();
   const { renameFile, createFile } = useFileManager();
 
   const { screenToFlowPosition } = useReactFlow();
-
-  useEffect(() => {
-    console.log('useNodeManager mounted');
-    console.log('flatFiles updated', flatFiles);
-  }, [flatFiles]);
 
   const toggleShowRawCode = useCallback(
     (moduleId) => {
@@ -87,11 +81,8 @@ export const useNodeManager = () => {
 
         const fullPath = moduleNode.data.fullPath;
         const fileInfo = flatFiles[fullPath];
-        console.log('got fileinfo for path', fullPath);
-        console.log('got fileinfo', fileInfo.fullAst);
-        //checkAndFixFunctionHoisting(fileInfo.fullAst);
-        const newRaw = recast.prettyPrint(fileInfo.fullAst).code;
-        console.log('got raw', newRaw);
+        checkAndFixFunctionHoisting(fileInfo.fullAst);
+        const newRaw = recast.print(fileInfo.fullAst).code;
         const newNodes = nodes.map((node) => {
           if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
             return {
@@ -115,14 +106,11 @@ export const useNodeManager = () => {
   );
 
   const toggleCollapseModule = useCallback((moduleId, isCollapsed) => {
-    console.log('toggleCollapseModule', moduleId, isCollapsed);
     setNodes((nodes) => {
       let newNodes;
       if (isCollapsed) {
-        console.log('expanding');
         newNodes = expandModule(nodes, moduleId);
       } else {
-        console.log('collapsing');
         newNodes = collapseModule(nodes, moduleId);
       }
       return newNodes;
@@ -145,6 +133,7 @@ export const useNodeManager = () => {
         rootCode: [],
         functions: [],
       };
+      enrichFileInfo(newFile);
       setFlatFiles((files) => {
         const newFiles = {
           ...files,
@@ -295,7 +284,9 @@ export const useNodeManager = () => {
     );
 
     console.log('foundFunction', foundFunction);
-    const finalContent = recast.print(foundFunction.node).code;
+    const finalContent = recast.print(foundFunction.node, {
+      reuseWhitespace: true,
+    }).code;
 
     removeFunctionFromAst(fileInfo.fullAst, functionId);
 
