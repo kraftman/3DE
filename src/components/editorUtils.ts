@@ -260,63 +260,6 @@ export const getFeatures = (code: string) => {
   }
 };
 
-const getHandlePosition = (feature) => {
-  if (feature.type === 'import') {
-    return Position.Right;
-  }
-  if (feature.type === 'export') {
-    return Position.Left;
-  }
-};
-
-const getLeftPosition = (feature) => {
-  switch (feature.type) {
-    case 'export':
-      return -5;
-    case 'function':
-      return 40 + feature.loc.start.column * (EDITOR.FONT_SIZE - 4);
-    default:
-      return 500;
-  }
-};
-const getTopPosition = (feature) => {
-  switch (feature.type) {
-    case 'function':
-      return 5 + (EDITOR.FONT_SIZE + 4) * feature.line;
-    default:
-      return 10 + (EDITOR.FONT_SIZE + 4) * feature.line;
-  }
-};
-
-const getColor = (feature) => {
-  if (feature.type === 'import') {
-    const isLocal =
-      feature.fileName.startsWith('./') ||
-      feature.fileName.startsWith('../') ||
-      feature.fileName.startsWith('/');
-    // if (isLocal) {
-    //   for (const node of nodes) {
-    //     if (feature.fileName.includes(node.data.fileName)) {
-    //       return '#03ad1a';
-    //     }
-    //   }
-    //   return '#b30f00';
-    // }
-    // if (settings.packageJson.dependencies[feature.fileName]) {
-    //   return '#4287f5';
-    // }
-    return '#b30f00';
-  }
-  switch (feature.type) {
-    case 'export':
-      return '#03ad1a';
-    case 'function':
-      return '#888888';
-    default:
-      return '#000';
-  }
-};
-
 const getMaxWidth = (lines) => {
   let maxWidth = 0;
   lines.forEach((line) => {
@@ -330,36 +273,6 @@ export const getEditorSize = (code) => {
   const newHeight = 50 + lines.length * 15;
   const newWidth = 100 + getMaxWidth(lines) * 6;
   return { height: newHeight, width: newWidth };
-};
-
-export const getHandles = (nodeId, fullPath, code) => {
-  const features = getFeatures(code);
-  const handles = features.map((feature) => {
-    const { name, type, fileName } = feature;
-    const newHandle = {
-      id: `${nodeId}-${type}-${name}`,
-      name,
-      nodeId,
-      fileName: fileName || '',
-      nodePath: fullPath || '',
-      loc: feature.loc,
-      type: 'source',
-      handleType: feature.type,
-      position: getHandlePosition(feature),
-      style: {
-        left: getLeftPosition(feature),
-        top: getTopPosition(feature),
-        background: getColor(feature),
-        zIndex: 1000,
-      },
-    };
-    if (feature.type === 'import') {
-      // @ts-expect-error bleh
-      newHandle.importPath = path.resolve(path.dirname(fullPath), fileName);
-    }
-    return newHandle;
-  });
-  return handles;
 };
 
 export const removeTextChunk = (

@@ -80,7 +80,6 @@ export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
   const edges = [];
 
   // for each new node, check if there is an old node that references the new node
-  console.log('new nodes:', moduleNodes);
   moduleNodes.forEach((newModule) => {
     oldNodes.find((oldModule) => {
       if (oldModule.id !== newModule.parentId) {
@@ -88,12 +87,12 @@ export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
       }
       oldModule.data.handles.forEach((handle) => {
         console.log(
-          'checking handle:',
+          'checking  handle:',
           handle.data.fullPath,
           newModule.data.fullPath
         );
         if (
-          handle.data.fullPath ===
+          importWithoutExtension(handle.data.fullPath) ===
           importWithoutExtension(newModule.data.fullPath)
         ) {
           console.log('found handle:', handle);

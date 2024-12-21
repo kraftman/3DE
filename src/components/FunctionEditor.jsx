@@ -4,6 +4,8 @@ import * as monaco from 'monaco-editor';
 import { useFileSystem } from '../stores/useFileSystem';
 import { useLayer } from '../hooks/useLayer';
 
+import { FunctionBar } from './FunctionBar';
+
 import { extractNonFunctionStatements } from '../utils/parser';
 
 import { parseWithRecast } from '../utils/parseWithRecast';
@@ -34,11 +36,9 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
   const [text, setText] = useState('not loaded');
 
   useEffect(() => {
-    console.log('befre parsing:', recast.print(funcInfo.node).code);
     const functionContent = funcInfo
       ? extractNonFunctionStatements(funcInfo.node)
       : '';
-    console.log('after parsing:', functionContent);
     setText(functionContent);
   }, [fileInfo]);
 
@@ -50,15 +50,14 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     // maybe this should be moved to iinside the onFunctonTextChange
     const parsed = parseWithRecast(wrappedCode);
     if (parsed) {
-      console.log('parsed:', recast.print(parsed.program.body[0].body).code);
       const newBodyStatements = parsed.program.body[0].body;
-      console.log('new body:', newBodyStatements);
       onFunctionTextChange(fullPath, functionId, newBodyStatements);
     }
   };
 
   return (
     <div className="editor-container">
+      <FunctionBar fullPath={fullPath} funcInfo={funcInfo} />
       <Editor
         className="editor nodrag"
         onChange={onChange}

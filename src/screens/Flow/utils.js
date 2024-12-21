@@ -1,65 +1,12 @@
 import { initialSettingsState, tempInput } from './mocks';
 
-import ReactFlow, {
-  useNodesState,
-  useEdgesState,
-  MiniMap,
-  Position,
-  Controls,
-  Background,
-  useReactFlow,
-  useUpdateNodeInternals,
-} from '@xyflow/react';
+import { Position } from '@xyflow/react';
 
 import * as ts from 'typescript';
 
-import { getHandles } from '../../components/editorUtils';
 let nodeIdCount = 0;
 
 export const getNewNodeId = () => `${nodeIdCount++}`;
-
-const updateParentSize = (nodes, node) => {
-  const parent = nodes.find((search) => search.id === node.parentId);
-  const nx = node.positionAbsolute.x;
-  const ny = node.positionAbsolute.y;
-  const nw = node.width;
-  const nh = node.height;
-
-  const px = parent?.positionAbsolute?.x || parent?.position?.x || 0;
-  const py = parent?.positionAbsolute?.y || parent?.position?.y || 0;
-  const pw = parent.width;
-  const ph = parent.height;
-
-  if (nx < px + 50) {
-    const diff = px + 50 - nx;
-    parent.position.x = px - diff;
-    parent.width = pw + diff;
-    parent.style.width = `${pw + diff}px`;
-  }
-
-  if (ny < py + 50) {
-    const diff = py + 50 - ny;
-    parent.position.y = py - diff;
-    parent.height = ph + diff;
-    parent.style.height = `${ph + diff}px`;
-  }
-
-  if (nx + nw > px + pw - 50) {
-    const diff = nx + nw - (px + pw - 50);
-    parent.width = pw + diff;
-    parent.style.width = `${pw + diff}px`;
-  }
-
-  if (ny + nh > py + ph - 50) {
-    const diff = ny + nh - (py + ph - 50);
-    parent.height = ph + diff;
-    parent.style.height = `${ph + diff}px`;
-  }
-
-  if (parent.parentId) {
-    updateParentSize(nodes, parent);
-  }
-};
 
 const makeSafeFilename = (input) => {
   // Extract the first 8 characters
@@ -74,30 +21,6 @@ const makeSafeFilename = (input) => {
   return safeFilename;
 };
 
-const getParentIntersections = (node, intersections) => {
-  // find the smallest node that the current node is inside of
-
-  const parentNodes = intersections.filter((search) => {
-    return (
-      node.positionAbsolute.x > search.positionAbsolute.x &&
-      node.positionAbsolute.y > search.positionAbsolute.y &&
-      node.positionAbsolute.x + node.width <
-        search.positionAbsolute.x + search.width &&
-      node.positionAbsolute.y + node.height <
-        search.positionAbsolute.y + search.height
-    );
-  });
-  if (!parentNodes) {
-    return null;
-  }
-  const sorted = parentNodes.sort((a, b) => {
-    //calculate the area of the intersection and sort by that
-    const areaA = a.width * a.height;
-    const areaB = b.width * b.height;
-    return areaA - areaB;
-  });
-  return sorted[0];
-};
 export const createEditorNode = (nodeId) => {
   const newNode = {
     id: nodeId,
@@ -113,78 +36,6 @@ export const createEditorNode = (nodeId) => {
     },
   };
   return newNode;
-};
-
-let edgeIdCount = 0;
-const getEdgeId = () => `${edgeIdCount++}`;
-
-const findMatch = (fullPath, partialPath) => {
-  const possibleExtensions = ['.js', '.jsx', '.ts', '.tsx', '.json'];
-  for (const extension of possibleExtensions) {
-    if (fullPath.includes(partialPath + extension)) {
-      return true;
-    }
-  }
-  if (fullPath === partialPath) {
-    return true;
-  }
-  return false;
-};
-
-export const getNewEdges = (nodeId, existingHandles, newHandles) => {
-  const exports = newHandles.filter((handle) => handle.handleType === 'export');
-  const imports = newHandles.filter((handle) => handle.handleType === 'import');
-
-  const newEdges = [];
-  exports.forEach((exportHandle) => {
-    existingHandles.forEach((existingHandle) => {
-      const namesMatch = existingHandle.name === exportHandle.name;
-
-      const pathsMatch = findMatch(
-        exportHandle.nodePath,
-        existingHandle.importPath
-      );
-      // console.log('existingHandle:', existingHandle);
-      // console.log('exportHandle:', exportHandle);
-      // console.log('pathsMatch:', pathsMatch);
-
-      // console.log('namesMatch:', namesMatch);
-      const isMatching =
-        existingHandle.handleType === 'import' && namesMatch && pathsMatch;
-
-      if (isMatching) {
-        newEdges.push({
-          id: getEdgeId(),
-          source: existingHandle.nodeId,
-          target: nodeId,
-          targetHandle: exportHandle.id,
-          sourceHandle: existingHandle.id,
-        });
-      }
-    });
-  });
-  imports.forEach((importHandle) => {
-    existingHandles.forEach((existingHandle) => {
-      const namesMatch = existingHandle.name === importHandle.name;
-      const pathsMatch = findMatch(
-        existingHandle.nodePath,
-        importHandle.importPath
-      );
-      const isMatching =
-        existingHandle.handleType === 'import' && namesMatch && pathsMatch;
-
-      if (isMatching) {
-        newEdges.push({
-          id: getEdgeId(),
-          source: nodeId,
-          sourceHandle: importHandle.id,
-          target: existingHandle.nodeId,
-          targetHandle: existingHandle.id,
-        });
-      }
-    });
-  });
-  return newEdges;
 };
 
 export const isValidCode = (code) => {
@@ -337,57 +188,4 @@ export const flattenFileTree = (folderData) => {
   flattenStructure(flat, wrapped.contents, 'root');
 
   return flat;
-};
-
-const findFile = (flatFiles, fullPath) => {
-  for (const [key, value] of Object.entries(flatFiles)) {
-    if (key.includes(fullPath)) {
-      console.log('found file:', value);
-      return [key, value];
-    }
-  }
-};
-
-export const createChildren = (flatFiles, parentNode) => {
-  const importHandles = getHandles(
-    parentNode.id,
-    parentNode.data.fullPath,
-    parentNode.data.value
-  ).filter((handle) => handle.handleType === 'import');
-
-  const localImports = importHandles.filter((handle) => {
-    const fileInfo = findFile(flatFiles, handle.importPath);
-    return fileInfo;
-  });
-
-  const children = localImports.map((handle, index) => {
-    const nextNodeId = getNewNodeId();
-    const [fullPath, fileInfo] = findFile(flatFiles, handle.importPath);
-    console.log('fileinfo: ', fileInfo);
-    if (!fileInfo) {
-      return null;
-    }
-    const fileContents = fileInfo.fileData;
-
-    return {
-      id: nextNodeId,
-      data: {
-        fullPath: fullPath,
-        fileName: fileInfo.data,
-        value: fileContents,
-        handles: [],
-      },
-      type: 'editor',
-      position: {
-        x: 550,
-        y: -(((index + 1) * 650) / 2) + index * 650,
-      },
-      style: {
-        width: '500px',
-        height: `400px`,
-      },
-      parentId: parentNode.id,
-    };
-  });
-  return children.filter((child) => child !== null);
 };

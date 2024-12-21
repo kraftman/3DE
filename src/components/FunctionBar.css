@@ -4,9 +4,9 @@
   gap: 8px;
   padding: 0px;
   position: relative;
-  top: -6px; /* Move the bar upwards */
-  left: 5px;
-  transform: translateY(-8px); /* Fine-tune its position */
+  top: 0px; /* Move the bar upwards */
+  left: 3px;
+  transform: translateY(0px); /* Fine-tune its position */
 }
 
 .editable-container {

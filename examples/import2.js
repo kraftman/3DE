@@ -1,5 +1,6 @@
 export const myFunction = () => {
   //  const { fullPath, fileContents } = fileInfo;
+  console.log('Hello');
 };
 
 function myFunction2() {

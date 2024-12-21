@@ -14,7 +14,7 @@ expressedFunction();
 
 // 3. Arrow Function
 const arrowFunction = () => {
-  console.log('This is an arrow function.');
+  console.log('This is an arrow funtion.');
 };
 
 arrowFunction();

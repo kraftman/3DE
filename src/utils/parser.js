@@ -6,14 +6,22 @@ import * as murmur from 'murmurhash-js';
 import { parseWithRecast } from './parseWithRecast';
 
 export const extractNonFunctionStatements = (functionNode) => {
-  // Ensure the function node has a block statement
-  if (functionNode.body.type !== 'BlockStatement') {
-    functionNode.body = b.blockStatement([
-      b.expressionStatement(functionNode.body),
-    ]);
+  const printed = recast.print(functionNode, { reuseWhitespace: true }).code;
+  let parsed = parseWithRecast(printed);
+  if (!parsed.program.body[0].body) {
+    if (parsed.program.body[0].type === 'ExpressionStatement') {
+      parsed = parsed.program.body[0].expression;
+    }
+  } else {
+    parsed = parsed.program.body[0];
   }
 
-  const bodyNodes = functionNode.body.body;
+  // Ensure the function node has a block statemen
+  if (parsed.body.type !== 'BlockStatement') {
+    parsed.body = b.blockStatement([b.expressionStatement(parsed.body)]);
+  }
+
+  const bodyNodes = parsed.body.body;
 
   // Filter out function declarations and variable declarations of functions
   const filteredNodes = bodyNodes.filter(
@@ -30,11 +38,11 @@ export const extractNonFunctionStatements = (functionNode) => {
       )
   );
 
-  // Create a *new* block statement to hold the filtered nodes
-  const newBlockStatement = b.blockStatement(filteredNodes);
+  // Create a *new* block sttemet to hold the filtered nodes
+  parsed.body.body = filteredNodes;
 
   // Now you can do whatever you want with newBlockStatement, e.g. return it
-  const extractedCode = recast.print(newBlockStatement, {
+  const extractedCode = recast.print(parsed, {
     reuseWhitespace: true,
   }).code;
 
