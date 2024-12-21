@@ -81,59 +81,6 @@ export const getFunctionContent = (nodes, functionNode) => {
 //   });
 // };
 
-export const getRaw = (nodes, moduleId) => {
-  // start with the imports
-  // get the root functions
-  // ensure they are ordered correctly if hey call each other
-  //
-  const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
-
-  const moduleNode = moduleNodes.find(
-    (node) => node.type === 'module' && node.id === moduleId
-  );
-
-  let lines = [];
-
-  // add the imports
-  moduleNode.data.imports.forEach((imp) => {
-    lines.push(recast.print(imp.node, { reuseWhitespace: true }).code);
-  });
-  // add the root level code
-  // TODO: any root level code that invokes a function needs to be after the function
-  lines.push(moduleNode.data.rootCode);
-
-  // order the functions
-
-  // add the functions and sub functions
-  const children = moduleNodes.filter(
-    (node) => node.type === 'pureFunctionNode' && node.parentId === moduleId
-  );
-
-  const parsedFunctions = children.map((child) => {
-    const newLines = getFunctionContent(nodes, child);
-    return {
-      id: child.id,
-      functionName: child.data.functionName,
-      rawCode: newLines.join('\n'),
-    };
-  });
-
-  // for each function, check if any other functionn references it
-  // if so, move it after that function
-
-  children.forEach((child) => {
-    const newLines = getFunctionContent(nodes, child);
-    const references = findReferences(newLines.join('\n'));
-    console.log('found references:', references);
-    lines.push(...newLines);
-  });
-
-  const code = lines.join('\n');
-  const newAst = parseWithRecast(code);
-
-  return recast.prettyPrint(newAst).code;
-};
-
 const getEdges = (handles) => {
   // loop through all the handles and create edges between them
   // how to avoid duplicates when checking each side?
@@ -244,8 +191,8 @@ export const getModuleNodes = (fileInfo) => {
   const fullPath = fileInfo.index;
 
   const newModuleId = uuid();
-  console.log('filinfo:', fileInfo);
   const nodes = [];
+  console.log('functions:', fileInfo.functions);
   if (fileInfo.functions.length > 1) {
     fileInfo.functions.forEach((func) => {
       const newNodes = getNodesForFunctions(func, fullPath, newModuleId);

@@ -1,28 +1,16 @@
 const recast = require('recast');
-const { namedTypes: n, visit } = require('ast-types');
+const { namedTypes: n, visit, builders: b } = require('ast-types');
 import { getEditorSize } from '../components/editorUtils';
 import * as murmur from 'murmurhash-js';
 
 import { parseWithRecast } from './parseWithRecast';
 
 export const extractNonFunctionStatements = (functionNode) => {
-  // If the function node already has a BlockStatement body, use it directly.
-  // Otherwise, convert the expression body to a BlockStatement with one ExpressionStatement.
+  // Ensure the function node has a block statement
   if (functionNode.body.type !== 'BlockStatement') {
-    functionNode.body = {
-      type: 'BlockStatement',
-      body: [
-        {
-          type: 'ExpressionStatement',
-          expression: functionNode.body,
-          // If location or comments info is available, you can copy them over:
-          loc: functionNode.body.loc,
-          comments: functionNode.body.comments,
-        },
-      ],
-      loc: functionNode.body.loc,
-      comments: functionNode.body.comments,
-    };
+    functionNode.body = b.blockStatement([
+      b.expressionStatement(functionNode.body),
+    ]);
   }
 
   const bodyNodes = functionNode.body.body;
@@ -42,11 +30,11 @@ export const extractNonFunctionStatements = (functionNode) => {
       )
   );
 
-  // Now replace the original body with the filtered list
-  functionNode.body.body = filteredNodes;
+  // Create a *new* block statement to hold the filtered nodes
+  const newBlockStatement = b.blockStatement(filteredNodes);
 
-  // Print with reuseWhitespace to try to preserve original formatting
-  const extractedCode = recast.print(functionNode.body, {
+  // Now you can do whatever you want with newBlockStatement, e.g. return it
+  const extractedCode = recast.print(newBlockStatement, {
     reuseWhitespace: true,
   }).code;
 
