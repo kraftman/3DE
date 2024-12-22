@@ -1,5 +1,6 @@
 import { useStore } from '../contexts/useStore';
 import dagre from '@dagrejs/dagre';
+import { importWithoutExtension } from '../utils/fileUtils';
 
 const findModuleEdges = (moduleNodes) => {
   const edges = [];
@@ -8,14 +9,11 @@ const findModuleEdges = (moduleNodes) => {
     // so multiple imports to the same file arent included
     moduleNode.data.imports.forEach((imp) => {
       //console.log('import path:', imp);
-      const targetModule = moduleNodes.find((node) => {
-        return (
-          node.data.fullPath === imp.fullPath + '.js' ||
-          node.data.fullPath === imp.fullPath + '.ts' ||
-          node.data.fullPath === imp.fullPath + '.tsx' ||
-          node.data.fullPath === imp.fullPath + '.jsx'
-        );
-      });
+      const targetModule = moduleNodes.find(
+        (node) =>
+          importWithoutExtension(node.data.fullPath) ===
+          importWithoutExtension(imp.fullPath)
+      );
       if (targetModule) {
         const edge = {
           id: `${moduleNode.id}-${targetModule.id}`,
@@ -31,10 +29,10 @@ const findModuleEdges = (moduleNodes) => {
 };
 
 export const useLayout = () => {
-  const store = useStore();
+  const setNodes = useStore((state) => state.setNodes);
 
   const layoutNodes = (parentId) => {
-    store.setNodes((nodes) => {
+    setNodes((nodes) => {
       const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(
         () => ({})
       );
@@ -45,11 +43,12 @@ export const useLayout = () => {
 
       moduleNodes.forEach((moduleNode) => {
         dagreGraph.setNode(moduleNode.id, {
-          width: moduleNode.data.width + 40,
+          width: moduleNode.data.width,
           height: moduleNode.data.height,
         });
       });
 
+      console.log('found edges:', edges);
       edges.forEach((edge) => {
         dagreGraph.setEdge(edge.source, edge.target);
       });
@@ -58,6 +57,7 @@ export const useLayout = () => {
 
       return nodes.map((node) => {
         const layout = dagreGraph.node(node.id);
+        console.log('layout:', layout);
         if (layout) {
           return {
             ...node,

@@ -192,7 +192,6 @@ export const getModuleNodes = (fileInfo) => {
 
   const newModuleId = uuid();
   const nodes = [];
-  console.log('functions:', fileInfo.functions);
   if (fileInfo.functions.length > 1) {
     fileInfo.functions.forEach((func) => {
       const newNodes = getNodesForFunctions(func, fullPath, newModuleId);

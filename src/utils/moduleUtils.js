@@ -1,7 +1,6 @@
 import { createChildNodes } from './createChildNodes';
 
 import { importWithoutExtension } from './fileUtils';
-import { getChildFiles } from './createChildNodes';
 
 export const findChildNodes = (nodes, moduleId) => {
   const childNodes = nodes.filter((node) => node.parentId === moduleId);
@@ -86,16 +85,10 @@ export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
         return;
       }
       oldModule.data.handles.forEach((handle) => {
-        console.log(
-          'checking  handle:',
-          handle.data.fullPath,
-          newModule.data.fullPath
-        );
         if (
           importWithoutExtension(handle.data.fullPath) ===
           importWithoutExtension(newModule.data.fullPath)
         ) {
-          console.log('found handle:', handle);
           const sourceName = oldModule.id + '-' + handle.data.fullPath + ':out';
           const targetName = newModule.id + '-handle';
           const edgeId = `${oldModule.id}-${newModule.id}}-${handle.data.name}`;
@@ -149,20 +142,18 @@ export const hideModuleChildren = (nodes, moduleId) => {
   return newNodes;
 };
 
-export const showModuleChildren = (
-  nodes,
-  edges,
-  moduleId,
-  flatFiles,
-  fileInfo
-) => {
+export const showModuleChildren = (nodes, edges, moduleNode, flatFiles) => {
   // need to only create new ones if they dont already exist
-  const childFiles = getChildFiles(flatFiles, fileInfo);
-  const newNodes = createChildNodes(nodes, moduleId, childFiles);
-  const children = findChildNodes(nodes, moduleId);
+
+  // create any that dont exist
+  const newNodes = createChildNodes(flatFiles, nodes, moduleNode);
+  console.log('================================');
+  console.log('found new child nodes:', newNodes);
+  // get the existing so they can be updated
+  const children = findChildNodes(nodes, moduleNode.id);
   const childIds = children.map((child) => child.id);
   const updatedNodes = nodes.map((node) => {
-    if (node.type === 'module' && node.id === moduleId) {
+    if (node.type === 'module' && node.id === moduleNode.id) {
       //console.log('found module node:', node);
       return {
         ...node,
@@ -181,8 +172,9 @@ export const showModuleChildren = (
   // TODO/WARNING newNewNodes includes all nodes, not just the new ones
   const moduleNodes = newNodes.filter((node) => node.type === 'module');
   const newEdges = findHandleEdges(edges, nodes, moduleNodes);
+  const childEdges = findHandleEdges(edges, moduleNodes, moduleNodes);
   return {
     newNodes: updatedNodes.concat(newNodes),
-    newEdges: newEdges,
+    newEdges: newEdges.concat(childEdges),
   };
 };

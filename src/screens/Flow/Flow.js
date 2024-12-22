@@ -45,8 +45,6 @@ export const Flow = () => {
   const nodes = useStore((store) => store.getNodes());
   const edges = useStore((store) => store.getEdges());
 
-  console.log('edges:', edges);
-
   const currentLayer = useStore((store) => store.currentLayer);
 
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();

@@ -46,14 +46,16 @@ export const useLayer = () => {
       }
       const nodes = getNodes();
       const edges = getEdges();
-      const fileInfo = flatFiles[fullPath];
+
+      const moduleNode = nodes.find(
+        (node) => node.type === 'module' && node.id === moduleId
+      );
 
       const { newNodes, newEdges } = showModuleChildren(
         nodes,
         edges,
-        moduleId,
-        flatFiles,
-        fileInfo
+        moduleNode,
+        flatFiles
       );
 
       setNodes(newNodes);

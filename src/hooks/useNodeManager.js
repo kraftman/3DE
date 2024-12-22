@@ -447,7 +447,7 @@ export const useNodeManager = () => {
           });
         });
       } else {
-        // create the chil
+        // create the child
         const fileInfo = findFileForImport(flatFiles, fullPath);
         const newNodes = createChildNodes(nodes, moduleId, [fileInfo]);
         const moduleNodes = newNodes.filter((node) => node.type === 'module');

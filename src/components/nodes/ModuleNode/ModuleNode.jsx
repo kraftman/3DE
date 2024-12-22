@@ -21,6 +21,7 @@ import * as recast from 'recast';
 
 import { useShallow } from 'zustand/react/shallow';
 import { FunctionEditor } from '../../FunctionEditor';
+import { useLayout } from '../../../hooks/useLayout';
 
 loader.config({ monaco });
 
@@ -78,6 +79,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const [fileName, setFileName] = useState(data?.fullPath);
   const [fileNameError, setFileNameError] = useState(false);
+  const { layoutNodes } = useLayout((state) => state.layoutNodes);
 
   const rootCodeAst = useFileSystem(
     useShallow((state) => {
@@ -217,12 +219,12 @@ export const ModuleNode = React.memo(({ id, data }) => {
   };
 
   const toggleChildrenInternal = (value, value2) => {
-    toggleShowChildModules(id, data.fullPath, data.showChildren);
+    toggleShowChildModules(id, data.showChildren);
   };
 
   const layoutChildrenInternal = () => {
     console.log('layout children with ', data.moduleId);
-    //layoutNodes(data.moduleId);
+    layoutNodes(data.moduleId);
   };
 
   const toggleExpandModuleInternal = () => {
@@ -354,7 +356,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
                 />
               </div>
             )}
-            {/* <div
+            {/*  <div
           id="node-container"
           style={{
             height: '100%',
