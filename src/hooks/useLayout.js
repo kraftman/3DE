@@ -29,6 +29,7 @@ const findModuleEdges = (moduleNodes) => {
 
 export const useLayout = () => {
   const setNodes = useStore((state) => state.setNodes);
+  const getEdges = useStore((state) => state.getEdges);
 
   const layoutNodes = (parentId) => {
     setNodes((nodes) => {
@@ -38,7 +39,9 @@ export const useLayout = () => {
       dagreGraph.setGraph({ rankdir: 'LR' });
 
       const moduleNodes = nodes.filter((node) => node.type === 'module');
-      const edges = findModuleEdges(moduleNodes);
+      const edges = getEdges();
+      //const edges = findModuleEdges(moduleNodes);
+      console.log('edges:', edges);
       edges.forEach((edge) => {
         dagreGraph.setEdge(edge.source, edge.target);
       });
@@ -59,6 +62,7 @@ export const useLayout = () => {
         if (layout) {
           return {
             ...node,
+            parentId: undefined,
             position: {
               x: layout.x - layout.width / 2,
               y: layout.y - layout.height / 2,
