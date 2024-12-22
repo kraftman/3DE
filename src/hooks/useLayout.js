@@ -20,7 +20,6 @@ const findModuleEdges = (moduleNodes) => {
           source: moduleNode.id,
           target: targetModule.id,
         };
-        console.log('found edge:', edge);
         edges.push(edge);
       }
     });
@@ -40,6 +39,9 @@ export const useLayout = () => {
 
       const moduleNodes = nodes.filter((node) => node.type === 'module');
       const edges = findModuleEdges(moduleNodes);
+      edges.forEach((edge) => {
+        dagreGraph.setEdge(edge.source, edge.target);
+      });
 
       moduleNodes.forEach((moduleNode) => {
         dagreGraph.setNode(moduleNode.id, {
@@ -48,16 +50,12 @@ export const useLayout = () => {
         });
       });
 
-      console.log('found edges:', edges);
-      edges.forEach((edge) => {
-        dagreGraph.setEdge(edge.source, edge.target);
-      });
-
       dagre.layout(dagreGraph);
 
       return nodes.map((node) => {
         const layout = dagreGraph.node(node.id);
         console.log('layout:', layout);
+        console.log(node.parentId);
         if (layout) {
           return {
             ...node,

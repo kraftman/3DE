@@ -75,6 +75,7 @@ export const expandModule = (nodes, moduleId) => {
   return newNodes;
 };
 
+// check if this can be merged with findModuleEdges in uselayout
 export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
   const edges = [];
 
@@ -147,8 +148,6 @@ export const showModuleChildren = (nodes, edges, moduleNode, flatFiles) => {
 
   // create any that dont exist
   const newNodes = createChildNodes(flatFiles, nodes, moduleNode);
-  console.log('================================');
-  console.log('found new child nodes:', newNodes);
   // get the existing so they can be updated
   const children = findChildNodes(nodes, moduleNode.id);
   const childIds = children.map((child) => child.id);
