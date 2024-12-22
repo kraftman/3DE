@@ -219,7 +219,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
   };
 
   const toggleChildrenInternal = (value, value2) => {
-    toggleShowChildModules(id, data.showChildren);
+    toggleShowChildModules(id);
   };
 
   const layoutChildrenInternal = () => {

@@ -14,7 +14,7 @@ import path from 'path-browserify';
 export const findChildIds = (nodes, parentId) => {
   //rucursively find children from nodes and add to a flat array of children
   let children = [];
-  const foundChildren = nodes.filter((node) => node.parentId === parentId);
+  const foundChildren = nodes.filter((node) => node.data.parentId === parentId);
   foundChildren.forEach((child) => {
     children.push(child.id);
     children = children.concat(findChildIds(nodes, child.id));
@@ -54,7 +54,7 @@ export const getFunctionContent = (nodes, functionNode) => {
 
   const frameNodes = nodes.filter(
     (node) =>
-      node.parentId === functionNode.id && node.type === 'pureFunctionNode'
+      node.data.parentId === functionNode.id && node.type === 'pureFunctionNode'
   );
   frameNodes.forEach((codeNode) => {
     const subLines = getFunctionContent(nodes, codeNode);

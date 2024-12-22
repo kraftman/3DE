@@ -3,7 +3,7 @@ import { createChildNodes } from './createChildNodes';
 import { importWithoutExtension } from './fileUtils';
 
 export const findChildNodes = (nodes, moduleId) => {
-  const childNodes = nodes.filter((node) => node.parentId === moduleId);
+  const childNodes = nodes.filter((node) => node.data.parentId === moduleId);
   let foundNodes = [];
   for (const child of childNodes) {
     foundNodes.push(child);
@@ -15,7 +15,7 @@ export const findChildNodes = (nodes, moduleId) => {
 
 export const findChildModules = (nodes, moduleId) => {
   const foundModules = nodes.filter(
-    (node) => node.parentId === moduleId && node.type === 'module'
+    (node) => node.data.parentId === moduleId && node.type === 'module'
   );
   return foundModules;
 };
@@ -114,8 +114,9 @@ export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
 
 export const hideModuleChildren = (nodes, moduleId) => {
   const childModules = nodes.filter(
-    (node) => node.parentId === moduleId && node.type === 'module'
+    (node) => node.data.parentId === moduleId && node.type === 'module'
   );
+  console.log('found child modules:', childModules);
   let foundNodes = [];
   for (const child of childModules) {
     foundNodes.push(child);

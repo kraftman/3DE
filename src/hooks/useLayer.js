@@ -39,17 +39,16 @@ export const useLayer = () => {
   };
 
   const toggleShowChildModules = useCallback(
-    (moduleId, fullPath, showChildren) => {
-      // later need to make sure the children arent already open
-      if (showChildren) {
-        return setNodes((nodes) => hideModuleChildren(nodes, moduleId));
-      }
+    (moduleId) => {
       const nodes = getNodes();
       const edges = getEdges();
 
       const moduleNode = nodes.find(
         (node) => node.type === 'module' && node.id === moduleId
       );
+      if (moduleNode.data.showChildren) {
+        return setNodes((nodes) => hideModuleChildren(nodes, moduleId));
+      }
 
       const { newNodes, newEdges } = showModuleChildren(
         nodes,

@@ -33,7 +33,8 @@ export const createChildNodes = (flatFiles, nodes, moduleNode) => {
   childFiles.forEach((file) => {
     const existingNode = nodes.find(
       (node) =>
-        node.data.fullPath === file.index && node.parentId === moduleNode.id
+        node.data.fullPath === file.index &&
+        node.data.parentId === moduleNode.id
     );
     if (existingNode) {
       console.log('skipping module because it already exists');

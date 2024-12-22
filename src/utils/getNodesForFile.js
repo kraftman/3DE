@@ -9,6 +9,7 @@ const createCodeNodes = (fileInfo, newPos, parentId) => {
   moduleNode.position = newPos;
 
   moduleNode.parentId = parentId;
+  moduleNode.data.parentId = parentId;
 
   const newNodes = [].concat(moduleNode).concat(children);
   return newNodes;
