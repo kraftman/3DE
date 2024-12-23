@@ -88,7 +88,7 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
   const [localLayerName, setLocalLayerName] = useState(layerName);
   const [localColor, setLocalColor] = useState(color);
 
-  const { setLayers, setCurrentLayer } = useLayer();
+  const { setLayers, setCurrentLayer } = useStore();
   const layers = useStore((store) => store.layers);
   const nodes = useStore((store) => store.getNodes());
   const edges = useStore((store) => store.edges);
@@ -207,7 +207,7 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
 };
 
 export const LayerManager = ({}) => {
-  const { setLayers, setCurrentLayer } = useLayer();
+  const { setLayers, setCurrentLayer } = useStore();
   const layers = useStore((store) => store.layers);
   const nodes = useStore((store) => store.nodes);
   const edges = useStore((store) => store.edges);

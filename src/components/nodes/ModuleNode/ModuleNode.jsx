@@ -257,6 +257,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
   };
 
   const onFileNameChange = (value) => {
+    // TODO use makeSafeFilename here to safely rename the file
     if (flatFiles[value]) {
       setFileNameError('file exists');
     } else {

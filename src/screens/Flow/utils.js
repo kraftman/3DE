@@ -1,5 +1,3 @@
-import { initialSettingsState, tempInput } from './mocks';
-
 import { Position } from '@xyflow/react';
 
 import * as ts from 'typescript';
@@ -74,74 +72,6 @@ export const stringToDarkTransparentColor = (str) => {
   color += alpha;
 
   return color;
-};
-
-export const getInitialNodes = (initialSettingsState) => [
-  {
-    id: '1',
-    data: {
-      fileName: './MyComponent.js',
-      value: tempInput,
-      handles: [],
-    },
-    type: 'editor',
-    position: { x: 800, y: 100 },
-  },
-  {
-    id: '2',
-    data: {
-      fileName: 'Settings.js',
-      value: '',
-      handles: [],
-      settings: initialSettingsState,
-    },
-    type: 'group',
-    position: { x: 200, y: 100 },
-  },
-  {
-    id: '3',
-    data: {
-      fileName: './MyComponent2.js',
-      value: `import { myfunction } from './MyComponent.js';`,
-      handles: [],
-    },
-    type: 'editor',
-    position: { x: 100, y: 300 },
-  },
-];
-
-export const createSelectionHandle = (node, selection) => {
-  const startLine = selection.startLineNumber;
-  const endLine = selection.endLineNumber;
-  const startColumn = selection.startColumn;
-  const endColumn = selection.endColumn;
-
-  const handle = {
-    id: `selection-${startLine}-${endLine}`,
-    name: 'selection',
-    handleType: 'selection',
-    type: 'source',
-    position: Position.Right,
-    nodePath: node.data.fullPath,
-    fileName: node.data.fileName,
-    loc: {
-      start: {
-        line: startLine,
-        column: startColumn,
-      },
-      end: {
-        line: endLine,
-        column: endColumn,
-      },
-    },
-    style: {
-      left: 40 + selection.endColumn * 7,
-      top: 16 * endLine,
-      zIndex: 1000,
-    },
-  };
-
-  return handle;
 };
 
 const sortDirectory = (flat, parentKey) => {
