@@ -9,6 +9,9 @@ import {
   ThemeProvider,
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
+import { useFileSystem } from '../stores/useFileSystem';
+import { SearchToggle } from './SearchBar/SearchToggle';
+import * as recast from 'recast';
 
 const useStyles = makeStyles((theme) => ({
   searchContainer: {
@@ -48,13 +51,66 @@ const darkTheme = createTheme({
   },
 });
 
-export const SearchBar = ({ searchContent, onSearchSelect }) => {
+export const SearchBar = ({ onSearchSelect }) => {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredContent, setFilteredContent] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [searchContent, setSearchContent] = useState([]);
+  const [functionContent, setFunctionContent] = useState([]);
+  const [fileContent, setFileContent] = useState([]);
+  const [codebaseContent, setCodebaseContent] = useState([]);
   const searchRef = useRef(null);
+
+  const [searchMode, setSearchMode] = useState('filenames');
+
+  const flatFiles = useFileSystem((state) => state.flatFiles);
+
+  useEffect(() => {
+    if (searchMode === 'filenames') {
+      setSearchContent(fileContent);
+    } else if (searchMode === 'functions') {
+      setSearchContent(functionContent);
+    } else {
+      setSearchContent(codebaseContent);
+    }
+  }, [searchMode, fileContent, functionContent, codebaseContent]);
+
+  useEffect(() => {
+    const newFunctions = [];
+    const newFileNames = [];
+    const newCodebase = [];
+    for (const key in flatFiles) {
+      const file = flatFiles[key];
+      newFileNames.push({
+        key: key,
+        id: key,
+        fullPath: key,
+        content: key,
+      });
+      newCodebase.push({
+        key: key,
+        id: key,
+        fullPath: key,
+        content: recast.print(file.fullAst).code,
+      });
+
+      if (file.functions) {
+        file.functions.forEach((func) => {
+          newFunctions.push({
+            key: key + func.id + func.name,
+            id: func.id,
+            fullPath: key,
+            content: func.name,
+          });
+        });
+      }
+    }
+    setFileContent(newFileNames);
+    setCodebaseContent(newCodebase);
+    setFunctionContent(newFunctions);
+  }, [flatFiles]);
 
   const handleKeyDown = (e) => {
     if (e.ctrlKey && e.key === 't') {
@@ -98,7 +154,6 @@ export const SearchBar = ({ searchContent, onSearchSelect }) => {
 
   useEffect(() => {
     if (searchTerm) {
-      console.log(searchContent);
       const results = searchContent.filter((item) =>
         item.content.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -113,6 +168,7 @@ export const SearchBar = ({ searchContent, onSearchSelect }) => {
     <ThemeProvider theme={darkTheme}>
       {open && (
         <Paper className={classes.searchContainer}>
+          <SearchToggle searchMode={searchMode} setSearchMode={setSearchMode} />
           <TextField
             fullWidth
             inputRef={searchRef}
@@ -127,7 +183,7 @@ export const SearchBar = ({ searchContent, onSearchSelect }) => {
             <List className={classes.list}>
               {filteredContent.map((item, index) => (
                 <ListItem
-                  key={item.id}
+                  key={item.key}
                   button
                   selected={index === selectedIndex}
                   onClick={() => {

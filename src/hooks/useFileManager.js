@@ -144,10 +144,10 @@ export const useFileManager = () => {
 
   const onFileSelected = useCallback(
     (newPos, fullPath) => {
+      console.log('onFileSelected', newPos, fullPath);
       const fileInfo = flatFiles[fullPath];
 
       const newNodes = getNodesForFile(fileInfo, newPos, null);
-      console.log('newNodes', newNodes);
       setNodes((nodes) => nodes.concat(newNodes));
     },
     [flatFiles]

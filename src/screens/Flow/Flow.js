@@ -33,11 +33,7 @@ import { useNodeManager } from '../../hooks/useNodeManager.js';
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
-  const {
-    //functions,
-    shiftLayerUp,
-    shiftLayerDown,
-  } = useLayer();
+  const { shiftLayerUp, shiftLayerDown } = useLayer();
   const { setNodes, setEdges } = useStore();
 
   const layers = useStore((store) => store.layers);
@@ -48,7 +44,7 @@ export const Flow = () => {
 
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();
 
-  const { loadFileSystem, handleSave } = useFileManager();
+  const { loadFileSystem, handleSave, onFileSelected } = useFileManager();
 
   useEffect(() => {
     const init = async () => {
@@ -110,27 +106,11 @@ export const Flow = () => {
   };
 
   const onSearchSelect = (selected) => {
-    const newId = (nodes.length + 1).toString();
-    const newNode = {
-      id: newId,
-      data: {
-        functionId: selected.id,
-        content: selected.content,
-        functionName: 'TestFunction' + newId,
-      },
-      type: 'pureFunctionNode',
-      position: {
-        x: 500,
-        y: 500,
-      },
-      style: {
-        width: '400px',
-        height: '300px',
-      },
-    };
-    setNodes((nodes) => {
-      return nodes.concat(newNode);
-    });
+    console.log('selected', selected);
+    const newPos = { x: 0, y: 0 };
+    onFileSelected(newPos, selected.fullPath);
+    // selected.id = ffunction id
+    // selected.fullpath = function fullpath
   };
 
   return (
@@ -170,10 +150,7 @@ export const Flow = () => {
               horizontal: 'center',
             }}
           />
-          {/* <SearchBar
-            searchContent={functions}
-            onSearchSelect={onSearchSelect}
-          /> */}
+          <SearchBar onSearchSelect={onSearchSelect} />
           <Tooltip
             id="saved-tooltip"
             place="bottom"
