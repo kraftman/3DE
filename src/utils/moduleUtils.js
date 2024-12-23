@@ -21,11 +21,13 @@ export const findChildModules = (nodes, moduleId) => {
 };
 
 export const collapseModule = (nodes, moduleId) => {
+  // get all children of this node
   const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
 
   const moduleNodeIds = moduleNodes.map((node) => node.id);
 
   const collapsedHeight = 50;
+  const collapsedWidth = 200;
 
   const newNodes = nodes.map((node) => {
     if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
@@ -38,7 +40,11 @@ export const collapseModule = (nodes, moduleId) => {
       return {
         ...node,
         data: { ...node.data, isCollapsed: true },
-        style: { ...node.style, height: collapsedHeight + 'px' },
+        style: {
+          ...node.style,
+          height: collapsedHeight + 'px',
+          width: collapsedWidth + 'px',
+        },
       };
     }
     return node;
@@ -148,8 +154,17 @@ export const showModuleChildren = (nodes, edges, moduleNode, flatFiles) => {
   // need to only create new ones if they dont already exist
 
   // create any that dont exist
-  const newNodes = createChildNodes(flatFiles, nodes, moduleNode);
-  // get the existing so they can be updated
+  let newNodes = createChildNodes(flatFiles, nodes, moduleNode);
+  if (moduleNode.data.isCollapsed) {
+    newNodes.forEach((node) => {
+      if (node.type === 'module') {
+        newNodes = collapseModule(newNodes, node.id);
+      }
+    });
+  }
+  // collapseModule(nodes, moduleId);
+
+  // get the existing so they can be update
   const children = findChildNodes(nodes, moduleNode.id);
   const childIds = children.map((child) => child.id);
   const updatedNodes = nodes.map((node) => {

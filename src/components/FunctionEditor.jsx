@@ -11,10 +11,17 @@ import { extractNonFunctionStatements } from '../utils/parser';
 import { parseWithRecast } from '../utils/parseWithRecast';
 import * as recast from 'recast';
 
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-okaidia.css';
+// Import languages you need
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-python';
+
 loader.config({ monaco });
 
 export const FunctionEditor = ({ fullPath, functionId }) => {
   const editorRef = useRef(null);
+  const [isFocused, setIsFocused] = useState(false);
 
   const fileInfo = useFileSystem((state) => {
     const fileInfo = state.flatFiles[fullPath];
@@ -33,13 +40,16 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     onFunctionTextChange: store.onFunctionTextChange,
   }));
 
-  const [text, setText] = useState('not loaded');
+  const [text, setText] = useState('not  loaded');
 
   useEffect(() => {
     const functionContent = funcInfo
       ? extractNonFunctionStatements(funcInfo.node)
       : '';
-    setText(functionContent);
+    const parsed = recast.print(functionContent.body, {
+      reuseWhitespace: true,
+    }).code;
+    setText(parsed);
   }, [fileInfo]);
 
   const onChange = (newText) => {
@@ -47,6 +57,7 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     const wrappedCode = `${
       funcInfo.async ? 'async ' : ''
     }function temp()  ${newText} `;
+    console.log('wrapped code:', wrappedCode);
     // maybe this should be moved to iinside the onFunctonTextChange
     const parsed = parseWithRecast(wrappedCode);
     if (parsed) {
@@ -55,31 +66,52 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     }
   };
 
+  const PlaceHolder = ({ code }) => {
+    return (
+      <pre style={{ fontSize: '13px' }}>
+        <code className={`language-javascript`}>{code}</code>
+      </pre>
+    );
+  };
+
+  useEffect(() => {
+    Prism.highlightAll();
+  }, [text, isFocused]);
+
   return (
-    <div className="editor-container">
+    <div
+      className="editor-container"
+      tabIndex={0} // Makes the div focusable
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+    >
       <FunctionBar fullPath={fullPath} funcInfo={funcInfo} />
-      <Editor
-        className="editor nodrag"
-        onChange={onChange}
-        height="100%"
-        width="100%"
-        defaultLanguage={'javascript'}
-        value={text}
-        options={{
-          fontSize: 10,
-          lineNumbersMinChars: 2,
-          automaticLayout: true,
-          scrollBeyondLastLine: false,
-          minimap: {
-            enabled: false,
-          },
-          lineNumbers: 'off',
-        }}
-        theme="vs-dark"
-        onMount={(editor) => {
-          editorRef.current = editor;
-        }}
-      />
+      {isFocused ? (
+        <Editor
+          className="editor nodrag"
+          onChange={onChange}
+          height="100%"
+          width="100%"
+          defaultLanguage={'javascript'}
+          value={text}
+          options={{
+            fontSize: 10,
+            lineNumbersMinChars: 2,
+            automaticLayout: true,
+            scrollBeyondLastLine: false,
+            minimap: {
+              enabled: false,
+            },
+            lineNumbers: 'off',
+          }}
+          theme="vs-dark"
+          onMount={(editor) => {
+            editorRef.current = editor;
+          }}
+        />
+      ) : (
+        <PlaceHolder code={text} />
+      )}
     </div>
   );
 };

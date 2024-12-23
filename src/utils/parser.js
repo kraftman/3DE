@@ -16,7 +16,7 @@ export const extractNonFunctionStatements = (functionNode) => {
     parsed = parsed.program.body[0];
   }
 
-  // Ensure the function node has a block statemen
+  // Ensure the function node has a block statement
   if (parsed.body.type !== 'BlockStatement') {
     parsed.body = b.blockStatement([b.expressionStatement(parsed.body)]);
   }
@@ -40,13 +40,14 @@ export const extractNonFunctionStatements = (functionNode) => {
 
   // Create a *new* block sttemet to hold the filtered nodes
   parsed.body.body = filteredNodes;
+  console.log('parsed:', parsed);
 
   // Now you can do whatever you want with newBlockStatement, e.g. return it
-  const extractedCode = recast.print(parsed, {
-    reuseWhitespace: true,
-  }).code;
+  // const extractedCode = recast.print(parsed, {
+  //   reuseWhitespace: true,
+  // }).code;
 
-  return extractedCode;
+  return parsed;
 };
 
 const createFunction = (path, name, parentId, depth, type) => {
@@ -55,12 +56,13 @@ const createFunction = (path, name, parentId, depth, type) => {
     (param) => recast.print(param, { reuseWhitespace: true }).code
   );
   const body = extractNonFunctionStatements(node);
+  const bodyString = recast.print(body, { reuseWhitespace: true }).code;
 
-  const funcId = murmur.murmur3(name + parentId + body);
+  const funcId = murmur.murmur3(name + parentId + bodyString);
   node._id = funcId;
 
   const nestedFunctions = getFunctions(node.body, funcId, depth + 1);
-  const contentSize = getEditorSize(body);
+  const contentSize = getEditorSize(bodyString);
   const funcInfo = {
     id: funcId,
     name,

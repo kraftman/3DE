@@ -21,8 +21,8 @@ export const useLayout = () => {
 
       moduleNodes.forEach((moduleNode) => {
         dagreGraph.setNode(moduleNode.id, {
-          width: moduleNode.data.width,
-          height: moduleNode.data.height,
+          width: moduleNode.data.isCollapsed ? 200 : moduleNode.data.width,
+          height: moduleNode.data.isCollapsed ? 50 : moduleNode.data.height,
         });
       });
 

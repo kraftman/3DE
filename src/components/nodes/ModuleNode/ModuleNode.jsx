@@ -214,6 +214,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
     );
   });
 
+  //test
   const toggleShowRawCodeInternal = () => {
     toggleShowRawCode(id);
   };
@@ -304,17 +305,17 @@ export const ModuleNode = React.memo(({ id, data }) => {
             onChange={onFileNameChange}
             error={fileNameError}
           />
-          {!isCollapsed && (
-            <TopBar
-              showRaw={data.showRaw}
-              toggleShowRawCode={toggleShowRawCodeInternal}
-              settings={settings}
-              handleToggle={toggleHideEdgesInternal}
-              toggleChildren={toggleChildrenInternal}
-              showChildren={data.showChildren}
-              layoutChildren={layoutChildrenInternal}
-            />
-          )}
+
+          <TopBar
+            showRaw={data.showRaw}
+            toggleShowRawCode={toggleShowRawCodeInternal}
+            settings={settings}
+            handleToggle={toggleHideEdgesInternal}
+            toggleChildren={toggleChildrenInternal}
+            showChildren={data.showChildren}
+            layoutChildren={layoutChildrenInternal}
+          />
+
           <ToggleExpand />
         </div>
         {!isCollapsed && (
