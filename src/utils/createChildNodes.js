@@ -22,12 +22,23 @@ export const getChildFiles = (flatFiles, fileInfo) => {
   return pathsWithExtension;
 };
 
-export const createChildNodes = (flatFiles, nodes, moduleNode) => {
-  console.log('creating children for module path:', moduleNode.data.fullPath);
+export const createChildNodes = (
+  flatFiles,
+  nodes,
+  moduleNode,
+  childPath,
+  maxDepth,
+  depth = 0
+) => {
   const fileInfo = flatFiles[moduleNode.data.fullPath];
-  const childFiles = getChildFiles(flatFiles, fileInfo);
+  let childFiles = getChildFiles(flatFiles, fileInfo);
+  if (childPath) {
+    const file = findFileForImport(flatFiles, childPath);
+    childFiles = [file];
+  }
 
   let offset = 0;
+  depth = depth + 1;
 
   const newNodes = [];
   childFiles.forEach((file) => {
@@ -49,9 +60,19 @@ export const createChildNodes = (flatFiles, nodes, moduleNode) => {
     newNodes.push(...myNodes);
   });
   // need a toggle here in case we dont want to return children
+  if (depth >= maxDepth) {
+    return newNodes;
+  }
   const newModules = newNodes.filter((node) => node.type === 'module');
   for (const newModule of newModules) {
-    const childNodes = createChildNodes(flatFiles, nodes, newModule);
+    const childNodes = createChildNodes(
+      flatFiles,
+      nodes,
+      newModule,
+      undefined,
+      maxDepth,
+      depth
+    );
     newNodes.push(...childNodes);
   }
   return newNodes;

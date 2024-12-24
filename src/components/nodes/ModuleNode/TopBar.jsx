@@ -9,30 +9,31 @@ import { Dashboard } from '@mui/icons-material';
 export const TopBar = ({
   showRaw,
   toggleShowRawCode,
-  settings,
-  handleToggle,
   toggleChildren,
   showChildren,
-  layoutChildren,
+  isCollapsed,
 }) => {
   const toggleChildrenValue = showChildren ? 'showChildren' : 'hideChildren';
   return (
     <div>
-      <ToggleButtonGroup
-        // value={settings}
-        value={showRaw ? 'code' : 'nodes'}
-        onChange={toggleShowRawCode}
-        exclusive
-        size="small"
-        aria-label="text alignment"
-      >
-        <ToggleButton value="code" aria-label="justified">
-          <CodeIcon fontSize="small" />
-        </ToggleButton>
-        <ToggleButton value="nodes" aria-label="justified">
-          <PolylineIcon fontSize="small" />
-        </ToggleButton>
-      </ToggleButtonGroup>
+      {!isCollapsed ? (
+        <ToggleButtonGroup
+          // value={settings}
+          value={showRaw ? 'code' : 'nodes'}
+          onChange={toggleShowRawCode}
+          exclusive
+          size="small"
+          aria-label="text alignment"
+        >
+          <ToggleButton value="code" aria-label="justified">
+            <CodeIcon fontSize="small" />
+          </ToggleButton>
+          <ToggleButton value="nodes" aria-label="justified">
+            <PolylineIcon fontSize="small" />
+          </ToggleButton>
+        </ToggleButtonGroup>
+      ) : null}
+
       {/*  <ToggleButtonGroup
         value={settings}
         onChange={handleToggle}
@@ -46,15 +47,8 @@ export const TopBar = ({
 
       <ToggleButton
         value="check"
-        aria-label="justified"
-        onChange={layoutChildren}
-      >
-        <Dashboard fontSize="small" />
-      </ToggleButton>
-
-      <ToggleButton
-        value="check"
         aria-label="show childrem"
+        size="small"
         selected={showChildren}
         onChange={toggleChildren}
       >

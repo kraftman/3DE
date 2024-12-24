@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { TextField, Tooltip } from '@mui/material';
 
-export const EditableText = ({ onFinishEditing, text, onChange, error }) => {
+export const EditableText = ({
+  onFinishEditing,
+  text,
+  onChange,
+  error,
+  placeholder,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleDoubleClick = () => {
@@ -53,7 +59,7 @@ export const EditableText = ({ onFinishEditing, text, onChange, error }) => {
           }}
           onDoubleClick={handleDoubleClick}
         >
-          {text}
+          {placeholder || text}
         </div>
       )}
     </div>

@@ -61,6 +61,7 @@ export const expandModule = (nodes, moduleId) => {
   const moduleNodeIds = moduleNodes.map((node) => node.id);
 
   const oldHeight = moduleNode.data.height;
+  const oldWidth = moduleNode.data.width;
 
   const newNodes = nodes.map((node) => {
     if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
@@ -73,7 +74,11 @@ export const expandModule = (nodes, moduleId) => {
       return {
         ...node,
         data: { ...node.data, isCollapsed: false },
-        style: { ...node.style, height: oldHeight + 'px' },
+        style: {
+          ...node.style,
+          height: oldHeight + 'px',
+          width: oldWidth + 'px',
+        },
       };
     }
     return node;
@@ -153,8 +158,15 @@ export const hideModuleChildren = (nodes, moduleId) => {
 export const showModuleChildren = (nodes, edges, moduleNode, flatFiles) => {
   // need to only create new ones if they dont already exist
 
-  // create any that dont exist
-  let newNodes = createChildNodes(flatFiles, nodes, moduleNode);
+  // create any that dont exis
+  const depth = 10;
+  let newNodes = createChildNodes(
+    flatFiles,
+    nodes,
+    moduleNode,
+    undefined,
+    depth
+  );
   if (moduleNode.data.isCollapsed) {
     newNodes.forEach((node) => {
       if (node.type === 'module') {

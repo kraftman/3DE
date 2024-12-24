@@ -9,7 +9,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { loader } from '@monaco-editor/react';
 import Editor from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import { findFileForImport } from '../../../utils/fileUtils';
 import { TopBar } from './TopBar';
 import { EditableText } from '../../EditableText';
 import { RootCode } from './RootCode';
@@ -22,25 +21,10 @@ import * as recast from 'recast';
 import { useShallow } from 'zustand/react/shallow';
 import { FunctionEditor } from '../../FunctionEditor';
 import { useLayout } from '../../../hooks/useLayout';
+import { getFileNameFromPath } from '../../../utils/fileUtils';
+import { ImportManager } from './ImportManager';
 
 loader.config({ monaco });
-
-const handleTextStyle = {
-  position: 'absolute', // Absolute positioning to center the text on the handle
-  top: '50%', // Center vertically
-  left: '50%', // Center horizontally
-  transform: 'translate(-50%, 5px)', // Align the text perfectly at the center
-  fontSize: '10px',
-  pointerEvents: 'none', // Prevent the text from interfering with interactions
-  color: 'white',
-  backgroundColor: 'black',
-  border: '1px solid grey', // Adds the border
-  padding: '2px 2px', // Adds padding to make the border look better
-  boxSizing: 'border-box', // Ensures padding doesn't increase the element size
-  borderRadius: '4px',
-  whiteSpace: 'nowrap', // Prevents text wrapping
-  textAlign: 'center', // Centers text within the box
-};
 
 const darkTheme = createTheme({
   palette: {
@@ -67,13 +51,8 @@ export const ModuleNode = React.memo(({ id, data }) => {
     toggleHideEdges,
     onRootNodeTextChange,
   } = useLayer();
-  const {
-    toggleShowRawCode,
-    createMissingImport,
-    toggleCollapseModule,
-    toggleChildModule,
-    renameModule,
-  } = useNodeManager();
+  const { toggleShowRawCode, toggleCollapseModule, renameModule } =
+    useNodeManager();
   const editorRef = useRef(null);
   const flatFiles = useFileSystem(useShallow((state) => state.flatFiles));
 
@@ -117,103 +96,6 @@ export const ModuleNode = React.memo(({ id, data }) => {
     });
   };
 
-  const getImportHandles = (handle) => {
-    if (Object.keys(flatFiles).length === 0) {
-      return null;
-    }
-
-    if (
-      handle.data.fullPath === false ||
-      findFileForImport(flatFiles, handle.data.fullPath)
-    ) {
-      const isExternal = handle.data.fullPath === false;
-      return (
-        <div key={handle.key}>
-          <Handle
-            key={handle.key}
-            type="source"
-            position={'right'}
-            id={handle.id}
-            style={{ ...handle.style }}
-          ></Handle>
-          <button
-            disabled={isExternal}
-            onClick={() => {
-              console.log('handle clic k', handle);
-              toggleChildModule(data.moduleId, handle.data.fullPath);
-            }}
-            key={handle.key + 'button'}
-            style={{
-              position: 'absolute',
-              display: 'inline-flex', // Ensures it wraps around its content
-              justifyContent: 'center', // Centers content horizontally
-              alignItems: 'center', // Centers content vertically
-              color: isExternal ? 'grey' : 'white',
-              fontSize: '10px',
-              backgroundColor: 'black',
-              border: '1px solid white',
-              padding: '2px 4px', // Add padding for spacing around the text
-              boxSizing: 'border-box',
-              borderRadius: '4px',
-              textAlign: 'center',
-              top: handle.style.top + 5,
-              right: handle.style.right,
-              transform: 'translate(50%, 0)', // Center the text horizontally
-            }}
-          >
-            {handle.data.name}
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <button
-        onClick={() => {
-          createMissingImport(data.moduleId, handle.data.fullPath);
-        }}
-        key={handle.key}
-        style={{
-          position: 'absolute',
-          display: 'inline-flex', // Ensures it wraps around its content
-          justifyContent: 'center', // Centers content horizontally
-          alignItems: 'center', // Centers content vertically
-          color: 'red',
-          fontSize: '10px',
-          backgroundColor: 'black',
-          border: '1px solid red',
-          padding: '2px 4px', // Add padding for spacing around the text
-          boxSizing: 'border-box',
-          borderRadius: '4px',
-          textAlign: 'center',
-          top: handle.style.top,
-          right: handle.style.right,
-          transform: 'translate(50%, 0)', // Center the text horizontally
-        }}
-      >
-        {handle.data.name}
-      </button>
-    );
-  };
-
-  const allHandles = data?.handles.map((handle, index) => {
-    if (handle.refType === 'import') {
-      return getImportHandles(handle);
-    }
-
-    return (
-      <Handle
-        key={handle.key}
-        type="source"
-        position={'right'}
-        id={handle.id}
-        style={{ ...handle.style }}
-      >
-        <button style={handleTextStyle}>{handle.data.name}</button>
-      </Handle>
-    );
-  });
-
   //test
   const toggleShowRawCodeInternal = () => {
     toggleShowRawCode(id);
@@ -221,11 +103,6 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const toggleChildrenInternal = (value, value2) => {
     toggleShowChildModules(id);
-  };
-
-  const layoutChildrenInternal = () => {
-    console.log('layout children with ', data.moduleId);
-    layoutNodes(data.moduleId);
   };
 
   const toggleExpandModuleInternal = () => {
@@ -248,7 +125,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
         }}
       >
         {data.isCollapsed ? (
-          <ExpandLessIcon fontSize="inherit" /> // Use "inherit" to scale with button size
+          <ExpandLessIcon fontSize="inherit" /> // Use "inherit" to scale with button siz
         ) : (
           <ExpandMoreIcon fontSize="inherit" />
         )}
@@ -303,6 +180,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
           <EditableText
             onFinishEditing={onFinishEditing}
             text={fileName}
+            placeholder={getFileNameFromPath(fileName)}
             onChange={onFileNameChange}
             error={fileNameError}
           />
@@ -314,7 +192,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
             handleToggle={toggleHideEdgesInternal}
             toggleChildren={toggleChildrenInternal}
             showChildren={data.showChildren}
-            layoutChildren={layoutChildrenInternal}
+            isCollapsed={isCollapsed}
           />
 
           <ToggleExpand />
@@ -358,20 +236,12 @@ export const ModuleNode = React.memo(({ id, data }) => {
                 />
               </div>
             )}
-            {/*  <div
-          id="node-container"
-          style={{
-            height: '100%',
-            width: '100%',
-            background: 'darkgrey',
-          }}
-        ></div> */}
           </>
         )}
       </div>
 
       <Handle type="source" position={'left'} id={id + '-handle'} />
-      {allHandles}
+      <ImportManager data={data} flatFiles={flatFiles} />
     </ThemeProvider>
   );
 });

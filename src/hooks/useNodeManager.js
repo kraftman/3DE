@@ -32,6 +32,7 @@ import { useFileSystem } from '../stores/useFileSystem.js';
 
 import { useReactFlow } from '@xyflow/react';
 import { checkAndFixFunctionHoisting } from '../utils/checkAndFixFunctionHoisting.js';
+import { useLayout } from './useLayout.js';
 
 const positionIsInsideModule = (parent, newPos) => {
   return (
@@ -65,6 +66,7 @@ export const useNodeManager = () => {
   );
   const { setFlatFiles, flatFiles } = useFileSystem();
   const { renameFile, createFile } = useFileManager();
+  const { layoutNodes } = useLayout();
 
   const { screenToFlowPosition } = useReactFlow();
 
@@ -115,6 +117,8 @@ export const useNodeManager = () => {
       }
       return newNodes;
     });
+
+    layoutNodes();
   }, []);
 
   const createMissingImport = useCallback(
@@ -421,7 +425,7 @@ export const useNodeManager = () => {
   }, []);
 
   const toggleChildModule = useCallback(
-    (moduleId, fullPath) => {
+    (moduleId, fullPath, depth) => {
       const nodes = getNodes();
       const children = findChildModules(nodes, moduleId);
       const foundChild = children.find(
@@ -447,14 +451,22 @@ export const useNodeManager = () => {
           });
         });
       } else {
-        // create the child
-        const fileInfo = findFileForImport(flatFiles, fullPath);
-        const newNodes = createChildNodes(nodes, moduleId, [fileInfo]);
+        const moduleNode = nodes.find((node) => node.id === moduleId);
+        let newNodes = createChildNodes(
+          flatFiles,
+          nodes,
+          moduleNode,
+          fullPath,
+          depth
+        );
         const moduleNodes = newNodes.filter((node) => node.type === 'module');
         const edges = getEdges();
+        // TODO fix edges here
         const newEdges = findHandleEdges(edges, nodes, moduleNodes);
         setNodes((nodes) => nodes.concat(newNodes));
         setEdges((edges) => [...edges, ...newEdges]);
+
+        layoutNodes();
       }
     },
     [flatFiles]

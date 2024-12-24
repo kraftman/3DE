@@ -182,6 +182,7 @@ export const getImportHandles = (imports, moduleId) => {
         name: imp.moduleSpecifier,
         fullPath: imp.fullPath,
         importType: imp.importType,
+        import: imp,
       },
     };
   });

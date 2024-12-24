@@ -11885,6 +11885,7 @@ __metadata:
     notistack: "npm:^3.0.1"
     os-browserify: "npm:^0.3.0"
     path-browserify: "npm:^1.0.1"
+    prism-themes: "npm:^1.9.0"
     prismjs: "npm:^1.29.0"
     react: "npm:^18.3.1"
     react-beautiful-dnd: "npm:^13.1.1"
@@ -13163,6 +13164,13 @@ __metadata:
     ansi-styles: "npm:^5.0.0"
     react-is: "npm:^18.0.0"
   checksum: 10c0/edc5ff89f51916f036c62ed433506b55446ff739358de77207e63e88a28ca2894caac6e73dcb68166a606e51c8087d32d400473e6a9fdd2dbe743f46c9c0276f
+  languageName: node
+  linkType: hard
+
+"prism-themes@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "prism-themes@npm:1.9.0"
+  checksum: 10c0/8ead5f4344248eeb21bcc3dc5f52f68fc8997e496ab523975f26954c20294d5b04c487b38ae39b35a449e436fc0226a2bf4dc2a3c97e0f0303e81fa05614002d
   languageName: node
   linkType: hard
 

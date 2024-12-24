@@ -29,6 +29,7 @@ import { TextNode } from '../../components/nodes/TextNode/TextNode.js';
 import { MarkdownNode } from '../../components/nodes/MarkdownNode/MarkdownNode.js';
 import { useFileManager } from '../../hooks/useFileManager.js';
 import { useNodeManager } from '../../hooks/useNodeManager.js';
+import { useLayout } from '../../hooks/useLayout.js';
 
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
@@ -45,6 +46,7 @@ export const Flow = () => {
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();
 
   const { loadFileSystem, handleSave, onFileSelected } = useFileManager();
+  const { layoutNodes } = useLayout();
 
   useEffect(() => {
     const init = async () => {
@@ -106,11 +108,8 @@ export const Flow = () => {
   };
 
   const onSearchSelect = (selected) => {
-    console.log('selected', selected);
     const newPos = { x: 0, y: 0 };
     onFileSelected(newPos, selected.fullPath);
-    // selected.id = ffunction id
-    // selected.fullpath = function fullpath
   };
 
   return (
@@ -137,6 +136,7 @@ export const Flow = () => {
 
         <Panel position="top-left">
           <FolderSelectButton onFolderSelected={onFolderSelected} />
+          <button onClick={layoutNodes}>Layout</button>
 
           <BasicTree />
         </Panel>

@@ -12,7 +12,8 @@ import { parseWithRecast } from '../utils/parseWithRecast';
 import * as recast from 'recast';
 
 import Prism from 'prismjs';
-import 'prismjs/themes/prism-okaidia.css';
+import 'prism-themes/themes/prism-vsc-dark-plus.css';
+
 // Import languages you need
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-python';
@@ -67,23 +68,35 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
   };
 
   const PlaceHolder = ({ code }) => {
+    const placeholderRef = useRef(null);
+
+    useEffect(() => {
+      if (placeholderRef.current) {
+        Prism.highlightElement(placeholderRef.current);
+      }
+    }, [code]);
+
     return (
-      <pre style={{ fontSize: '13px' }}>
-        <code className={`language-javascript`}>{code}</code>
+      <pre className="language-javascript" style={{ fontSize: '12px' }}>
+        <code ref={placeholderRef}>{code}</code>
       </pre>
     );
   };
 
   useEffect(() => {
-    Prism.highlightAll();
-  }, [text, isFocused]);
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.dispose();
+      }
+    };
+  }, []);
 
   return (
     <div
       className="editor-container"
       tabIndex={0} // Makes the div focusable
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
+      onFocusCapture={() => setIsFocused(true)}
+      onBlurCapture={() => setIsFocused(false)}
     >
       <FunctionBar fullPath={fullPath} funcInfo={funcInfo} />
       {isFocused ? (

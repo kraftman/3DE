@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useStore } from '../contexts/useStore'; // adjust the import path as needed
+import { useLayout } from './useLayout.js';
 
 import { parseWithRecast } from '../utils/parseWithRecast.js';
 import { useShallow } from 'zustand/react/shallow';
@@ -28,6 +29,8 @@ export const useLayer = () => {
       flatFiles: state.flatFiles,
     }))
   );
+
+  const { layoutNodes } = useLayout();
 
   const onModuleClose = (moduleId) => {
     setNodes((nodes) => {
@@ -59,6 +62,8 @@ export const useLayer = () => {
 
       setNodes(newNodes);
       setEdges((edges) => [...edges, ...newEdges]);
+
+      layoutNodes();
     },
     [flatFiles]
   );
