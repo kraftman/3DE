@@ -22,7 +22,7 @@ import { FolderSelectButton } from '../../components/FolderSelectButton';
 import { BasicTree } from '../../components/FolderTree';
 import './updatenode.css';
 import { SnackbarProvider } from 'notistack';
-import { useLayer } from '../../hooks/useLayer.js';
+import { useLayerManager } from '../../hooks/useLayerManager';
 import { LayerManager } from '../../components/LayerManager';
 import { SearchBar } from '../../components/SearchBar';
 import { useStore } from '../../contexts/useStore.js';
@@ -35,7 +35,7 @@ import { useLayout } from '../../hooks/useLayout.js';
 const defaultViewport = { x: 0, y: 0, zoom: 1.5 };
 
 export const Flow = () => {
-  const { shiftLayerUp, shiftLayerDown } = useLayer();
+  const { shiftLayerUp, shiftLayerDown } = useLayerManager();
   const { setNodes, setEdges } = useStore();
 
   const layers = useStore((store) => store.layers);

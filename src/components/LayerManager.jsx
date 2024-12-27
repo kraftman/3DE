@@ -89,10 +89,6 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
   const [localColor, setLocalColor] = useState(color);
 
   const { setLayers, setCurrentLayer } = useStore();
-  const layers = useStore((store) => store.layers);
-  const nodes = useStore((store) => store.getNodes());
-  const edges = useStore((store) => store.edges);
-  const currentLayer = useStore((store) => store.currentLayer);
 
   let outlineColor = lightenColor(color, 20); // Lighten by 20%
 
@@ -206,14 +202,13 @@ const LayerPreview = ({ layerName, layer, onLayerSelected, selectedLayer }) => {
   );
 };
 
-export const LayerManager = ({}) => {
+export const LayerManager = () => {
   const { setLayers, setCurrentLayer } = useStore();
   const layers = useStore((store) => store.layers);
-  const nodes = useStore((store) => store.nodes);
-  const edges = useStore((store) => store.edges);
   const currentLayer = useStore((store) => store.currentLayer);
 
   const onNewLayer = () => {
+    console.log('adding new layer', Object.keys(layers).length);
     setLayers((layers) => {
       const layerCount = Object.keys(layers).length;
       return {

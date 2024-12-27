@@ -9,12 +9,13 @@ export const useStore = create(
     },
     currentLayer: 0,
 
-    // Set functions using Immer
+    // Set functions using Imme
     setLayers: (updateFn) =>
       set((state) => {
         state.layers =
           typeof updateFn === 'function' ? updateFn(state.layers) : updateFn;
       }),
+    getLayers: () => get().layers,
     setCurrentLayer: (layerId) =>
       set((state) => {
         if (!state.layers[layerId]) {
@@ -22,6 +23,7 @@ export const useStore = create(
         }
         state.currentLayer = layerId;
       }),
+    getCurrentLayer: () => get().currentLayer,
     setNodes: (updateFn) =>
       set((state) => {
         const currentLayer = state.currentLayer;
