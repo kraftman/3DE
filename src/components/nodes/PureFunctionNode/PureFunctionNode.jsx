@@ -18,7 +18,6 @@ export const PureFunctionNode = ({ id, data }) => {
 
   return (
     <>
-      {/* {renderedHandles} */}
       <div className="text-updater-node" style={{ border: '2px solid black' }}>
         {!hasChildren && (
           <FunctionEditor

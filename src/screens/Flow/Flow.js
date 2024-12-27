@@ -16,6 +16,7 @@ import 'react-tooltip/dist/react-tooltip.css';
 import { ModuleNode } from '../../components/nodes/ModuleNode/ModuleNode.jsx';
 import { PureFunctionNode } from '../../components/nodes/PureFunctionNode/PureFunctionNode';
 import { CodeNode } from '../../components/nodes/CodeNode/CodeNode';
+import { PartialNode } from '../../components/nodes/PartialNode/PartialNode.js';
 import { ImageNode } from '../../components/nodes/ImageNode';
 import { FolderSelectButton } from '../../components/FolderSelectButton';
 import { BasicTree } from '../../components/FolderTree';
@@ -96,6 +97,7 @@ export const Flow = () => {
       code: CodeNode,
       module: ModuleNode,
       pureFunctionNode: PureFunctionNode,
+      partial: PartialNode,
       image: ImageNode,
     }),
     [TextNode, MarkdownNode, CodeNode, ModuleNode, PureFunctionNode, ImageNode]

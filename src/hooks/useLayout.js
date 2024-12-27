@@ -14,7 +14,6 @@ export const useLayout = () => {
 
       const moduleNodes = nodes.filter((node) => node.type === 'module');
       const edges = getEdges();
-      console.log('edges:', edges);
       edges.forEach((edge) => {
         dagreGraph.setEdge(edge.source, edge.target);
       });

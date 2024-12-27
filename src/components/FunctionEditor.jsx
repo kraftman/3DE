@@ -77,7 +77,10 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     }, [code]);
 
     return (
-      <pre className="language-javascript" style={{ fontSize: '12px' }}>
+      <pre
+        className="language-javascript"
+        style={{ fontSize: '12px', padding: '0px', paddingLeft: '20px' }}
+      >
         <code ref={placeholderRef}>{code}</code>
       </pre>
     );

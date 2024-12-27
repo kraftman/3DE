@@ -33,6 +33,7 @@ export const createChildNodes = (
   const fileInfo = flatFiles[moduleNode.data.fullPath];
   let childFiles = getChildFiles(flatFiles, fileInfo);
   if (childPath) {
+    console.log('finding child file for ', childPath);
     const file = findFileForImport(flatFiles, childPath);
     childFiles = [file];
   }
@@ -41,7 +42,9 @@ export const createChildNodes = (
   depth = depth + 1;
 
   const newNodes = [];
+  console.log('creating child nodes for ', childFiles);
   childFiles.forEach((file) => {
+    console.log('creating child nodes for ', file);
     const existingNode = nodes.find(
       (node) =>
         node.data.fullPath === file.index &&
@@ -49,7 +52,8 @@ export const createChildNodes = (
     );
     if (existingNode) {
       console.log('skipping module because it already exists');
-      return;
+      newNodes.push(existingNode);
+      //return existingNod
     }
     const newPos = {
       x: moduleNode.position.x + moduleNode.data.width + 100,

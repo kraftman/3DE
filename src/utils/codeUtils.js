@@ -1,4 +1,5 @@
 const { namedTypes: n, visit } = require('ast-types');
+import * as recast from 'recast';
 
 const getMaxWidth = (lines) => {
   let maxWidth = 0;
@@ -6,6 +7,11 @@ const getMaxWidth = (lines) => {
     maxWidth = Math.max(maxWidth, line.length);
   });
   return maxWidth;
+};
+
+export const getAstSize = (ast) => {
+  const code = recast.print(ast, { reuseWhitespace: true }).code;
+  return getEditorSize(code);
 };
 
 export const getEditorSize = (code) => {

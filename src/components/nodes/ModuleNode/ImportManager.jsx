@@ -23,7 +23,7 @@ const handleTextStyle = {
   textAlign: 'center',
 };
 
-// Base button style that all import-related buttons share:
+// Base button style that all import-related button
 const baseButtonStyle = {
   position: 'absolute',
   display: 'inline-flex',
@@ -99,9 +99,11 @@ const MissingImportHandle = ({ handle, data }) => {
  * so other handles can be stacked below it.
  */
 const FileImportHandle = ({ handle, data, top }) => {
-  const { toggleChildModule } = useNodeManager((store) => ({
-    toggleChildModule: store.toggleChildModule,
-  }));
+  const { toggleChildModule, togglePartialModule } = useNodeManager(
+    (store) => ({
+      toggleChildModule: store.toggleChildModule,
+    })
+  );
 
   const importButtons = handle.data.import.specifiers.map(
     (specifier, index) => {
@@ -112,6 +114,11 @@ const FileImportHandle = ({ handle, data, top }) => {
             console.log('func imort clicked', specifier);
             e.preventDefault();
             e.stopPropagation();
+            togglePartialModule(
+              data.moduleId,
+              handle.data.name,
+              specifier.local.name
+            );
           }}
           style={{
             ...fileImportButtonStyle,

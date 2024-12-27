@@ -1,6 +1,7 @@
 import { useStore } from '../contexts/useStore';
 import { useCallback, useEffect } from 'react';
 const { namedTypes: n, visit } = require('ast-types');
+import { v4 as uuid } from 'uuid';
 import {
   findChildIds,
   getFunctionContent,
@@ -33,6 +34,7 @@ import { useFileSystem } from '../stores/useFileSystem.js';
 import { useReactFlow } from '@xyflow/react';
 import { checkAndFixFunctionHoisting } from '../utils/checkAndFixFunctionHoisting.js';
 import { useLayout } from './useLayout.js';
+import { getAstSize } from '../utils/codeUtils';
 
 const positionIsInsideModule = (parent, newPos) => {
   return (
@@ -472,9 +474,80 @@ export const useNodeManager = () => {
     [flatFiles]
   );
 
+  const togglePartialModule = useCallback(
+    (moduleId, relativePath, functionName) => {
+      // need to open a module up as usual
+      // but with only one function in it, the one weve clicked
+
+      const nodes = getNodes();
+      const moduleNode = nodes.find((node) => node.id === moduleId);
+      const fullPath = path.join(
+        path.dirname(moduleNode.data.fullPath),
+        relativePath
+      );
+      console.log('toggle partial module', fullPath);
+      const fileInfo = findFileForImport(flatFiles, fullPath);
+      if (!fileInfo) {
+        console.error('could not find file for import', fullPath);
+      }
+      const functionNode = fileInfo.functions.find(
+        (func) => func.name === functionName
+      );
+      if (!functionNode) {
+        console.error('could not find function', functionName);
+      }
+      console.log('found function', functionNode);
+
+      const newSize = getAstSize(functionNode.node);
+
+      const newNode = {
+        id: uuid(),
+        parentId: moduleId,
+        type: 'partial',
+        position: {
+          x: moduleNode.position.x + moduleNode.data.width + 100,
+          y: 0,
+        },
+        width: newSize.width,
+        height: newSize.height,
+        data: {
+          fullPath: fileInfo.index,
+          moduleId: moduleId,
+          functionId: functionNode.id,
+          functionName: functionNode.name,
+          functionType: functionNode.type,
+          functionArgs: functionNode.parameters,
+          functionAsync: functionNode.async,
+        },
+        style: {
+          width: `${newSize.width}px`,
+          height: `${newSize.height}px`,
+        },
+      };
+      setNodes((nodes) => {
+        return nodes.concat(newNode);
+      });
+
+      const newEdge = {
+        id: uuid(),
+        source: moduleId,
+        target: newNode.id,
+        sourceHandle: moduleNode.id + '-' + fullPath + ':out',
+        targetHandle: newNode.id + '-handle',
+      };
+      setEdges((edges) => {
+        return edges.concat(newEdge);
+      });
+
+      layoutNodes();
+    },
+    [flatFiles]
+  );
+
   return {
     toggleShowRawCode,
     toggleCollapseModule,
+    togglePartialModule,
     createMissingImport,
     onNodeDragStart,
     onNodeDragStop,
