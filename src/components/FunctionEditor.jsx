@@ -59,7 +59,7 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
       funcInfo.async ? 'async ' : ''
     }function temp()  ${newText} `;
     console.log('wrapped code:', wrappedCode);
-    // maybe this should be moved to iinside the onFunctonTextChange
+    // maybe this should be moved to iinside the onFunctonTextChang
     const parsed = parseWithRecast(wrappedCode);
     if (parsed) {
       const newBodyStatements = parsed.program.body[0].body;

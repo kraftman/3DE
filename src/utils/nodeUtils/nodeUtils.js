@@ -1,15 +1,9 @@
 import { v4 as uuid } from 'uuid';
 
-import * as recast from 'recast';
-import { findReferences } from '../parser.js';
-
-import { parseWithRecast } from '../parseWithRecast.js';
-
 import { getNodesForFunctions } from './getNodesForFunctions.js';
 import { layoutChildren } from './layoutChildren.js';
-import { parseImports } from './parseImports.ts';
 
-import path from 'path-browserify';
+import { getAstSize } from '../codeUtils.js';
 
 export const findChildIds = (nodes, parentId) => {
   //rucursively find children from nodes and add to a flat array of children
@@ -64,22 +58,31 @@ export const getFunctionContent = (nodes, functionNode) => {
   return lines;
 };
 
-// export const getFunctionContent = (codeStrings, nodes, nodeId) => {
-//   const lines = [];
-//   const thisNode = nodes.find((node) => node.id === nodeId);
-//   const newLines = functionNodeToString(thisNode);
-//   const frameNodes = nodes.filter(
-//     (node) => node.parentId === parentId && node.type === 'pureFunctionNode'
-//   );
-//   console.log('found nodes:', frameNodes);
-//   frameNodes.forEach((codeNode) => {
-//     const signature = generateFunctionSignature(codeNode.data);
-//     codeStrings.push(signature);
-//     codeStrings.push(codeNode.data.content);
-//     getFunctionContent(codeStrings, nodes, codeNode.id);
-//     codeStrings.push('}');
-//   });
-// };
+export const createPartialNode = (foundFunction, moduleNode, newPath) => {
+  const newSize = getAstSize(foundFunction.node);
+
+  const newNode = {
+    id: uuid(),
+    parentId: moduleNode.id,
+    type: 'partial',
+    position: {
+      x: moduleNode.position.x + moduleNode.data.width + 100,
+      y: 0,
+    },
+    width: newSize.width,
+    height: newSize.height,
+    data: {
+      fullPath: newPath,
+      moduleId: moduleNode.id,
+      functionId: foundFunction.id,
+    },
+    style: {
+      width: `${newSize.width}px`,
+      height: `${newSize.height}px`,
+    },
+  };
+  return newNode;
+};
 
 const getEdges = (handles) => {
   // loop through all the handles and create edges between them
@@ -109,56 +112,6 @@ const getEdges = (handles) => {
   });
   return edges;
 };
-
-// const createHandles = () => {
-//   const functionCalls = findCallExpressions(func.localAst);
-
-//   const functionHandles = functionCalls.map((call, index) => {
-//     const line = call.node.loc.start.line;
-
-//     const key = 'func:' + call.name + ':out' + index;
-
-//     return {
-//       moduleId: newModuleId,
-//       funcName: call.name,
-//       parentId: func.id + 'code',
-//       refType: 'functionCall',
-//       id: key,
-//       key: key,
-//       type: 'source',
-//       position: 'right',
-//       style: {
-//         top: 14 * line,
-//       },
-//       data: {
-//         name: call.name,
-//       },
-//     };
-//   });
-//   // the main function handle
-//   const functionDefinitionHandle = {
-//     moduleId: newModuleId,
-//     parentId: func.id + 'code',
-//     funcName: func.name,
-//     refType: 'functionDefinition',
-//     id: func.name + ':func',
-//     key: func.name + ':func',
-//     type: 'source',
-//     position: 'left',
-//     style: {
-//       top: -10,
-//       left: -20,
-//     },
-//     data: {
-//       name: '',
-//     },
-//   };
-//   handles.push(functionDefinitionHandle);
-//   allHandles.push(functionDefinitionHandle);
-
-//   handles = handles.concat(functionHandles);
-//   allHandles = allHandles.concat(functionHandles);
-// };
 
 export const getImportHandles = (imports, moduleId) => {
   const localImports = imports.filter((imp) => imp.importType === 'local');
