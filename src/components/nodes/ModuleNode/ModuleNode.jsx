@@ -20,7 +20,6 @@ import * as recast from 'recast';
 
 import { useShallow } from 'zustand/react/shallow';
 import { FunctionEditor } from '../../FunctionEditor';
-import { useLayout } from '../../../hooks/useLayout';
 import { getFileNameFromPath } from '../../../utils/fileUtils';
 import { ImportManager } from './ImportManager';
 

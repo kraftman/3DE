@@ -21,7 +21,6 @@ export const useLayout = () => {
       });
 
       moduleNodes.forEach((moduleNode) => {
-        console.log('=======', moduleNode.data.width);
         dagreGraph.setNode(moduleNode.id, {
           width: moduleNode.data.isCollapsed ? 200 : moduleNode.data.width,
           height: moduleNode.data.isCollapsed ? 50 : moduleNode.data.height,
@@ -29,6 +28,9 @@ export const useLayout = () => {
       });
 
       dagre.layout(dagreGraph);
+      // if we want the parent to not move, we need to adjust the position of the children
+      // relative the parents offset. if we want to do this we need to calculate the parent
+      // which could be tricky if there are multiple parents
 
       return nodes.map((node) => {
         const layout = dagreGraph.node(node.id);
