@@ -127,7 +127,6 @@ export const hideModuleChildren = (nodes, moduleId) => {
   const childModules = nodes.filter(
     (node) => node.data.parentId === moduleId && node.type === 'module'
   );
-  console.log('found child modules:', childModules);
   let foundNodes = [];
   for (const child of childModules) {
     foundNodes.push(child);

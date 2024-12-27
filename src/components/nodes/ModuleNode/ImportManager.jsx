@@ -132,7 +132,6 @@ const FileImportHandle = ({ handle, data, top }) => {
       );
     }
   );
-  console.log('import buttons', importButtons);
 
   return (
     <div>
@@ -239,7 +238,6 @@ export const ImportManager = ({ flatFiles, data }) => {
     // If we found the file for the import:
     if (findFileForImport(flatFiles, handle.data.fullPath)) {
       const importCount = handle?.data?.import?.specifiers?.length || 1;
-      console.log('imporots', handle.data.import.specifiers);
       const topForThisHandle = currentTop;
 
       // Increase currentTop by however tall you think this handle is:

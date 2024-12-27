@@ -14,7 +14,6 @@ export const BasicTree = () => {
 
   const flatFiles = useFileSystem((state) => state.flatFiles);
 
-  //console.log('flatFiles in tree', flatFiles);
   const { onFileSelected } = useFileManager();
 
   const { screenToFlowPosition } = useReactFlow();

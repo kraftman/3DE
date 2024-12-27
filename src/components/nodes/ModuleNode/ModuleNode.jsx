@@ -58,7 +58,6 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const [fileName, setFileName] = useState(data?.fullPath);
   const [fileNameError, setFileNameError] = useState(false);
-  const { layoutNodes } = useLayout((state) => state.layoutNodes);
 
   const rootCodeAst = useFileSystem(
     useShallow((state) => {

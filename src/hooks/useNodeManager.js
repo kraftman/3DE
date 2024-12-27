@@ -488,7 +488,8 @@ export const useNodeManager = () => {
       const existingNode = nodes.find(
         (node) =>
           node.data.fullPath === fileInfo.index &&
-          node.data.functionId === foundFunction.id
+          node.data.functionId === foundFunction.id &&
+          node.type === 'partial'
       );
       if (existingNode) {
         setNodes((nodes) => {

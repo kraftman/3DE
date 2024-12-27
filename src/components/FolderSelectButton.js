@@ -1,6 +1,6 @@
 import React from 'react';
 import Button from '@mui/material/Button';
-import { selectFolder, loadFolderTree } from '../electronHelpers';
+import { selectFolder } from '../electronHelpers';
 
 export const FolderSelectButton = ({ onFolderSelected }) => {
   const handleButtonClick = async () => {

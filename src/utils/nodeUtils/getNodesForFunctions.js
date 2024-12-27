@@ -13,6 +13,7 @@ export const getNodesForFunctions = (func, fullPath, moduleId) => {
       functionArgs: func.parameters,
       functionAsync: func.async,
       content: func.body,
+      parentId: moduleId,
       depth: func.depth,
       functionId: func.id,
       moduleId: moduleId,

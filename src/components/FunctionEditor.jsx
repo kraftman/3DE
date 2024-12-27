@@ -14,9 +14,7 @@ import * as recast from 'recast';
 import Prism from 'prismjs';
 import 'prism-themes/themes/prism-vsc-dark-plus.css';
 
-// Import languages you need
 import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-python';
 
 loader.config({ monaco });
 
