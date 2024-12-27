@@ -12,13 +12,16 @@ export const useLayout = () => {
       );
       dagreGraph.setGraph({ rankdir: 'LR' });
 
-      const moduleNodes = nodes.filter((node) => node.type === 'module');
+      const moduleNodes = nodes.filter(
+        (node) => node.type === 'module' || node.type === 'partial'
+      );
       const edges = getEdges();
       edges.forEach((edge) => {
         dagreGraph.setEdge(edge.source, edge.target);
       });
 
       moduleNodes.forEach((moduleNode) => {
+        console.log('=======', moduleNode.data.width);
         dagreGraph.setNode(moduleNode.id, {
           width: moduleNode.data.isCollapsed ? 200 : moduleNode.data.width,
           height: moduleNode.data.isCollapsed ? 50 : moduleNode.data.height,

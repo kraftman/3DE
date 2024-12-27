@@ -61,13 +61,17 @@ export const getFunctionContent = (nodes, functionNode) => {
 export const createPartialNode = (foundFunction, moduleNode, newPath) => {
   const newSize = getAstSize(foundFunction.node);
 
+  const newPos = {
+    x: moduleNode.position.x + moduleNode.data.width + 100,
+    y: 0,
+  };
+
   const newNode = {
     id: uuid(),
     parentId: moduleNode.id,
     type: 'partial',
     position: {
-      x: moduleNode.position.x + moduleNode.data.width + 100,
-      y: 0,
+      ...newPos,
     },
     width: newSize.width,
     height: newSize.height,
@@ -75,6 +79,8 @@ export const createPartialNode = (foundFunction, moduleNode, newPath) => {
       fullPath: newPath,
       moduleId: moduleNode.id,
       functionId: foundFunction.id,
+      ...newPos,
+      ...newSize,
     },
     style: {
       width: `${newSize.width}px`,

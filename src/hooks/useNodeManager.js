@@ -487,7 +487,7 @@ export const useNodeManager = () => {
 
       const existingNode = nodes.find(
         (node) =>
-          node.data.fullPath === fullPath &&
+          node.data.fullPath === fileInfo.index &&
           node.data.functionId === foundFunction.id
       );
       if (existingNode) {
