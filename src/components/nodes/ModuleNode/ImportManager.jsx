@@ -2,6 +2,7 @@ import React from 'react';
 import { Handle } from '@xyflow/react';
 import { findFileForImport } from '../../../utils/fileUtils';
 import { useNodeManager } from '../../../hooks/useNodeManager';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 //
 // SHARED STYLES
@@ -29,13 +30,13 @@ const baseButtonStyle = {
   display: 'inline-flex',
   justifyContent: 'center',
   alignItems: 'center',
+  transform: 'translate(50%, 0)',
   fontSize: '10px',
   backgroundColor: 'black',
   padding: '2px 4px',
   boxSizing: 'border-box',
   borderRadius: '4px',
   textAlign: 'center',
-  transform: 'translate(50%, 0)',
 };
 
 // Variants for different scenarios
@@ -98,7 +99,7 @@ const MissingImportHandle = ({ handle, data }) => {
  * FileImportHandle, but expects a computed `top` from the parent
  * so other handles can be stacked below it.
  */
-const FileImportHandle = ({ handle, data, top }) => {
+const FileImportHandle = ({ handle, data, top, onClick, showChildren }) => {
   const { toggleChildModule, togglePartialModule } = useNodeManager(
     (store) => ({
       toggleChildModule: store.toggleChildModule,
@@ -143,21 +144,59 @@ const FileImportHandle = ({ handle, data, top }) => {
         // We override the top with our computed offset:
         style={{ ...handle.style, top }}
       />
-      <button
-        onClick={() => {
-          const depth = 1;
-          toggleChildModule(data.moduleId, handle.data.fullPath, depth);
-        }}
-        key={handle.key + '_button'}
+      <div
         style={{
           ...fileImportButtonStyle,
           top: top + 5,
           right: handle.style.right,
+          backgroundColor: '#333', // Dark background for the div
+          padding: '0px',
+          borderRadius: '4px',
+          display: 'flex',
+          gap: '8px', // Space between buttons
+          alignItems: 'center',
         }}
       >
-        {handle.data.name}
-      </button>
-      {importButtons}
+        <button
+          style={{
+            backgroundColor: '#444', // Dark button background
+            color: '#fff', // White text
+            border: 'none',
+            borderRadius: '2px',
+            padding: '0px',
+            cursor: 'pointer',
+            fontSize: '14px',
+          }}
+          onClick={() => {
+            const depth = 1;
+            onClick();
+          }}
+          key={handle.key + '_button'}
+        >
+          {handle.data.name}
+        </button>
+        <button
+          style={{
+            backgroundColor: '#444',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '2px',
+            padding: '0px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => {
+            console.log('handle click', handle);
+            const depth = 1;
+            toggleChildModule(data.moduleId, handle.data.fullPath, depth);
+          }}
+        >
+          <ArrowForwardIcon style={{ color: '#fff', fontSize: '16px' }} />
+        </button>
+      </div>
+      {showChildren[handle.key] ? importButtons : null}
     </div>
   );
 };
@@ -200,6 +239,7 @@ export const ImportManager = ({ flatFiles, data }) => {
   let currentTop = 100;
 
   const handleSpacing = 30;
+  const [showChildren, setShowChildren] = React.useState({});
 
   // Build up all your handles:
   const allHandles = data?.handles?.map((handle) => {
@@ -235,13 +275,17 @@ export const ImportManager = ({ flatFiles, data }) => {
       );
     }
 
-    // If we found the file for the import:
+    // If we found the file for the import
     if (findFileForImport(flatFiles, handle.data.fullPath)) {
       const importCount = handle?.data?.import?.specifiers?.length || 1;
       const topForThisHandle = currentTop;
 
       // Increase currentTop by however tall you think this handle is:
-      currentTop += importCount * handleSpacing;
+      if (showChildren[handle.key]) {
+        currentTop += importCount * handleSpacing;
+      } else {
+        currentTop += handleSpacing;
+      }
 
       return (
         <FileImportHandle
@@ -249,6 +293,13 @@ export const ImportManager = ({ flatFiles, data }) => {
           handle={handle}
           data={data}
           top={topForThisHandle}
+          showChildren={showChildren}
+          onClick={() => {
+            setShowChildren({
+              ...showChildren,
+              [handle.key]: !showChildren[handle.key],
+            });
+          }}
         />
       );
     }

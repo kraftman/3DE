@@ -464,7 +464,7 @@ export const useNodeManager = () => {
         // TODO fix edges here
         const newEdges = findHandleEdges(edges, nodes, moduleNodes);
         setNodes((nodes) => nodes.concat(newNodes));
-        setEdges((edges) => [...edges, ...newEdges]);
+        setEdges((edges) => edges.concat(newEdges));
 
         layoutNodes();
       }
@@ -522,9 +522,7 @@ export const useNodeManager = () => {
         sourceHandle: moduleNode.id + '-' + fullPath + ':out',
         targetHandle: newNode.id + '-handle',
       };
-      setEdges((edges) => {
-        return edges.concat(newEdge);
-      });
+      setEdges((edges) => edges.concat(newEdge));
 
       layoutNodes();
     },

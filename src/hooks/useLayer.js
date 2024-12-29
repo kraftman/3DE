@@ -61,7 +61,7 @@ export const useLayer = () => {
       );
 
       setNodes(newNodes);
-      setEdges((edges) => [...edges, ...newEdges]);
+      setEdges((edges) => edges.concat(newEdges));
 
       layoutNodes();
     },

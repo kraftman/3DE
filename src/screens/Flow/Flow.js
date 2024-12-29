@@ -85,9 +85,7 @@ export const Flow = () => {
   };
 
   const onEdgesChange = (changes) => {
-    setEdges((prevEdges) => {
-      applyEdgeChanges(changes, prevEdges);
-    });
+    setEdges((prevEdges) => applyEdgeChanges(changes, prevEdges));
   };
 
   const nodeTypes = useMemo(
