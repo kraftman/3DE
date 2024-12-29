@@ -3,6 +3,10 @@ import { Handle } from '@xyflow/react';
 import { findFileForImport } from '../../../utils/fileUtils';
 import { useNodeManager } from '../../../hooks/useNodeManager';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { Box, TextField } from '@mui/material';
+import { AddImportModal } from './AddImportModal';
+
+import { Modal } from '@mui/material';
 
 //
 // SHARED STYLES
@@ -240,6 +244,7 @@ export const ImportManager = ({ flatFiles, data }) => {
 
   const handleSpacing = 30;
   const [showChildren, setShowChildren] = React.useState({});
+  const [isOpen, setIsOpen] = React.useState(false);
 
   // Build up all your handles:
   const allHandles = data?.handles?.map((handle) => {
@@ -308,5 +313,11 @@ export const ImportManager = ({ flatFiles, data }) => {
     return <MissingImportHandle key={handle.key} handle={handle} data={data} />;
   });
 
-  return <>{allHandles}</>;
+  return (
+    <>
+      {allHandles}
+      <button onClick={() => setIsOpen(true)}>Open Modal</button>
+      <AddImportModal open={isOpen} onClose={() => setIsOpen(false)} />
+    </>
+  );
 };
