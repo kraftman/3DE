@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FunctionEditor } from '../../FunctionEditor';
 import { useFileSystem } from '../../../stores/useFileSystem';
+import { Handle } from '@xyflow/react';
 
 export const PureFunctionNode = ({ id, data }) => {
   const fileInfo = useFileSystem((state) => {
@@ -25,6 +26,16 @@ export const PureFunctionNode = ({ id, data }) => {
             functionId={data.functionId}
           />
         )}
+        <Handle
+          type="source"
+          position="left"
+          id={id + data.functionId + ':out'}
+        />
+        <Handle
+          type="target"
+          position="right"
+          id={id + data.functionId + ':in'}
+        />
       </div>
     </>
   );

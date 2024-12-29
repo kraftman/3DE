@@ -4,6 +4,7 @@ import { getNodesForFunctions } from './getNodesForFunctions.js';
 import { layoutChildren } from './layoutChildren.js';
 
 import { getAstSize } from '../codeUtils.js';
+import * as recast from 'recast';
 
 export const findChildIds = (nodes, parentId) => {
   //rucursively find children from nodes and add to a flat array of children
@@ -90,32 +91,106 @@ export const createPartialNode = (foundFunction, moduleNode, newPath) => {
   return newNode;
 };
 
-const getEdges = (handles) => {
-  // loop through all the handles and create edges between them
-  // how to avoid duplicates when checking each side?
-  const callHandles = handles.filter(
-    (handle) => handle.refType === 'functionCall'
-  );
+// const getEdges = (handles) => {
+//   // loop through all the handles and create edges between them
+//   // how to avoid duplicates when checking each side?
+//   const callHandles = handles.filter(
+//     (handle) => handle.refType === 'functionCall'
+//   );
+//   const edges = [];
+//   callHandles.forEach((handle) => {
+//     const targetHandles = handles.filter(
+//       (h) =>
+//         h.funcName === handle.funcName &&
+//         (h.refType === 'functionDefinition' || h.refType === 'import')
+//     );
+//     targetHandles.forEach((target) => {
+//       if (target.parentId !== handle.id) {
+//         const newEdge = {
+//           id: handle.id + target.id,
+//           source: handle.parentId,
+//           sourceHandle: handle.id,
+//           target: target.parentId,
+//           targetHandle: target.id,
+//         };
+//         edges.push(newEdge);
+//       }
+//     });
+//   });
+//   return edges;
+// };
+
+const isFunctionInvoked = (ast, functionName) => {
+  let isInvoked = false;
+
+  recast.visit(ast, {
+    visitCallExpression(path) {
+      const { callee } = path.node;
+
+      // Check if the callee is an identifier and matches the function name
+      if (callee.type === 'Identifier' && callee.name === functionName) {
+        isInvoked = true;
+        return false; // Exit early since we found a match
+      }
+
+      // Check if the callee is a member expression (e.g., obj.method)
+      if (
+        callee.type === 'MemberExpression' &&
+        callee.property.type === 'Identifier' &&
+        callee.property.name === functionName
+      ) {
+        isInvoked = true;
+        return false; // Exit early since we found a match
+      }
+
+      this.traverse(path);
+    },
+  });
+
+  return isInvoked;
+};
+
+export const getInternalEdges = (fileInfo, functionNodes, moduleNode) => {
+  // TODO: this doesnt account for functions that are inside other functions.
   const edges = [];
-  callHandles.forEach((handle) => {
-    const targetHandles = handles.filter(
-      (h) =>
-        h.funcName === handle.funcName &&
-        (h.refType === 'functionDefinition' || h.refType === 'import')
-    );
-    targetHandles.forEach((target) => {
-      if (target.parentId !== handle.id) {
-        const newEdge = {
-          id: handle.id + target.id,
-          source: handle.parentId,
-          sourceHandle: handle.id,
-          target: target.parentId,
-          targetHandle: target.id,
-        };
-        edges.push(newEdge);
+  const { functions, exports } = fileInfo;
+  functions.forEach((funcDefinition) => {
+    // find any other function that calls this function
+    functions.forEach((funcCall) => {
+      const isCalled = isFunctionInvoked(funcCall.node, funcDefinition.name);
+      if (isCalled) {
+        const sourceNode = functionNodes.find(
+          (node) => node.data.functionId === funcCall.id
+        );
+        const targetNode = functionNodes.find(
+          (node) => node.data.functionId === funcDefinition.id
+        );
+        edges.push({
+          id: sourceNode.id + targetNode.id,
+          moduleId: moduleNode.id,
+          target: sourceNode.id,
+          source: targetNode.id,
+          isInternal: true,
+        });
       }
     });
+    if (exports.find((exp) => exp.name === funcDefinition.name)) {
+      const sourceNode = moduleNode;
+      const targetNode = functionNodes.find(
+        (node) => node.data.functionId === funcDefinition.id
+      );
+      if (sourceNode && targetNode) {
+        edges.push({
+          id: sourceNode.id + targetNode.id,
+          moduleId: moduleNode.id,
+          target: sourceNode.id,
+          source: targetNode.id,
+        });
+      }
+    }
   });
+  console.log('exports:', exports);
+
   return edges;
 };
 
@@ -198,14 +273,10 @@ export const getModuleNodes = (fileInfo) => {
     },
   };
 
-  // Internal edges, needs moving out
-  const edges = getEdges(moduleHandles);
-
   return {
     id: newModuleId,
     moduleNode,
     // rootCode,
     children,
-    edges,
   };
 };

@@ -207,7 +207,6 @@ export const LayerManager = () => {
   const currentLayer = useStore((store) => store.currentLayer);
 
   const onNewLayer = () => {
-    console.log('adding new layer', Object.keys(layers).length);
     setLayers((layers) => {
       const layerCount = Object.keys(layers).length;
       return {
@@ -219,6 +218,7 @@ export const LayerManager = () => {
         },
       };
     });
+    setCurrentLayer(Object.keys(layers).length);
   };
 
   const onLayerSelected = (layerName) => {

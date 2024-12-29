@@ -1,8 +1,5 @@
 import { useStore } from '../contexts/useStore';
 import { useCallback } from 'react';
-import { isValidCode } from '../screens/Flow/utils.js';
-import path from 'path-browserify';
-import { enqueueSnackbar } from 'notistack';
 import { loadFolderTree, loadFile } from '../electronHelpers';
 import { flattenFileTree } from '../screens/Flow/utils';
 import * as recast from 'recast';
@@ -16,6 +13,8 @@ import { useFileSystem } from '../stores/useFileSystem.js';
 import { getNodesForFile } from '../utils/getNodesForFile.js';
 import { useShallow } from 'zustand/react/shallow';
 import { saveFile } from '../electronHelpers';
+import { getInternalEdges } from '../utils/nodeUtils/nodeUtils.js';
+import { layoutInternalNodes } from './useLayout.js';
 
 export const useFileManager = () => {
   const { flatFiles, setFlatFiles, setRootPath, setFolderData } = useFileSystem(
@@ -26,10 +25,11 @@ export const useFileManager = () => {
       flatFiles: state.flatFiles,
     }))
   );
-  const { setNodes, getNodes } = useStore(
+  const { setNodes, getNodes, setEdges } = useStore(
     useShallow((state) => ({
       setNodes: state.setNodes,
       getNodes: state.getNodes,
+      setEdges: state.setEdges,
     }))
   );
 
@@ -147,6 +147,15 @@ export const useFileManager = () => {
       const fileInfo = flatFiles[fullPath];
 
       const newNodes = getNodesForFile(fileInfo, newPos, null);
+      const functionNodes = newNodes.filter(
+        (node) => node.type === 'pureFunctionNode'
+      );
+
+      const moduleNode = newNodes.find((node) => node.type === 'module');
+      const newEdges = getInternalEdges(fileInfo, functionNodes, moduleNode);
+
+      layoutInternalNodes(newNodes, newEdges);
+      setEdges((oldEdges) => oldEdges.concat(newEdges));
       setNodes((nodes) => nodes.concat(newNodes));
     },
     [flatFiles]

@@ -186,9 +186,19 @@ const getExports = (ast) => {
   visit(ast, {
     visitExportNamedDeclaration(path) {
       const exportNode = path.node;
+      let name = null;
+
+      if (exportNode.declaration) {
+        if (exportNode.declaration.type === 'VariableDeclaration') {
+          name = exportNode.declaration.declarations[0]?.id?.name;
+        } else {
+          name = exportNode.declaration.id?.name;
+        }
+      }
+
       myExports.push({
         node: exportNode,
-        name: exportNode.declaration?.id?.name || null,
+        name,
         declarations: recast.print(exportNode, { reuseWhitespace: true }).code,
       });
       this.traverse(path);
