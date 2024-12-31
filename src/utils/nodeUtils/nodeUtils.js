@@ -194,34 +194,6 @@ export const getInternalEdges = (fileInfo, functionNodes, moduleNode) => {
   return edges;
 };
 
-export const getImportHandles = (imports, moduleId) => {
-  const localImports = imports.filter((imp) => imp.importType === 'local');
-
-  return localImports.map((imp, index) => {
-    return {
-      moduleId: moduleId,
-      parentId: moduleId,
-      funcName: imp.moduleSpecifier,
-      refType: 'import',
-      id: moduleId + '-' + imp.fullPath + ':out',
-      key: imp.fullPath + ':out',
-      type: 'source',
-      position: 'right',
-      style: {
-        top: 100 + 30 * index,
-        right: 0,
-        borderColor: imp.importType === 'local' ? 'blue' : 'green',
-      },
-      data: {
-        name: imp.moduleSpecifier,
-        fullPath: imp.fullPath,
-        importType: imp.importType,
-        import: imp,
-      },
-    };
-  });
-};
-
 export const getModuleNodes = (fileInfo) => {
   const fullPath = fileInfo.index;
 
@@ -242,8 +214,6 @@ export const getModuleNodes = (fileInfo) => {
 
   children = children.reverse();
 
-  const moduleHandles = getImportHandles(fileInfo.imports, newModuleId);
-
   const baseSize = {
     width: 200,
     height: 100,
@@ -256,7 +226,7 @@ export const getModuleNodes = (fileInfo) => {
     data: {
       exports: fileInfo.exports,
       imports: fileInfo.imports,
-      handles: moduleHandles,
+      handles: [],
       moduleId: newModuleId,
       fullPath: fullPath,
       width: moduleWidth + 30,

@@ -3,13 +3,10 @@ import { Handle } from '@xyflow/react';
 import { findFileForImport } from '../../../utils/fileUtils';
 import { useNodeManager } from '../../../hooks/useNodeManager';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Box, TextField } from '@mui/material';
 import { AddImportModal } from './AddImportModal';
 import path from 'path-browserify';
 
 const { namedTypes: n, visit, builders: b } = require('ast-types');
-
-import { Modal } from '@mui/material';
 
 //
 // SHARED STYLES
@@ -278,6 +275,34 @@ function addImports(thisPath, ast, exportNodes) {
   });
 }
 
+export const getImportHandles = (imports, moduleId) => {
+  const localImports = imports.filter((imp) => imp.importType === 'local');
+
+  return localImports.map((imp, index) => {
+    return {
+      moduleId: moduleId,
+      parentId: moduleId,
+      funcName: imp.moduleSpecifier,
+      refType: 'import',
+      id: moduleId + '-' + imp.fullPath + ':out',
+      key: imp.fullPath + ':out',
+      type: 'source',
+      position: 'right',
+      style: {
+        top: 100 + 30 * index,
+        right: 0,
+        borderColor: imp.importType === 'local' ? 'blue' : 'green',
+      },
+      data: {
+        name: imp.moduleSpecifier,
+        fullPath: imp.fullPath,
+        importType: imp.importType,
+        import: imp,
+      },
+    };
+  });
+};
+
 export const ImportManager = ({ flatFiles, data }) => {
   let currentTop = 100;
 
@@ -288,17 +313,17 @@ export const ImportManager = ({ flatFiles, data }) => {
   const fileInfo = flatFiles[data.fullPath];
 
   const handleNewImports = (newExports) => {
-    console.log('new imports', newExports);
     setIsOpen(false);
     if (!newExports) {
       return;
     }
     addImports(data.fullPath, fileInfo.fullAst, newExports);
-    console.log('new imports', newExports);
   };
 
-  // Build up all your handles:
-  const allHandles = data?.handles?.map((handle) => {
+  const handles = getImportHandles(fileInfo.imports, data.moduleId);
+
+  // Build up all your handles
+  const allHandles = handles?.map((handle) => {
     if (handle.refType !== 'import') {
       // Non-import handles remain the same
       return (

@@ -2,10 +2,7 @@ import { useStore } from '../contexts/useStore';
 import { useCallback } from 'react';
 const { namedTypes: n, visit } = require('ast-types');
 import { v4 as uuid } from 'uuid';
-import {
-  findChildIds,
-  getImportHandles,
-} from '../utils/nodeUtils/nodeUtils.js';
+import { findChildIds } from '../utils/nodeUtils/nodeUtils.js';
 import * as recast from 'recast';
 import { createChildNodes } from '../utils/createChildNodes.js';
 
@@ -346,17 +343,12 @@ export const useNodeManager = () => {
             type: 'local',
             fullPath: stripExt(newPath),
           };
-          const newHandles = getImportHandles(
-            node.data.imports.concat(newImport),
-            node.id
-          );
 
           return {
             ...node,
             data: {
               ...node.data,
               imports: node.data.imports.concat(newImport),
-              handles: newHandles,
             },
           };
         }
