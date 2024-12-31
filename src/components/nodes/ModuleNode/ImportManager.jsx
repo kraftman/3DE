@@ -5,6 +5,9 @@ import { useNodeManager } from '../../../hooks/useNodeManager';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Box, TextField } from '@mui/material';
 import { AddImportModal } from './AddImportModal';
+import path from 'path-browserify';
+
+const { namedTypes: n, visit, builders: b } = require('ast-types');
 
 import { Modal } from '@mui/material';
 
@@ -239,12 +242,60 @@ const ModuleImportHandle = ({ handle, data }) => {
   );
 };
 
+function addImports(thisPath, ast, exportNodes) {
+  const importDeclarations = ast.program.body.filter(
+    (node) => node.type === 'ImportDeclaration'
+  );
+
+  exportNodes.forEach((exportNode) => {
+    // Check if there's already an import from the target file
+    const relativePath = path.relative(path.dirname(thisPath), exportNode.path);
+    let targetImport = importDeclarations.find(
+      (node) => node.source.value === relativePath
+    );
+
+    if (!targetImport) {
+      // Create a new ImportDeclaration
+      targetImport = b.importDeclaration(
+        [b.importSpecifier(b.identifier(exportNode.name))],
+        b.literal(relativePath)
+      );
+      // Add the new import at the top of the file
+      ast.program.body.unshift(targetImport);
+    } else {
+      // Check if the specifier already exists to avoid duplicates
+      const specifierExists = targetImport.specifiers.some(
+        (specifier) => specifier.imported.name === exportNode.name
+      );
+
+      if (!specifierExists) {
+        // Add a new ImportSpecifier to the existing ImportDeclaration
+        targetImport.specifiers.push(
+          b.importSpecifier(b.identifier(exportNode.name))
+        );
+      }
+    }
+  });
+}
+
 export const ImportManager = ({ flatFiles, data }) => {
   let currentTop = 100;
 
   const handleSpacing = 30;
   const [showChildren, setShowChildren] = React.useState({});
   const [isOpen, setIsOpen] = React.useState(false);
+
+  const fileInfo = flatFiles[data.fullPath];
+
+  const handleNewImports = (newExports) => {
+    console.log('new imports', newExports);
+    setIsOpen(false);
+    if (!newExports) {
+      return;
+    }
+    addImports(data.fullPath, fileInfo.fullAst, newExports);
+    console.log('new imports', newExports);
+  };
 
   // Build up all your handles:
   const allHandles = data?.handles?.map((handle) => {
@@ -317,7 +368,7 @@ export const ImportManager = ({ flatFiles, data }) => {
     <>
       {allHandles}
       <button onClick={() => setIsOpen(true)}>Open Modal</button>
-      <AddImportModal open={isOpen} onClose={() => setIsOpen(false)} />
+      <AddImportModal open={isOpen} onClose={handleNewImports} />
     </>
   );
 };
