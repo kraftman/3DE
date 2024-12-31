@@ -33,6 +33,7 @@ const darkTheme = createTheme({
 
 export const AddImportModal = ({ open, onClose }) => {
   const flatFiles = useFileSystem((state) => state.flatFiles);
+  const rootPath = useFileSystem((state) => state.rootPath);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -76,6 +77,8 @@ export const AddImportModal = ({ open, onClose }) => {
     }
   };
 
+  const toRelativePath = (path) => path.replace(rootPath, '');
+
   const handleDeleteExport = (exportToDelete) => {
     setSelectedExports((prev) =>
       prev.filter(
@@ -101,7 +104,7 @@ export const AddImportModal = ({ open, onClose }) => {
       {Object.entries(groupedExports).map(([path, exports]) => (
         <Box key={path} sx={{ mb: 2 }}>
           <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 1 }}>
-            from '{path}':
+            from &#39;{toRelativePath(path)}&#39;:
           </Typography>
           <Box sx={{ ml: 2 }}>
             {exports.map((exp) => (
@@ -146,14 +149,17 @@ export const AddImportModal = ({ open, onClose }) => {
     .filter(
       ([key, value]) => value.exports?.length > 0 && key.includes(searchTerm)
     )
-    .map(([key, value]) => (
-      <ListItem button key={key} onClick={() => handleFileSelect(value)}>
-        <ListItemText
-          primary={key}
-          primaryTypographyProps={{ color: 'text.primary' }}
-        />
-      </ListItem>
-    ));
+    .map(([key, value]) => {
+      const relativePath = value.index.replace(rootPath, '');
+      return (
+        <ListItem button key={key} onClick={() => handleFileSelect(value)}>
+          <ListItemText
+            primary={relativePath}
+            primaryTypographyProps={{ color: 'text.primary' }}
+          />
+        </ListItem>
+      );
+    });
 
   return (
     <ThemeProvider theme={darkTheme}>
