@@ -9,7 +9,11 @@ import {
   ListItemText,
   Button,
   Divider,
+  IconButton,
+  ListItemSecondaryAction,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useFileSystem } from '../../../stores/useFileSystem';
 
@@ -17,12 +21,12 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     background: {
-      paper: '#121212', // Darker background for modal
-      default: '#1e1e1e', // Slightly lighter background for contrast
+      paper: '#121212',
+      default: '#1e1e1e',
     },
     text: {
-      primary: '#ffffff', // White text for high contrast
-      secondary: '#b0b0b0', // Light grey for secondary text
+      primary: '#ffffff',
+      secondary: '#b0b0b0',
     },
   },
 });
@@ -32,7 +36,6 @@ export const AddImportModal = ({ open, onClose }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [preview, setPreview] = useState('');
   const [selectedExports, setSelectedExports] = useState([]);
 
   const handleSearch = (event) => {
@@ -40,57 +43,117 @@ export const AddImportModal = ({ open, onClose }) => {
   };
 
   const handleFileSelect = (file) => {
-    console.log('file selected', file);
     setSelectedFile(file);
   };
 
-  const handleExportSelect = (myExport) => {
-    console.log('export selected', myExport);
-    console.log('selected file index', selectedFile.index);
-
-    setSelectedExports((prev) => [
-      ...prev,
-      {
-        ...myExport,
-        path: selectedFile.index,
-      },
-    ]);
-  };
-
-  const ExportPreview = ({ export: myExport }) => {
-    if (!myExport) {
-      return '';
-    }
-    return (
-      <>
-        <span
-          style={{ color: '#569cd6' }}
-        >{`${myExport.name} from ${myExport.path}`}</span>
-      </>
+  const isExportSelected = (myExport) => {
+    return selectedExports.some(
+      (selected) =>
+        selected.name === myExport.name && selected.path === selectedFile?.index
     );
   };
 
-  const ExportPreviews = selectedExports.map((myExport) => (
-    <ExportPreview key={myExport.name} export={myExport} />
-  ));
+  const handleExportToggle = (myExport) => {
+    const isSelected = isExportSelected(myExport);
 
-  const ListItems = [];
-
-  for (const [key, value] of Object.entries(flatFiles)) {
-    if (!value.exports || value.exports.length === 0) {
-      continue;
-    }
-    if (key.includes(searchTerm)) {
-      ListItems.push(
-        <ListItem button key={key} onClick={() => handleFileSelect(value)}>
-          <ListItemText
-            primary={key}
-            primaryTypographyProps={{ color: 'text.primary' }} // Ensures text is white
-          />
-        </ListItem>
+    if (isSelected) {
+      // Remove the export
+      setSelectedExports((prev) =>
+        prev.filter(
+          (exp) =>
+            !(exp.name === myExport.name && exp.path === selectedFile.index)
+        )
       );
+    } else {
+      // Add the export
+      setSelectedExports((prev) => [
+        ...prev,
+        {
+          ...myExport,
+          path: selectedFile.index,
+        },
+      ]);
     }
-  }
+  };
+
+  const handleDeleteExport = (exportToDelete) => {
+    setSelectedExports((prev) =>
+      prev.filter(
+        (exp) =>
+          !(
+            exp.name === exportToDelete.name && exp.path === exportToDelete.path
+          )
+      )
+    );
+  };
+
+  // Group exports by file path
+  const groupedExports = selectedExports.reduce((acc, exp) => {
+    if (!acc[exp.path]) {
+      acc[exp.path] = [];
+    }
+    acc[exp.path].push(exp);
+    return acc;
+  }, {});
+
+  const PreviewSection = () => (
+    <Box sx={{ mt: 2 }}>
+      {Object.entries(groupedExports).map(([path, exports]) => (
+        <Box key={path} sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ color: '#b0b0b0', mb: 1 }}>
+            from '{path}':
+          </Typography>
+          <Box sx={{ ml: 2 }}>
+            {exports.map((exp) => (
+              <Box
+                key={exp.name}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: '#569cd6',
+                    fontFamily: 'monospace',
+                    flexGrow: 1,
+                  }}
+                >
+                  {exp.name}
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => handleDeleteExport(exp)}
+                  sx={{
+                    color: '#b0b0b0',
+                    '&:hover': {
+                      color: '#ff4444',
+                    },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+
+  const ListItems = Object.entries(flatFiles)
+    .filter(
+      ([key, value]) => value.exports?.length > 0 && key.includes(searchTerm)
+    )
+    .map(([key, value]) => (
+      <ListItem button key={key} onClick={() => handleFileSelect(value)}>
+        <ListItemText
+          primary={key}
+          primaryTypographyProps={{ color: 'text.primary' }}
+        />
+      </ListItem>
+    ));
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -140,12 +203,32 @@ export const AddImportModal = ({ open, onClose }) => {
                   <ListItem
                     button
                     key={myExport.name}
-                    onClick={() => handleExportSelect(myExport)}
+                    onClick={() => handleExportToggle(myExport)}
+                    sx={{
+                      bgcolor: isExportSelected(myExport)
+                        ? 'rgba(144, 202, 249, 0.08)'
+                        : 'transparent',
+                      '&:hover': {
+                        bgcolor: isExportSelected(myExport)
+                          ? 'rgba(144, 202, 249, 0.12)'
+                          : undefined,
+                      },
+                    }}
                   >
                     <ListItemText
                       primary={myExport.name}
                       primaryTypographyProps={{ color: 'text.primary' }}
                     />
+                    {isExportSelected(myExport) && (
+                      <ListItemSecondaryAction>
+                        <CheckCircleIcon
+                          sx={{
+                            color: '#90caf9',
+                            fontSize: 20,
+                          }}
+                        />
+                      </ListItemSecondaryAction>
+                    )}
                   </ListItem>
                 )) || (
                   <Typography variant="body2" color="text.secondary">
@@ -162,13 +245,19 @@ export const AddImportModal = ({ open, onClose }) => {
           <Box
             sx={{
               p: 2,
-              bgcolor: '#2d2d2d', // Higher contrast for preview box
-              color: '#ffffff', // White text for preview
+              bgcolor: '#2d2d2d',
+              color: '#ffffff',
               borderRadius: 1,
-              fontFamily: 'monospace',
+              minHeight: '100px',
             }}
           >
-            {ExportPreviews}
+            {selectedExports.length > 0 ? (
+              <PreviewSection />
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No imports selected.
+              </Typography>
+            )}
           </Box>
           <Box
             sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
@@ -178,11 +267,11 @@ export const AddImportModal = ({ open, onClose }) => {
             </Button>
             <Button
               onClick={() => {
-                onClose(preview);
+                onClose(selectedExports);
               }}
               variant="contained"
               color="primary"
-              disabled={!preview}
+              disabled={selectedExports.length === 0}
             >
               Add Import
             </Button>
