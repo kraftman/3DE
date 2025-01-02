@@ -110,11 +110,8 @@ export const useNodeManager = () => {
     );
 
     //===================================================
-    // need to check if the newRaw is valid js
-    // store the old functions
-    // parse the newRaw
-    // if there are functions that no longer exist, remove their nodes
-    // if there are new functions, create nodes for them
+    // need to update this so that edits within a function are also reflected
+    // as well as imports, et
     const fileInfo = flatFiles[moduleNode.data.fullPath];
     const valid = parseWithRecast(newRaw);
     let nodesToAdd = [];
@@ -162,15 +159,12 @@ export const useNodeManager = () => {
       }
       return node;
     });
-    console.log('existing nodes', newNodes);
 
     newNodes = newNodes.concat(nodesToAdd);
     newNodes = newNodes.concat(nodesToAdd);
-    console.log('number of nodes:', newNodes.length);
     newNodes = newNodes.filter(
       (node) => !functionIdsToRemove.includes(node.data.functionId)
     );
-    console.log('number of nodes fter:', newNodes.length);
     const functionNodes = newNodes.filter(
       (node) =>
         node.type === 'pureFunctionNode' && node.data.moduleId === moduleId
@@ -192,8 +186,6 @@ export const useNodeManager = () => {
       };
     });
 
-    // need to set edges here?
-    // also need to update file
     return newNodes;
   };
 
@@ -204,7 +196,6 @@ export const useNodeManager = () => {
           (node) => node.id === moduleId && node.type === 'module'
         );
         if (moduleNode.data.showRaw) {
-          console.log('hiding raw code');
           return hideRawCode(nodes, moduleId, newRaw);
         } else {
           return showRawCode(nodes, moduleId);

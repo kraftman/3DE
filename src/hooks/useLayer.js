@@ -5,6 +5,7 @@ import { useLayout } from './useLayout.js';
 import { parseWithRecast } from '../utils/parseWithRecast.js';
 import { useShallow } from 'zustand/react/shallow';
 const { namedTypes: n, visit } = require('ast-types');
+import { removeFunctionFromAst } from '../utils/codeUtils.js';
 
 import {
   hideModuleChildren,
@@ -255,6 +256,27 @@ export const useLayer = () => {
     [flatFiles]
   );
 
+  const onFunctionDelete = (fullPath, functionId) => {
+    const fileInfo = flatFiles[fullPath];
+
+    removeFunctionFromAst(fileInfo.fullAst, functionId);
+
+    // maybe layout nodes too?
+    setNodes((nodes) =>
+      nodes.filter((node) => node.data.functionId !== functionId)
+    );
+    setFlatFiles((files) => {
+      const newFunctions = fileInfo.functions.filter(
+        (func) => func.id !== functionId
+      );
+      const newFile = {
+        ...fileInfo,
+        functions: newFunctions,
+      };
+      return { ...files, [fullPath]: newFile };
+    });
+  };
+
   return {
     onModuleClose,
     toggleShowChildModules,
@@ -262,5 +284,6 @@ export const useLayer = () => {
     onfunctionTitledChanged,
     onRootNodeTextChange,
     onFunctionSignatureChange,
+    onFunctionDelete,
   };
 };

@@ -10,7 +10,8 @@
 }
 
 .editable-container {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   padding: 2px 2px;
   background-color: #2b2b2b; /* Slightly lighter dark background */
   border: 1px solid #444; /* Subtle border */
