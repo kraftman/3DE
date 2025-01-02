@@ -135,7 +135,7 @@ const FileImportHandle = ({ handle, data, top, onClick, showChildren }) => {
             right: handle.style.right,
           }}
         >
-          {handle.data.name}
+          {specifier.local?.name || specifier.imported?.name}
         </button>
       );
     }
@@ -242,41 +242,42 @@ const ModuleImportHandle = ({ handle, data }) => {
   );
 };
 
-function addImports(thisPath, ast, exportNodes) {
-  let importDeclarations = ast.program.body.filter(
-    (node) => node.type === 'ImportDeclaration'
+function replaceImports(thisPath, ast, exportNodes) {
+  // 1. Remove all existing import declarations
+  ast.program.body = ast.program.body.filter(
+    (node) => node.type !== 'ImportDeclaration'
   );
 
+  // 2. Group exports by relative path
+  const groupedImports = {};
   exportNodes.forEach((exportNode) => {
-    const relativePath = path.relative(path.dirname(thisPath), exportNode.path);
-
-    // Re-check the current list of importDeclarations to see if we already have one
-    let targetImport = importDeclarations.find(
-      (node) => node.source.value === relativePath
-    );
-
-    if (!targetImport) {
-      // Create a new ImportDeclaration
-      targetImport = b.importDeclaration(
-        [b.importSpecifier(b.identifier(exportNode.name))],
-        b.literal(relativePath)
-      );
-      // Insert at the top of the file
-      ast.program.body.unshift(targetImport);
-      // Keep our local list in sync so subsequent exportNodes can find it
-      importDeclarations.push(targetImport);
-    } else {
-      // Check if this specifier already exists
-      const specifierExists = targetImport.specifiers.some(
-        (specifier) => specifier.imported.name === exportNode.name
-      );
-      if (!specifierExists) {
-        targetImport.specifiers.push(
-          b.importSpecifier(b.identifier(exportNode.name))
-        );
-      }
+    let relativePath = path.relative(path.dirname(thisPath), exportNode.path);
+    if (!relativePath.startsWith('.') && !path.isAbsolute(relativePath)) {
+      relativePath = `.${path.sep}${relativePath}`;
     }
+    console.log('relativePath', relativePath);
+    if (!groupedImports[relativePath]) {
+      groupedImports[relativePath] = new Set();
+    }
+    groupedImports[relativePath].add(exportNode.name);
   });
+
+  // 3. Create and insert fresh import declarations
+  Object.entries(groupedImports).forEach(([importPath, names]) => {
+    console.log('importPath', importPath);
+    const specifiers = Array.from(names).map((name) =>
+      b.importSpecifier(b.identifier(name))
+    );
+    console.log('specifiers', specifiers);
+    const importDeclaration = b.importDeclaration(
+      specifiers,
+      b.literal(importPath)
+    );
+    console.log('creating new import, ', importDeclaration);
+    // Insert at the top of the file
+    ast.program.body.unshift(importDeclaration);
+  });
+  console.log(' new ast', ast);
 }
 
 export const getImportHandles = (imports, moduleId) => {
@@ -323,19 +324,44 @@ export const ImportManager = ({ flatFiles, data }) => {
     if (!newExports) {
       return;
     }
-    addImports(data.fullPath, fileInfo.fullAst, newExports);
+    console.log('before repalcing', fileInfo.fullAst);
+    replaceImports(data.fullPath, fileInfo.fullAst, newExports);
     const imports = getImports(fileInfo.fullAst);
+    console.log(' ===new imports', imports);
     const parsedImports = parseImports(imports, data.fullPath);
+    console.log(' ==parsed imports', parsedImports);
     setFlatFiles({
       ...flatFiles,
       [data.fullPath]: {
         ...fileInfo,
+        fullAst: fileInfo.fullAst,
         imports: parsedImports,
       },
     });
   };
 
+  const initialImports = [];
+
   const handles = getImportHandles(fileInfo.imports, data.moduleId);
+  console.log('handles', handles);
+
+  handles.forEach((handle) => {
+    handle.data.import.specifiers.forEach((specifier) => {
+      let name = specifier?.local?.name;
+      if (!specifier?.local?.name) {
+        name = specifier?.imported?.name;
+        //console.error('no name for specifier', specifier);
+      }
+      if (!name) {
+        console.error('no name for specifier', specifier);
+      }
+      initialImports.push({
+        name: name,
+        path: handle.data.fullPath,
+      });
+    });
+  });
+  console.log('initialImports', initialImports);
 
   // Build up all your handles
   const allHandles = handles?.map((handle) => {
@@ -403,12 +429,17 @@ export const ImportManager = ({ flatFiles, data }) => {
     // Otherwise, it's a missing import handle:
     return <MissingImportHandle key={handle.key} handle={handle} data={data} />;
   });
+  console.log('initialImports', initialImports);
 
   return (
     <>
       {allHandles}
       <button onClick={() => setIsOpen(true)}>Open Modal</button>
-      <AddImportModal open={isOpen} onClose={handleNewImports} />
+      <AddImportModal
+        open={isOpen}
+        onClose={handleNewImports}
+        initialImports={initialImports}
+      />
     </>
   );
 };

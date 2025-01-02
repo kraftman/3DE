@@ -31,13 +31,13 @@ const darkTheme = createTheme({
   },
 });
 
-export const AddImportModal = ({ open, onClose }) => {
+export const AddImportModal = ({ open, onClose, initialImports }) => {
   const flatFiles = useFileSystem((state) => state.flatFiles);
   const rootPath = useFileSystem((state) => state.rootPath);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedExports, setSelectedExports] = useState([]);
+  const [selectedExports, setSelectedExports] = useState([...initialImports]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
