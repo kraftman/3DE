@@ -64,7 +64,7 @@ export const useLayer = () => {
       setNodes(newNodes);
       setEdges((edges) => edges.concat(newEdges));
 
-      layoutNodes();
+      layoutNodes(moduleNode.id);
     },
     [flatFiles]
   );

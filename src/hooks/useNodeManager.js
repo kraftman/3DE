@@ -216,7 +216,7 @@ export const useNodeManager = () => {
       return newNodes;
     });
 
-    layoutNodes();
+    layoutNodes(moduleId);
   }, []);
 
   const createMissingImport = useCallback(
@@ -559,7 +559,7 @@ export const useNodeManager = () => {
         setNodes((nodes) => nodes.concat(newNodes));
         setEdges((edges) => edges.concat(newEdges));
 
-        layoutNodes();
+        layoutNodes(moduleNode.id);
       }
     },
     [flatFiles]
@@ -617,7 +617,7 @@ export const useNodeManager = () => {
       };
       setEdges((edges) => edges.concat(newEdge));
 
-      layoutNodes();
+      layoutNodes(moduleNode.id);
     },
     [flatFiles]
   );

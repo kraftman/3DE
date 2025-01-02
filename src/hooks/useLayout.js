@@ -56,7 +56,7 @@ export const useLayout = () => {
   const setNodes = useStore((state) => state.setNodes);
   const getEdges = useStore((state) => state.getEdges);
 
-  const layoutNodes = () => {
+  const layoutNodes = (parentId) => {
     setNodes((nodes) => {
       const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(
         () => ({})
@@ -66,6 +66,17 @@ export const useLayout = () => {
       const moduleNodes = nodes.filter(
         (node) => node.type === 'module' || node.type === 'partial'
       );
+
+      console.error(' looking for parent id', parentId, ' in ', moduleNodes);
+      const parentNode = moduleNodes.find((node) => node.id === parentId);
+      let xOffset = 0;
+      let yOffset = 0;
+      if (parentNode) {
+        console.log('parent', parentNode);
+        xOffset = parentNode.position.x;
+        yOffset = parentNode.position.y;
+      }
+
       const edges = getEdges();
       edges.forEach((edge) => {
         dagreGraph.setEdge(edge.source, edge.target);
@@ -90,8 +101,8 @@ export const useLayout = () => {
             ...node,
             parentId: undefined,
             position: {
-              x: layout.x - layout.width / 2,
-              y: layout.y - layout.height / 2,
+              x: layout.x - layout.width / 2 + xOffset,
+              y: layout.y - layout.height / 2 + yOffset,
             },
           };
         }

@@ -1,5 +1,9 @@
 const recast = require('recast');
 
+import path from 'path-browserify';
+
+const { namedTypes: n, visit, builders: b } = require('ast-types');
+
 export function findCallExpressions(ast) {
   const callExpressions = [];
   const ignoreList = ['console.log', 'console.error', 'console.warn'];
@@ -30,6 +34,44 @@ export function findCallExpressions(ast) {
   });
 
   return callExpressions;
+}
+
+export function replaceImports(thisPath, ast, exportNodes) {
+  // 1. Remove all existing import declarations
+  ast.program.body = ast.program.body.filter(
+    (node) => node.type !== 'ImportDeclaration'
+  );
+
+  // 2. Group exports by relative path
+  const groupedImports = {};
+  exportNodes.forEach((exportNode) => {
+    let relativePath = path.relative(path.dirname(thisPath), exportNode.path);
+    if (!relativePath.startsWith('.') && !path.isAbsolute(relativePath)) {
+      relativePath = `.${path.sep}${relativePath}`;
+    }
+    console.log('relativePath', relativePath);
+    if (!groupedImports[relativePath]) {
+      groupedImports[relativePath] = new Set();
+    }
+    groupedImports[relativePath].add(exportNode.name);
+  });
+
+  // 3. Create and insert fresh import declarations
+  Object.entries(groupedImports).forEach(([importPath, names]) => {
+    console.log('importPath', importPath);
+    const specifiers = Array.from(names).map((name) =>
+      b.importSpecifier(b.identifier(name))
+    );
+    console.log('specifiers', specifiers);
+    const importDeclaration = b.importDeclaration(
+      specifiers,
+      b.literal(importPath)
+    );
+    console.log('creating new import, ', importDeclaration);
+    // Insert at the top of the file
+    ast.program.body.unshift(importDeclaration);
+  });
+  console.log(' new ast', ast);
 }
 
 export const generateFunctionSignature = (funcInfo) => {
