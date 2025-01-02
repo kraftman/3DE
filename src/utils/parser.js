@@ -167,7 +167,7 @@ function getFunctions(node, parentId = null, depth = 0) {
   return functionList;
 }
 
-const getImports = (ast) => {
+export const getImports = (ast) => {
   const imports = [];
   visit(ast, {
     visitImportDeclaration(path) {

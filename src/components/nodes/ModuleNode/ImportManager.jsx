@@ -5,6 +5,9 @@ import { useNodeManager } from '../../../hooks/useNodeManager';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { AddImportModal } from './AddImportModal';
 import path from 'path-browserify';
+import { useFileSystem } from '../../../stores/useFileSystem';
+import { getImports } from '../../../utils/parser';
+import { parseImports } from '../../../utils/nodeUtils/parseImports';
 
 const { namedTypes: n, visit, builders: b } = require('ast-types');
 
@@ -132,7 +135,7 @@ const FileImportHandle = ({ handle, data, top, onClick, showChildren }) => {
             right: handle.style.right,
           }}
         >
-          {specifier.local.name}
+          {handle.data.name}
         </button>
       );
     }
@@ -240,13 +243,14 @@ const ModuleImportHandle = ({ handle, data }) => {
 };
 
 function addImports(thisPath, ast, exportNodes) {
-  const importDeclarations = ast.program.body.filter(
+  let importDeclarations = ast.program.body.filter(
     (node) => node.type === 'ImportDeclaration'
   );
 
   exportNodes.forEach((exportNode) => {
-    // Check if there's already an import from the target file
     const relativePath = path.relative(path.dirname(thisPath), exportNode.path);
+
+    // Re-check the current list of importDeclarations to see if we already have one
     let targetImport = importDeclarations.find(
       (node) => node.source.value === relativePath
     );
@@ -257,16 +261,16 @@ function addImports(thisPath, ast, exportNodes) {
         [b.importSpecifier(b.identifier(exportNode.name))],
         b.literal(relativePath)
       );
-      // Add the new import at the top of the file
+      // Insert at the top of the file
       ast.program.body.unshift(targetImport);
+      // Keep our local list in sync so subsequent exportNodes can find it
+      importDeclarations.push(targetImport);
     } else {
-      // Check if the specifier already exists to avoid duplicates
+      // Check if this specifier already exists
       const specifierExists = targetImport.specifiers.some(
         (specifier) => specifier.imported.name === exportNode.name
       );
-
       if (!specifierExists) {
-        // Add a new ImportSpecifier to the existing ImportDeclaration
         targetImport.specifiers.push(
           b.importSpecifier(b.identifier(exportNode.name))
         );
@@ -311,13 +315,24 @@ export const ImportManager = ({ flatFiles, data }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const fileInfo = flatFiles[data.fullPath];
+  const setFlatFiles = useFileSystem((state) => state.setFlatFiles);
 
   const handleNewImports = (newExports) => {
+    console.log('new immports', newExports);
     setIsOpen(false);
     if (!newExports) {
       return;
     }
     addImports(data.fullPath, fileInfo.fullAst, newExports);
+    const imports = getImports(fileInfo.fullAst);
+    const parsedImports = parseImports(imports, data.fullPath);
+    setFlatFiles({
+      ...flatFiles,
+      [data.fullPath]: {
+        ...fileInfo,
+        imports: parsedImports,
+      },
+    });
   };
 
   const handles = getImportHandles(fileInfo.imports, data.moduleId);
