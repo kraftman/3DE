@@ -21,17 +21,55 @@ export const getEditorSize = (code) => {
   return { height: newHeight, width: newWidth };
 };
 
-export const removeFunctionFromAst = (ast, functionId) => {
-  visit(ast, {
-    visitFunctionDeclaration(path) {
-      if (path.node._id && path.node._id === functionId) {
-        path.prune();
-        return false;
-      }
+const removeFunction = (path, functionId) => {
+  if (path.node._id && path.node._id === functionId) {
+    // For arrow functions in variable declarations, remove the entire declaratio
+    if (path.parent && path.parent.type === 'VariableDeclarator') {
+      path.parent.prune();
+    } else {
+      path.prune();
+    }
+  }
+};
 
+export const removeFunctionFromAst = (ast, functionId) => {
+  console.log('removing function:', functionId);
+  visit(ast, {
+    visitExportNamedDeclaration(path) {
+      if (path.node.declaration?.declarations?.[0]?.init?._id === functionId) {
+        path.prune();
+      }
+      this.traverse(path);
+    },
+    visitVariableDeclarator(path) {
+      if (path.node.init && path.node.init._id === functionId) {
+        path.prune();
+      }
+      this.traverse(path);
+    },
+    visitFunctionDeclaration(path) {
+      removeFunction(path, functionId);
+      this.traverse(path);
+    },
+    visitFunctionExpression(path) {
+      removeFunction(path, functionId);
+      this.traverse(path);
+    },
+    visitArrowFunctionExpression(path) {
+      removeFunction(path, functionId);
+      this.traverse(path);
+    },
+    visitObjectMethod(path) {
+      removeFunction(path, functionId);
+      this.traverse(path);
+    },
+    visitClassMethod(path) {
+      removeFunction(path, functionId);
       this.traverse(path);
     },
   });
+  console.log('after removal ast:', ast);
+  console.log('after removal:', recast.print(ast).code);
 };
 
 export const addFunctionToAst = (ast, functionAst) => {

@@ -185,6 +185,13 @@ app.whenReady().then(() => {
 
       // Send file updates to the frontend
       const sendUpdate = (eventType, filePath) => {
+        if (
+          filePath.includes('.git') ||
+          filePath.includes('node_modules') ||
+          filePath.includes('.webpack')
+        ) {
+          return;
+        }
         event.sender.send('file-update', { eventType, filePath });
       };
 

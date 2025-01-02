@@ -143,10 +143,7 @@ export const useLayer = () => {
 
   function handleFunctionNode(path, functionId, newBodyStatements) {
     if (path.node._id && path.node._id === functionId) {
-      console.log('old path', path);
-      console.log('new body statements', newBodyStatements);
       path.node.body = newBodyStatements;
-      console.log('new path', path);
 
       return false;
     }

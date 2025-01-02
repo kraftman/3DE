@@ -44,6 +44,7 @@ const darkTheme = createTheme({
 
 export const ModuleNode = React.memo(({ id, data }) => {
   const [settings, setSettings] = useState([]);
+  const [localRaw, setLocalRaw] = useState(data.raw);
   const {
     onModuleClose,
     toggleShowChildModules,
@@ -96,7 +97,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   //test
   const toggleShowRawCodeInternal = () => {
-    toggleShowRawCode(id);
+    toggleShowRawCode(id, localRaw);
   };
 
   const toggleChildrenInternal = (value, value2) => {
@@ -152,6 +153,10 @@ export const ModuleNode = React.memo(({ id, data }) => {
 
   const onRootCodeChangeInternal = (newCode) => {
     onRootNodeTextChange(data.fullPath, newCode);
+  };
+
+  const onRawChange = (value) => {
+    setLocalRaw(value);
   };
 
   return (
@@ -217,6 +222,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
                   defaultLanguage={'javascript'}
                   automaticLayout="true"
                   value={data.raw}
+                  onChange={onRawChange}
                   options={{
                     fontSize: 10,
                     lineNumbersMinChars: 2,

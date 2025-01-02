@@ -30,6 +30,11 @@ import { useReactFlow } from '@xyflow/react';
 import { checkAndFixFunctionHoisting } from '../utils/checkAndFixFunctionHoisting.js';
 import { useLayout } from './useLayout.js';
 import { createPartialNode } from '../utils/nodeUtils/nodeUtils.js';
+import { parseCode } from '../utils/parser.js';
+import { parseWithRecast } from '../utils/parseWithRecast.js';
+import { getModuleNodes } from '../utils/nodeUtils/nodeUtils.js';
+import { layoutInternalNodes } from './useLayout.js';
+import { getInternalEdges } from '../utils/nodeUtils/nodeUtils.js';
 
 const positionIsInsideModule = (parent, newPos) => {
   return (
@@ -67,38 +72,143 @@ export const useNodeManager = () => {
 
   const { screenToFlowPosition } = useReactFlow();
 
+  const showRawCode = (nodes, moduleId) => {
+    const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
+    const moduleNodeIds = moduleNodes.map((node) => node.id);
+    const moduleNode = nodes.find(
+      (node) => node.id === moduleId && node.type === 'module'
+    );
+
+    const fullPath = moduleNode.data.fullPath;
+    const fileInfo = flatFiles[fullPath];
+    checkAndFixFunctionHoisting(fileInfo.fullAst);
+    const newRaw = recast.print(fileInfo.fullAst).code;
+    const newNodes = nodes.map((node) => {
+      if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
+        return {
+          ...node,
+          hidden: moduleNode.data.showRaw,
+        };
+      }
+      if (node.type === 'module' && node.id === moduleId) {
+        node.data = {
+          ...node.data,
+          showRaw: !node.data.showRaw,
+          raw: newRaw,
+        };
+      }
+      return node;
+    });
+    return newNodes;
+  };
+
+  const hideRawCode = (nodes, moduleId, newRaw) => {
+    const moduleNodes = nodes.filter((node) => node.data.moduleId === moduleId);
+    const moduleNodeIds = moduleNodes.map((node) => node.id);
+    const moduleNode = nodes.find(
+      (node) => node.id === moduleId && node.type === 'module'
+    );
+
+    //===================================================
+    // need to check if the newRaw is valid js
+    // store the old functions
+    // parse the newRaw
+    // if there are functions that no longer exist, remove their nodes
+    // if there are new functions, create nodes for them
+    const fileInfo = flatFiles[moduleNode.data.fullPath];
+    const valid = parseWithRecast(newRaw);
+    let nodesToAdd = [];
+
+    let functionIdsToRemove = [];
+
+    let functionsToAdd = [];
+    if (valid) {
+      const parsed = parseCode(newRaw);
+      fileInfo.functions.forEach((func) => {
+        const found = parsed.functions.find((node) => node.id === func.id);
+        if (!found) {
+          functionIdsToRemove.push(func.id);
+        }
+      });
+      parsed.functions.forEach((func) => {
+        const found = fileInfo.functions.find((node) => node.id === func.id);
+        if (!found) {
+          functionsToAdd.push(func);
+        }
+      });
+
+      const tempFileInfo = { ...fileInfo, functions: functionsToAdd };
+
+      const { children } = getModuleNodes(tempFileInfo);
+      nodesToAdd = children;
+      console.log('functions to remove', functionIdsToRemove);
+      console.log('functions to add', functionsToAdd);
+    }
+
+    //===================================================
+
+    let newNodes = nodes.map((node) => {
+      if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
+        return {
+          ...node,
+          hidden: false,
+        };
+      }
+      if (node.type === 'module' && node.id === moduleId) {
+        node.data = {
+          ...node.data,
+          showRaw: false,
+        };
+      }
+      return node;
+    });
+    console.log('existing nodes', newNodes);
+
+    newNodes = newNodes.concat(nodesToAdd);
+    newNodes = newNodes.concat(nodesToAdd);
+    console.log('number of nodes:', newNodes.length);
+    newNodes = newNodes.filter(
+      (node) => !functionIdsToRemove.includes(node.data.functionId)
+    );
+    console.log('number of nodes fter:', newNodes.length);
+    const functionNodes = newNodes.filter(
+      (node) =>
+        node.type === 'pureFunctionNode' && node.data.moduleId === moduleId
+    );
+    const newEdges = getInternalEdges(fileInfo, functionNodes, moduleNode);
+    layoutInternalNodes(newNodes, newEdges);
+
+    functionIdsToRemove.forEach((id) => {
+      removeFunctionFromAst(fileInfo.fullAst, id);
+    });
+
+    setFlatFiles((files) => {
+      return {
+        ...files,
+        [moduleNode.data.fullPath]: {
+          ...fileInfo,
+          functions: [...fileInfo.functions, ...functionsToAdd],
+        },
+      };
+    });
+
+    // need to set edges here?
+    // also need to update file
+    return newNodes;
+  };
+
   const toggleShowRawCode = useCallback(
-    (moduleId) => {
+    (moduleId, newRaw) => {
       setNodes((nodes) => {
-        const moduleNodes = nodes.filter(
-          (node) => node.data.moduleId === moduleId
-        );
-        const moduleNodeIds = moduleNodes.map((node) => node.id);
-        const moduleNode = moduleNodes.find(
+        const moduleNode = nodes.find(
           (node) => node.id === moduleId && node.type === 'module'
         );
-
-        const fullPath = moduleNode.data.fullPath;
-        const fileInfo = flatFiles[fullPath];
-        checkAndFixFunctionHoisting(fileInfo.fullAst);
-        const newRaw = recast.print(fileInfo.fullAst).code;
-        const newNodes = nodes.map((node) => {
-          if (moduleNodeIds.includes(node.id) && node.type !== 'module') {
-            return {
-              ...node,
-              hidden: moduleNode.data.showRaw,
-            };
-          }
-          if (node.type === 'module' && node.id === moduleId) {
-            node.data = {
-              ...node.data,
-              showRaw: !node.data.showRaw,
-              raw: newRaw,
-            };
-          }
-          return node;
-        });
-        return newNodes;
+        if (moduleNode.data.showRaw) {
+          console.log('hiding raw code');
+          return hideRawCode(nodes, moduleId, newRaw);
+        } else {
+          return showRawCode(nodes, moduleId);
+        }
       });
     },
     [flatFiles]
