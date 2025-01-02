@@ -161,6 +161,44 @@ export const useFileManager = () => {
     [flatFiles]
   );
 
+  const addNewFile = useCallback(async (newFilePath) => {
+    if (flatFiles[newFilePath]) {
+      return;
+    }
+
+    const fileInfo = {
+      index: newFilePath,
+      children: [],
+      data: getFileNameFromPath(newFilePath),
+      isFolder: false,
+      fileData: await loadFile(newFilePath),
+    };
+
+    fileInfo.savedData = fileInfo.fileData;
+    console.log('new file info', fileInfo);
+    if (!isCodeFile(newFilePath)) {
+      enrichFileInfo(fileInfo);
+    }
+    createFile(fileInfo);
+  }, []);
+
+  const removeFile = useCallback((fullPath) => {
+    setFlatFiles((oldFiles) => {
+      const newFiles = { ...oldFiles };
+      const file = newFiles[fullPath];
+      if (!file) {
+        return newFiles;
+      }
+      delete newFiles[fullPath];
+
+      const folderPath = getFileFolder(fullPath);
+      const folder = newFiles[folderPath];
+      folder.children = folder.children.filter((child) => child !== fullPath);
+
+      return newFiles;
+    });
+  }, []);
+
   return {
     flatFiles,
     handleSave,
@@ -168,5 +206,7 @@ export const useFileManager = () => {
     renameFile,
     createFile,
     onFileSelected,
+    addNewFile,
+    removeFile,
   };
 };

@@ -46,7 +46,8 @@ export const Flow = () => {
 
   const { onNodeDragStart, onNodeDragStop } = useNodeManager();
 
-  const { loadFileSystem, handleSave, onFileSelected } = useFileManager();
+  const { loadFileSystem, handleSave, onFileSelected, addNewFile, removeFile } =
+    useFileManager();
   const { layoutNodes } = useLayout();
 
   useEffect(() => {
@@ -58,6 +59,14 @@ export const Flow = () => {
       await onFolderSelected('/home/chris/3DE');
     };
     init();
+    window.electronAPI.receiveFromMain('file-update', (response) => {
+      console.log('file update', response);
+      if (response.eventType === 'add') {
+        addNewFile(response.filePath);
+      } else if (response.eventType === 'unlink') {
+        removeFile(response.filePath);
+      }
+    });
   }, []);
 
   useEffect(() => {

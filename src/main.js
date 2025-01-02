@@ -5,6 +5,7 @@ const { exec } = require('child_process');
 const util = require('util');
 const runTest = require('./run-tests');
 const { ESLint } = require('eslint');
+const chokidar = require('chokidar');
 const {
   default: installExtension,
   REACT_DEVELOPER_TOOLS,
@@ -139,7 +140,10 @@ app.whenReady().then(() => {
     return result.filePaths[0];
   });
 
+  const watchers = new Map();
+
   ipcMain.handle('load-folder-tree', async (event, folderPath) => {
+    console.log('load folder tree');
     const readDirectory = (directory) => {
       const items = fs.readdirSync(directory);
       const basePath = path.resolve(directory);
@@ -165,6 +169,41 @@ app.whenReady().then(() => {
 
     const full = readDirectory(folderPath);
     const fullRootPath = path.resolve(folderPath);
+
+    // Check if a watcher already exists for this folderPath
+    if (!watchers.has(folderPath)) {
+      const watcher = chokidar.watch(folderPath, {
+        persistent: true,
+        ignoreInitial: true, // Ignore initial "add" events for existing files
+        ignored: ['**/.git', '**/node_modules', '**/.webpack/**'], // Ignore specified patterns
+        atomic: true,
+        awaitWriteFinish: {
+          stabilityThreshold: 2000,
+          pollInterval: 100,
+        },
+      });
+
+      // Send file updates to the frontend
+      const sendUpdate = (eventType, filePath) => {
+        event.sender.send('file-update', { eventType, filePath });
+      };
+
+      watcher
+        .on('add', (filePath) => sendUpdate('add', filePath))
+        .on('addDir', (filePath) => sendUpdate('addDir', filePath))
+        .on('unlink', (filePath) => sendUpdate('unlink', filePath))
+        .on('unlinkDir', (filePath) => sendUpdate('unlinkDir', filePath))
+        .on('change', (filePath) => sendUpdate('change', filePath));
+
+      // Clean up watcher when necessary
+      app.on('before-quit', () => {
+        watcher.close();
+      });
+
+      // Store the watcher in the map
+      watchers.set(folderPath, watcher);
+    }
+
     return { fullRootPath, folderTree: full };
   });
 
