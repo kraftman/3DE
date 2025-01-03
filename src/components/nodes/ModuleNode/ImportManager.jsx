@@ -1,5 +1,8 @@
 import React from 'react';
 import { Handle } from '@xyflow/react';
+import IconButton from '@mui/material/IconButton';
+import SettingsIcon from '@mui/icons-material/Settings';
+
 import { findFileForImport } from '../../../utils/fileUtils';
 import { AddImportModal } from './AddImportModal';
 import { useFileSystem } from '../../../stores/useFileSystem';
@@ -11,6 +14,7 @@ import { MissingImportHandle } from './ImportManager/MissingImportHandle';
 import { ModuleImportHandle } from './ImportManager/ModuleImportHandle';
 import { handleTextStyle } from './ImportManager/styles';
 import { replaceImports } from '../../../utils/astUtils';
+import { useStore } from '../../../contexts/useStore';
 
 /**
  * FileImportHandle, but expects a computed `top` from the parent
@@ -51,18 +55,38 @@ export const ImportManager = ({ flatFiles, data }) => {
   const handleSpacing = 30;
   const [showChildren, setShowChildren] = React.useState({});
   const [isOpen, setIsOpen] = React.useState(false);
+  const setNodes = useStore((state) => state.setNodes);
 
   const fileInfo = flatFiles[data.fullPath];
   const setFlatFiles = useFileSystem((state) => state.setFlatFiles);
 
   const handleNewImports = (newExports) => {
     setIsOpen(false);
-    if (!newExports) {
+
+    if (!Array.isArray(newExports)) {
       return;
     }
+    console.log('new exports', newExports);
     replaceImports(data.fullPath, fileInfo.fullAst, newExports);
     const imports = getImports(fileInfo.fullAst);
     const parsedImports = parseImports(imports, data.fullPath);
+
+    setNodes((nodes) => {
+      const newNodes = nodes.map((node) => {
+        if (node.id === data.moduleId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              imports: parsedImports,
+            },
+          };
+        }
+        return node;
+      });
+      return newNodes;
+    });
+
     setFlatFiles({
       ...flatFiles,
       [data.fullPath]: {
@@ -82,7 +106,6 @@ export const ImportManager = ({ flatFiles, data }) => {
       let name = specifier?.local?.name;
       if (!specifier?.local?.name) {
         name = specifier?.imported?.name;
-        //console.error('no name for specifier', specifier);
       }
       if (!name) {
         console.error('no name for specifier', specifier);
@@ -94,10 +117,9 @@ export const ImportManager = ({ flatFiles, data }) => {
     });
   });
 
-  // Build up all your handles
-  const allHandles = handles?.map((handle) => {
+  // Create the rest of the handles
+  const otherHandles = handles?.map((handle) => {
     if (handle.refType !== 'import') {
-      // Non-import handles remain the same
       return (
         <Handle
           key={handle.key}
@@ -111,29 +133,24 @@ export const ImportManager = ({ flatFiles, data }) => {
       );
     }
 
-    // If it is an import handle:
     if (Object.keys(flatFiles).length === 0) {
       return null;
     }
 
     if (data.isCollapsed) {
-      // If the node is collapsed:
       return <CollapsedHandle key={handle.key} handle={handle} />;
     }
 
     if (handle.data.fullPath === false) {
-      // It's a module import that isn't resolved to a file
       return (
         <ModuleImportHandle key={handle.key} handle={handle} data={data} />
       );
     }
 
-    // If we found the file for the import
     if (findFileForImport(flatFiles, handle.data.fullPath)) {
       const importCount = handle?.data?.import?.specifiers?.length || 1;
       const topForThisHandle = currentTop;
 
-      // Increase currentTop by however tall you think this handle is:
       if (showChildren[handle.key]) {
         currentTop += importCount * handleSpacing;
       } else {
@@ -157,14 +174,31 @@ export const ImportManager = ({ flatFiles, data }) => {
       );
     }
 
-    // Otherwise, it's a missing import handle:
     return <MissingImportHandle key={handle.key} handle={handle} data={data} />;
   });
+
+  // Prepend the cog IconButton to the list of handles
+  const allHandles = [
+    <IconButton
+      key="openModalCog"
+      aria-label="open modal"
+      onClick={() => setIsOpen(true)}
+      style={{
+        position: 'absolute',
+        top: 70,
+        right: 0,
+        transform: 'translate(50%, -50%)',
+      }}
+      size="small"
+    >
+      <SettingsIcon />
+    </IconButton>,
+    ...otherHandles,
+  ];
 
   return (
     <>
       {allHandles}
-      <button onClick={() => setIsOpen(true)}>Open Modal</button>
       <AddImportModal
         open={isOpen}
         onClose={handleNewImports}

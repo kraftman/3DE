@@ -557,7 +557,7 @@ export const useNodeManager = () => {
         // TODO fix edges here
         console.log('existing nodes', nodes);
         console.log('new nodes', moduleNodes);
-        const newEdges = findHandleEdges(edges, nodes, moduleNodes);
+        const newEdges = findHandleEdges(flatFiles, edges, nodes, moduleNodes);
         console.log('newEdges', newEdges);
         setNodes((nodes) => nodes.concat(newNodes));
         setEdges((edges) => edges.concat(newEdges));

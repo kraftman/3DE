@@ -224,9 +224,6 @@ export const getModuleNodes = (fileInfo) => {
   const moduleNode = {
     id: newModuleId,
     data: {
-      exports: fileInfo.exports,
-      imports: fileInfo.imports,
-      handles: [],
       moduleId: newModuleId,
       fullPath: fullPath,
       width: moduleWidth + 30,

@@ -87,7 +87,7 @@ export const expandModule = (nodes, moduleId) => {
 };
 
 // check if this can be merged with findModuleEdges in uselayout
-export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
+export const findHandleEdges = (flatFiles, oldEdge, oldNodes, moduleNodes) => {
   const edges = [];
 
   // for each new node, check if there is an old node that references the new node
@@ -96,10 +96,8 @@ export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
       if (oldModule.id !== newModule.parentId) {
         return;
       }
-
-      const localImports = oldModule.data.imports.filter(
-        (imp) => imp.importType === 'local'
-      );
+      const imports = flatFiles[oldModule.data.fullPath].imports;
+      const localImports = imports.filter((imp) => imp.importType === 'local');
       localImports.forEach((imp) => {
         if (
           importWithoutExtension(imp.fullPath) ===
@@ -201,8 +199,13 @@ export const showModuleChildren = (nodes, edges, moduleNode, flatFiles) => {
 
   // TODO/WARNING newNewNodes includes all nodes, not just the new ones
   const moduleNodes = newNodes.filter((node) => node.type === 'module');
-  const newEdges = findHandleEdges(edges, nodes, moduleNodes);
-  const childEdges = findHandleEdges(edges, moduleNodes, moduleNodes);
+  const newEdges = findHandleEdges(flatFiles, edges, nodes, moduleNodes);
+  const childEdges = findHandleEdges(
+    flatFiles,
+    edges,
+    moduleNodes,
+    moduleNodes
+  );
   return {
     newNodes: updatedNodes.concat(newNodes),
     newEdges: newEdges.concat(childEdges),
