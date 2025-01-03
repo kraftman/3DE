@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { useLayer } from '../hooks/useLayer';
 import './FunctionBar.css'; // Import the CSS file
 import { EditableText } from './EditableText';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import { generateFunctionSignature } from '../utils/astUtils';
 import { parseWithRecast } from '../utils/parseWithRecast';
+import { useFunctionManager } from '../hooks/useFunctionManager';
 
-export const FunctionBar = ({ fullPath, funcInfo }) => {
-  const { onFunctionSignatureChange, onFunctionDelete } = useLayer((store) => ({
-    onFunctionSignatureChange: store.onFunctionSignatureChange,
-    onFunctionDelete: store.onFunctionDelete,
-  }));
+export const FunctionBar = ({ fullPath, funcInfo, onAi }) => {
+  const { onFunctionSignatureChange, onFunctionDelete } = useFunctionManager(
+    (store) => ({
+      onFunctionSignatureChange: store.onFunctionSignatureChange,
+      onFunctionDelete: store.onFunctionDelete,
+    })
+  );
 
   const functionSignature = funcInfo ? generateFunctionSignature(funcInfo) : '';
   const [text, setText] = useState(functionSignature);
@@ -37,6 +39,10 @@ export const FunctionBar = ({ fullPath, funcInfo }) => {
     onFunctionDelete(fullPath, funcInfo.id);
   };
 
+  const handleAsk = () => {
+    onAi();
+  };
+
   return (
     <div className="function-bar">
       <div className="editable-container">
@@ -47,6 +53,9 @@ export const FunctionBar = ({ fullPath, funcInfo }) => {
         />
         <IconButton size="small" onClick={handleDelete}>
           <DeleteIcon fontSize="small" />
+        </IconButton>
+        <IconButton size="small" onClick={handleAsk}>
+          <QuestionAnswerIcon fontSize="small" />
         </IconButton>
       </div>
     </div>

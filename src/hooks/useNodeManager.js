@@ -555,7 +555,10 @@ export const useNodeManager = () => {
         const moduleNodes = newNodes.filter((node) => node.type === 'module');
         const edges = getEdges();
         // TODO fix edges here
+        console.log('existing nodes', nodes);
+        console.log('new nodes', moduleNodes);
         const newEdges = findHandleEdges(edges, nodes, moduleNodes);
+        console.log('newEdges', newEdges);
         setNodes((nodes) => nodes.concat(newNodes));
         setEdges((edges) => edges.concat(newEdges));
 

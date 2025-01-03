@@ -10,6 +10,7 @@ const {
   default: installExtension,
   REACT_DEVELOPER_TOOLS,
 } = require('electron-devtools-installer');
+require('dotenv').config(); // Add this line to load environment variables
 
 const eslintConfig = require('../eslint.config.mjs');
 
@@ -23,6 +24,8 @@ const db = JSON.parse(sessionStates);
 
 const execPromise = util.promisify(exec);
 
+const { session } = require('electron');
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -33,6 +36,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     fullscreen: true,
     webPreferences: {
+      webSecurity: false,
       devTools: true,
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -73,6 +77,17 @@ app.whenReady().then(() => {
   });
 
   const mainWindow = createWindow();
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; connect-src 'self' https://openrouter.ai; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';",
+        ],
+      },
+    });
+  });
 
   ipcMain.handle('save-session', async (event, sessionData) => {
     db.sessions[sessionData.rootPath] = sessionData.layerState;

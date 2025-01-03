@@ -40,6 +40,7 @@ module.exports = {
   module: {
     rules,
   },
+  devtool: 'inline-source-map',
   resolve: {
     alias: {
       '@babel/parser': require.resolve('@babel/parser'), // Ensure it resolves correctly
@@ -51,6 +52,8 @@ module.exports = {
       path: require.resolve('path-browserify'),
       util: require.resolve('util/'),
       stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify'),
+      vm: require.resolve('vm-browserify'),
     },
   },
   plugins: [new MonacoWebpackPlugin()],

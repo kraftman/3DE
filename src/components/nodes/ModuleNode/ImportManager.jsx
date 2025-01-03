@@ -56,17 +56,13 @@ export const ImportManager = ({ flatFiles, data }) => {
   const setFlatFiles = useFileSystem((state) => state.setFlatFiles);
 
   const handleNewImports = (newExports) => {
-    console.log('new immports', newExports);
     setIsOpen(false);
     if (!newExports) {
       return;
     }
-    console.log('before repalcing', fileInfo.fullAst);
     replaceImports(data.fullPath, fileInfo.fullAst, newExports);
     const imports = getImports(fileInfo.fullAst);
-    console.log(' ===new imports', imports);
     const parsedImports = parseImports(imports, data.fullPath);
-    console.log(' ==parsed imports', parsedImports);
     setFlatFiles({
       ...flatFiles,
       [data.fullPath]: {
@@ -80,7 +76,6 @@ export const ImportManager = ({ flatFiles, data }) => {
   const initialImports = [];
 
   const handles = getImportHandles(fileInfo.imports, data.moduleId);
-  console.log('handles', handles);
 
   handles.forEach((handle) => {
     handle.data.import.specifiers.forEach((specifier) => {
@@ -98,7 +93,6 @@ export const ImportManager = ({ flatFiles, data }) => {
       });
     });
   });
-  console.log('initialImports', initialImports);
 
   // Build up all your handles
   const allHandles = handles?.map((handle) => {
@@ -166,7 +160,6 @@ export const ImportManager = ({ flatFiles, data }) => {
     // Otherwise, it's a missing import handle:
     return <MissingImportHandle key={handle.key} handle={handle} data={data} />;
   });
-  console.log('initialImports', initialImports);
 
   return (
     <>

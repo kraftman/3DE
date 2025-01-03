@@ -96,14 +96,18 @@ export const findHandleEdges = (oldEdge, oldNodes, moduleNodes) => {
       if (oldModule.id !== newModule.parentId) {
         return;
       }
-      oldModule.data.handles.forEach((handle) => {
+
+      const localImports = oldModule.data.imports.filter(
+        (imp) => imp.importType === 'local'
+      );
+      localImports.forEach((imp) => {
         if (
-          importWithoutExtension(handle.data.fullPath) ===
+          importWithoutExtension(imp.fullPath) ===
           importWithoutExtension(newModule.data.fullPath)
         ) {
-          const sourceName = oldModule.id + '-' + handle.data.fullPath + ':out';
+          const sourceName = oldModule.id + '-' + imp.fullPath + ':out';
           const targetName = newModule.id + '-handle';
-          const edgeId = `${oldModule.id}-${newModule.id}}-${handle.data.name}`;
+          const edgeId = `${oldModule.id}-${newModule.id}}-${imp.moduleSpecifier}`;
           if (oldEdge.find((edge) => edge.id === edgeId)) {
             return;
           }

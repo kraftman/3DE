@@ -14,3 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke(channel, data);
   },
 });
+
+contextBridge.exposeInMainWorld('env', {
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+});
