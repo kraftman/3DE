@@ -3,6 +3,8 @@ import { Handle } from '@xyflow/react';
 import IconButton from '@mui/material/IconButton';
 import SettingsIcon from '@mui/icons-material/Settings';
 
+import { useUpdateNodeInternals } from '@xyflow/react';
+
 import { findFileForImport } from '../../../utils/fileUtils';
 import { AddImportModal } from './AddImportModal';
 import { useFileSystem } from '../../../stores/useFileSystem';
@@ -49,13 +51,15 @@ export const getImportHandles = (imports, moduleId) => {
   });
 };
 
-export const ImportManager = ({ flatFiles, data }) => {
+const ImportManager = React.memo(({ flatFiles, data }) => {
   let currentTop = 100;
 
   const handleSpacing = 30;
   const [showChildren, setShowChildren] = React.useState({});
+  const updateNodeInternals = useUpdateNodeInternals();
   const [isOpen, setIsOpen] = React.useState(false);
   const setNodes = useStore((state) => state.setNodes);
+  console.log('inside import hanlde manager');
 
   const fileInfo = flatFiles[data.fullPath];
   const setFlatFiles = useFileSystem((state) => state.setFlatFiles);
@@ -95,6 +99,7 @@ export const ImportManager = ({ flatFiles, data }) => {
         imports: parsedImports,
       },
     });
+    updateNodeInternals(data.moduleId);
   };
 
   const initialImports = [];
@@ -206,4 +211,6 @@ export const ImportManager = ({ flatFiles, data }) => {
       />
     </>
   );
-};
+});
+ImportManager.displayName = 'ImportManager';
+export { ImportManager };

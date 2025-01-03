@@ -245,7 +245,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
       </div>
 
       <Handle type="source" position={'left'} id={id + '-handle'} />
-      <ImportManager data={data} flatFiles={flatFiles} moduleId={id} />
+      <ImportManager data={data} flatFiles={flatFiles} />
     </ThemeProvider>
   );
 });

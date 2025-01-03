@@ -109,6 +109,12 @@ export const findHandleEdges = (flatFiles, oldEdge, oldNodes, moduleNodes) => {
           if (oldEdge.find((edge) => edge.id === edgeId)) {
             return;
           }
+          console.log(
+            'creating new edge from source',
+            sourceName,
+            'to target',
+            targetName
+          );
           edges.push({
             id: edgeId,
             source: oldModule.id,
