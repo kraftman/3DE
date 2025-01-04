@@ -56,7 +56,7 @@ export const createFunction = (path, name, parentId, depth, type) => {
     (param) => recast.print(param, { reuseWhitespace: true }).code
   );
   const body = extractNonFunctionStatements(node);
-  const bodyString = recast.print(body, { reuseWhitespace: true }).code;
+  const bodyString = recast.print(body.body, { reuseWhitespace: true }).code;
 
   const funcId = murmur.murmur3(name + parentId + bodyString);
   node._id = funcId;
@@ -71,6 +71,7 @@ export const createFunction = (path, name, parentId, depth, type) => {
     depth,
     nestedFunctions,
     node,
+    localBody: bodyString,
     async: node.async,
     path,
     contentSize,

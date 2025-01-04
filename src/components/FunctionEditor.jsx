@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Editor, { loader, DiffEditor } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import { useFileSystem } from '../stores/useFileSystem';
+import { debounce } from 'lodash';
 
 import { FunctionBar } from './FunctionBar';
 import { extractNonFunctionStatements } from '../utils/parser';
@@ -33,6 +34,7 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
   const editorRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
   const [suggested, setSuggested] = useState(null);
+  console.log('function editor re-rendering', functionId);
 
   const fileInfo = useFileSystem((state) => {
     const fileInfo = state.flatFiles[fullPath];
@@ -48,12 +50,14 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     [fileInfo]
   );
 
-  const { onFunctionTextChange, onFunctionSizeChange } = useFunctionManager((store) => ({
-    onFunctionTextChange: store.onFunctionTextChange,
-    onFunctionSizeChange: store.onFunctionSizeChange,
-  }));
+  const [text, setText] = useState(funcInfo.localBody);
 
-  const [text, setText] = useState('not loaded');
+  const { onFunctionTextChange, onFunctionSizeChange } = useFunctionManager(
+    (store) => ({
+      onFunctionTextChange: store.onFunctionTextChange,
+      onFunctionSizeChange: store.onFunctionSizeChange,
+    })
+  );
 
   useEffect(() => {
     if (funcInfo) {
@@ -65,22 +69,27 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     }
   }, [fileInfo, funcInfo]);
 
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce((newText, fullPath, functionId, funcInfo, onFunctionSizeChange, onFunctionTextChange) => {
+        const existingSize = funcInfo.contentSize;
+        const newSize = getEditorSize(newText);
+        if (existingSize.height !== newSize.height || existingSize.width !== newSize.width) {
+          onFunctionSizeChange(fullPath, functionId, newSize);
+        }
+        const wrappedCode = `${funcInfo.async ? 'async ' : ''}function temp() ${newText} `;
+        const parsed = parseWithRecast(wrappedCode);
+        if (parsed) {
+          const newBodyStatements = parsed.program.body[0].body;
+          onFunctionTextChange(fullPath, functionId, newBodyStatements);
+        }
+      }, 300),
+    []
+  );
+
   const onChange = (newText) => {
     setText(newText);
-    const existingSize = funcInfo.contentSize
-    const newSize = getEditorSize(newText);
-    if (existingSize.height !== newSize.height || existingSize.width !== newSize.width) {
-      onFunctionSizeChange(fullPath, functionId, newSize);
-    }
-    const wrappedCode = `${
-      funcInfo.async ? 'async ' : ''
-    }function temp() ${newText} `;
-    // maybe this should be moved inside onFunctionTextChange
-    const parsed = parseWithRecast(wrappedCode);
-    if (parsed) {
-      const newBodyStatements = parsed.program.body[0].body;
-      onFunctionTextChange(fullPath, functionId, newBodyStatements);
-    }
+    debouncedUpdate(newText, fullPath, functionId, funcInfo, onFunctionSizeChange, onFunctionTextChange);
   };
 
   const PlaceHolder = ({ code }) => {

@@ -4097,6 +4097,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash@npm:^4":
+  version: 4.17.14
+  resolution: "@types/lodash@npm:4.17.14"
+  checksum: 10c0/343c6f722e0b39969036a885ad5aad6578479ead83987128c9b994e6b7f2fb9808244d802d4d332396bb09096f720a6c7060de16a492f5460e06a44560360322
+  languageName: node
+  linkType: hard
+
 "@types/mdast@npm:^4.0.0":
   version: 4.0.4
   resolution: "@types/mdast@npm:4.0.4"
@@ -12239,6 +12246,7 @@ __metadata:
     "@swc/wasm-web": "npm:^1.9.3"
     "@ts-morph/bootstrap": "npm:^0.25.0"
     "@types/dagre": "npm:^0"
+    "@types/lodash": "npm:^4"
     "@types/murmurhash-js": "npm:^1"
     "@types/prismjs": "npm:^1"
     "@types/react-beautiful-dnd": "npm:^13"
@@ -12272,6 +12280,7 @@ __metadata:
     globals: "npm:^15.4.0"
     html2canvas: "npm:^1.4.1"
     immer: "npm:^10.1.1"
+    lodash: "npm:^4.17.21"
     lowdb: "npm:^7.0.1"
     monaco-editor: "npm:^0.49.0"
     monaco-editor-webpack-plugin: "npm:^7.1.0"

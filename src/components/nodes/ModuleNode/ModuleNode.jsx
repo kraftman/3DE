@@ -43,6 +43,7 @@ const darkTheme = createTheme({
 });
 
 export const ModuleNode = React.memo(({ id, data }) => {
+  console.log('re-rendering module node', data.moduleId);
   const [settings, setSettings] = useState([]);
   const [localRaw, setLocalRaw] = useState(data.raw);
   const {
@@ -88,7 +89,6 @@ export const ModuleNode = React.memo(({ id, data }) => {
     return lines.join('\n');
   }, [rootCodeAst]);
 
-  console.log('re-rendering module node', data.moduleId);
   const toggleHideEdgesInternal = (event, newSettings) => {
     setSettings((oldSettings) => {
       toggleHideEdges(id, newSettings.showEdges);
