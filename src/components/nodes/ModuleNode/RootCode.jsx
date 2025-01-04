@@ -17,7 +17,7 @@ export const RootCode = ({ content, onChange }) => {
   };
 
   return (
-    <div>
+    <div style={{ marginTop: '20px' }}>
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         style={{

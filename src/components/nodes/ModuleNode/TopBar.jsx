@@ -17,7 +17,7 @@ export const TopBar = ({
 }) => {
   const toggleChildrenValue = showChildren ? 'showChildren' : 'hideChildren';
   return (
-    <div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
       {!isCollapsed ? (
         <ToggleButtonGroup
           // value={settings}
@@ -27,10 +27,10 @@ export const TopBar = ({
           size="small"
           aria-label="text alignment"
         >
-          <ToggleButton value="code" aria-label="justified">
+          <ToggleButton value="code" aria-label="justified" sx={{ minWidth: '30px', height: '30px', padding: 0, backgroundColor: '#333', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}>
             <CodeIcon fontSize="small" />
           </ToggleButton>
-          <ToggleButton value="nodes" aria-label="justified">
+          <ToggleButton value="nodes" aria-label="justified" sx={{ minWidth: '30px', height: '30px', padding: 0, backgroundColor: '#333', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}>
             <PolylineIcon fontSize="small" />
           </ToggleButton>
         </ToggleButtonGroup>
@@ -42,7 +42,7 @@ export const TopBar = ({
         size="small"
         aria-label="text alignment"
       >
-        <ToggleButton value="showEdges" aria-label="justified">
+        <ToggleButton value="showEdges" aria-label="justified" sx={{ minWidth: '30px', height: '30px', padding: 0, backgroundColor: '#333', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}>
           <CommitIcon fontSize="small" />
         </ToggleButton>
       </ToggleButtonGroup> */}
@@ -53,6 +53,7 @@ export const TopBar = ({
         size="small"
         selected={showChildren}
         onClick={() => toggleChildren()}
+        sx={{ minWidth: '30px', height: '30px', padding: 0, backgroundColor: '#333', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}
       >
         <ReadMoreIcon fontSize="small" />
       </ToggleButton>
@@ -62,6 +63,7 @@ export const TopBar = ({
         aria-label="add new function"
         size="small"
         onClick={() => createNewFunction()}
+        sx={{ minWidth: '30px', height: '30px', padding: 0, backgroundColor: '#333', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}
       >
         <AddIcon fontSize="small" />
       </ToggleButton>

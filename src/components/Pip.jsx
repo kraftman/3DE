@@ -18,7 +18,7 @@ export const Pip = ({
   return (
     <span
       onClick={onClick}
-      style={onClick ? { cursor: 'pointer' } : {}}
+      style={{ ...onClick ? { cursor: 'pointer' } : {}, fontSize: '10px', width: '10px', height: '10px' }}
       data-tooltip-id={targetTooltip}
       data-tooltip-content={tooltipContent}
       className={className}

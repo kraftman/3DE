@@ -37,28 +37,20 @@ export const EditableText = ({
             error={Boolean(error)}
             InputProps={{
               style: {
-                fontSize: '12px', // Smaller font size
-                height: '30px', // Smaller height
-                padding: '5px', // Smaller padding
+                fontSize: '12px', 
+                height: '30px', 
                 color: 'white',
                 background: 'transparent',
+                width: `${text.length}ch`
               },
             }}
             style={{
               borderColor: error ? 'red' : undefined,
-              width: '150px', // Adjust width to make it more compact
             }}
           />
         </Tooltip>
       ) : (
-        <div
-          style={{
-            color: '#e0e0e0',
-            cursor: 'pointer',
-            fontSize: '12px',
-          }}
-          onDoubleClick={handleDoubleClick}
-        >
+        <div style={{ fontSize: '12px', height: '30px', display: 'flex', alignItems: 'center', color: 'white' }} onDoubleClick={handleDoubleClick}>
           {placeholder || text}
         </div>
       )}

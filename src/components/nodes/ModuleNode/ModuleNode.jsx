@@ -118,11 +118,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
         aria-label="justified"
         selected={data.isCollapsed}
         onChange={toggleExpandModuleInternal}
-        sx={{
-          minWidth: '30px', // Reduce button size
-          height: '30px', // Reduce height
-          padding: 0, // Remove extra padding
-        }}
+        sx={{ minWidth: '30px', height: '30px', padding: 0, backgroundColor: '#333', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}
       >
         {data.isCollapsed ? (
           <ExpandLessIcon fontSize="inherit" /> // Use "inherit" to scale with button siz
@@ -164,9 +160,9 @@ export const ModuleNode = React.memo(({ id, data }) => {
     <ThemeProvider theme={darkTheme}>
       <div
         className="text-updater-node"
-        style={{ background: '#121212', padding: '2px', borderRadius: '8px' }}
+        style={{ background: '#121212', padding: '2px', borderRadius: '8px', position: 'relative' }}
       >
-        <div className="pip-container">
+        <div className="pip-container" style={{ position: 'absolute', top: '5px', right: '5px' }}>
           <Pip
             onClick={() => onModuleClose(data.moduleId)}
             targetTooltip="saved-tooltip"
@@ -174,33 +170,23 @@ export const ModuleNode = React.memo(({ id, data }) => {
             status="error"
           />
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <EditableText
-            onFinishEditing={onFinishEditing}
-            text={fileName}
-            placeholder={getFileNameFromPath(fileName)}
-            onChange={onFileNameChange}
-            error={fileNameError}
-          />
-
-          <TopBar
-            showRaw={data.showRaw}
-            toggleShowRawCode={toggleShowRawCodeInternal}
-            settings={settings}
-            handleToggle={toggleHideEdgesInternal}
-            toggleChildren={toggleChildrenInternal}
-            showChildren={data.showChildren}
-            isCollapsed={isCollapsed}
-            createNewFunction={() => createNewFunction(id)}
-          />
-
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', position: 'absolute', top: '-15px', right: '50px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', marginRight: '10px' }}>
+            <TopBar
+              showRaw={data.showRaw}
+              toggleShowRawCode={toggleShowRawCodeInternal}
+              settings={settings}
+              handleToggle={toggleHideEdgesInternal}
+              toggleChildren={toggleChildrenInternal}
+              showChildren={data.showChildren}
+              isCollapsed={isCollapsed}
+              createNewFunction={() => createNewFunction(id)}
+            />
+          </div>
           <ToggleExpand />
+        </div>
+        <div style={{ position: 'absolute', top: '-15px', left: '10px', backgroundColor: '#333', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)', padding: '5px', borderRadius: '4px' }}>
+          <EditableText onFinishEditing={onFinishEditing} text={fileName} placeholder={getFileNameFromPath(fileName)} onChange={onFileNameChange} error={fileNameError} style={{ color: 'white' }} />
         </div>
         {!isCollapsed && (
           <>
