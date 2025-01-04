@@ -50,7 +50,7 @@ export const extractNonFunctionStatements = (functionNode) => {
   return parsed;
 };
 
-const createFunction = (path, name, parentId, depth, type) => {
+export const createFunction = (path, name, parentId, depth, type) => {
   const node = path.node;
   const parameters = node.params.map(
     (param) => recast.print(param, { reuseWhitespace: true }).code
@@ -181,7 +181,7 @@ export const getImports = (ast) => {
   return imports;
 };
 
-const getExports = (ast) => {
+export const getExports = (ast) => {
   const myExports = [];
   visit(ast, {
     visitExportNamedDeclaration(path) {

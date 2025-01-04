@@ -132,7 +132,7 @@ export const useFileManager = () => {
 
       // Recursively ensure parent folders exist and update their children
 
-      // Ensure the new folder hierarchy exists
+      // Ensure the new folder hierarchy exist
       ensureFolderExists(newFiles, newFolderPath);
 
       // Add the file to the new folder

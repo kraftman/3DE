@@ -4,6 +4,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import CommitIcon from '@mui/icons-material/Commit';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import PolylineIcon from '@mui/icons-material/Polyline';
+import AddIcon from '@mui/icons-material/Add';
 import { Dashboard } from '@mui/icons-material';
 
 export const TopBar = ({
@@ -12,6 +13,7 @@ export const TopBar = ({
   toggleChildren,
   showChildren,
   isCollapsed,
+  createNewFunction,
 }) => {
   const toggleChildrenValue = showChildren ? 'showChildren' : 'hideChildren';
   return (
@@ -50,9 +52,18 @@ export const TopBar = ({
         aria-label="show childrem"
         size="small"
         selected={showChildren}
-        onChange={toggleChildren}
+        onClick={() => toggleChildren()}
       >
         <ReadMoreIcon fontSize="small" />
+      </ToggleButton>
+
+      <ToggleButton
+        value="newFunction"
+        aria-label="add new function"
+        size="small"
+        onClick={() => createNewFunction()}
+      >
+        <AddIcon fontSize="small" />
       </ToggleButton>
     </div>
   );

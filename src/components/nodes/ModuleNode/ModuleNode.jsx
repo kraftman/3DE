@@ -51,7 +51,8 @@ export const ModuleNode = React.memo(({ id, data }) => {
     toggleHideEdges,
     onRootNodeTextChange,
   } = useLayer();
-  const { toggleShowRawCode, toggleCollapseModule, renameModule } =
+  const { toggleShowRawCode, toggleCollapseModule, renameModule, 
+    createNewFunction } =
     useNodeManager();
   const editorRef = useRef(null);
   const flatFiles = useFileSystem(useShallow((state) => state.flatFiles));
@@ -196,6 +197,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
             toggleChildren={toggleChildrenInternal}
             showChildren={data.showChildren}
             isCollapsed={isCollapsed}
+            createNewFunction={() => createNewFunction(id)}
           />
 
           <ToggleExpand />

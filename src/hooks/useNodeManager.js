@@ -35,6 +35,12 @@ import { parseWithRecast } from '../utils/parseWithRecast.js';
 import { getModuleNodes } from '../utils/nodeUtils/nodeUtils.js';
 import { layoutInternalNodes } from './useLayout.js';
 import { getInternalEdges } from '../utils/nodeUtils/nodeUtils.js';
+import { createFunction } from '../utils/parser.js';
+import { types } from 'recast';
+
+const { builders: b } = types;
+const { NodePath } = types;
+
 
 const positionIsInsideModule = (parent, newPos) => {
   return (
@@ -625,6 +631,82 @@ export const useNodeManager = () => {
     [flatFiles]
   );
 
+  const createNewFunction = useCallback((moduleId) => {
+    const nodes = getNodes();
+    const moduleNode = nodes.find(
+      (node) => node.id === moduleId && node.type === 'module'
+    );
+
+
+    const fileInfo = flatFiles[moduleNode.data.fullPath];
+
+    // Generate unique function name
+    const existingNames = new Set(fileInfo.functions.map(f => f.name));
+    let newFuncName = 'newFunction';
+    let counter = 1;
+    while (existingNames.has(newFuncName)) {
+      newFuncName = `newFunction${counter}`;
+      counter++;
+    }
+
+    // Create new function AST node
+    const functionNode = b.functionDeclaration(
+      b.identifier('newFunction'),
+      [], // No parameters
+      b.blockStatement([]) // Empty function body
+    );
+    
+    // Step 2: Wrap the function node in a Path
+    const functionPath = new NodePath(functionNode);
+    
+    // (Optional) Attach parentPath or other metadata if needed
+    functionPath.parentPath = null;
+
+    addFunctionToAst(fileInfo.fullAst, functionNode);
+
+
+    // Add function to AST
+    
+    const parsedFunc = createFunction(functionPath, newFuncName, null, 0, 'functionDeclaration');
+    
+    
+    const newFileInfo = {
+      ...fileInfo,
+      functions: [...fileInfo.functions, parsedFunc],
+    };
+    console.log('newFileInfo', newFileInfo);  
+
+    // Update fileInfo
+    
+    const newFlatFiles = {
+      ...flatFiles,
+      [moduleNode.data.fullPath]: newFileInfo,
+    };
+    setFlatFiles(newFlatFiles);
+
+    // Create new node for the functio
+    const { children } = getModuleNodes(newFileInfo, moduleNode.id);
+    const newFunctionNode = children.find(node => node.data.functionId === parsedFunc.id);
+    console.log('new function id:', parsedFunc.id);
+    console.log('children', children);
+    console.log('newFunctionNode', newFunctionNode);
+    if (newFunctionNode) {
+      // Position the new node
+      const position = {
+        x: moduleNode.position.x + 50,
+        y: moduleNode.position.y + 50
+      };
+      newFunctionNode.position = position;
+      newFunctionNode.data.moduleId = moduleId;
+
+      // Update nodes
+      const newNodes = [...nodes, newFunctionNode];
+      setNodes(newNodes);
+
+      
+    }
+  }, [getNodes, setNodes, flatFiles, setFlatFiles, setEdges]);
+
   return {
     toggleShowRawCode,
     toggleCollapseModule,
@@ -634,5 +716,6 @@ export const useNodeManager = () => {
     onNodeDragStop,
     renameModule,
     toggleChildModule,
+    createNewFunction,
   };
 };

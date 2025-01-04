@@ -194,10 +194,10 @@ export const getInternalEdges = (fileInfo, functionNodes, moduleNode) => {
   return edges;
 };
 
-export const getModuleNodes = (fileInfo) => {
+export const getModuleNodes = (fileInfo, moduleId) => {
   const fullPath = fileInfo.index;
 
-  const newModuleId = uuid();
+  const newModuleId = moduleId || uuid();
   const nodes = [];
   if (fileInfo.functions.length > 1) {
     fileInfo.functions.forEach((func) => {

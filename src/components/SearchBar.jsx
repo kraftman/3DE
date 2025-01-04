@@ -78,6 +78,7 @@ export const SearchBar = ({ onSearchSelect }) => {
   }, [searchMode, fileContent, functionContent, codebaseContent]);
 
   useEffect(() => {
+    try {
     const newFunctions = [];
     const newFileNames = [];
     const newCodebase = [];
@@ -110,6 +111,9 @@ export const SearchBar = ({ onSearchSelect }) => {
     setFileContent(newFileNames);
     setCodebaseContent(newCodebase);
     setFunctionContent(newFunctions);
+    } catch (error) {
+      console.log(error);
+    }
   }, [flatFiles]);
 
   const handleKeyDown = (e) => {
