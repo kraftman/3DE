@@ -14,6 +14,7 @@ import Prism from 'prismjs';
 import 'prism-themes/themes/prism-vsc-dark-plus.css';
 import 'prismjs/components/prism-javascript';
 import { useFunctionManager } from '../hooks/useFunctionManager';
+import { getEditorSize } from './editorUtils';
 
 loader.config({ monaco });
 
@@ -47,8 +48,9 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
     [fileInfo]
   );
 
-  const { onFunctionTextChange } = useFunctionManager((store) => ({
+  const { onFunctionTextChange, onFunctionSizeChange } = useFunctionManager((store) => ({
     onFunctionTextChange: store.onFunctionTextChange,
+    onFunctionSizeChange: store.onFunctionSizeChange,
   }));
 
   const [text, setText] = useState('not loaded');
@@ -65,6 +67,11 @@ export const FunctionEditor = ({ fullPath, functionId }) => {
 
   const onChange = (newText) => {
     setText(newText);
+    const existingSize = funcInfo.contentSize
+    const newSize = getEditorSize(newText);
+    if (existingSize.height !== newSize.height || existingSize.width !== newSize.width) {
+      onFunctionSizeChange(fullPath, functionId, newSize);
+    }
     const wrappedCode = `${
       funcInfo.async ? 'async ' : ''
     }function temp() ${newText} `;

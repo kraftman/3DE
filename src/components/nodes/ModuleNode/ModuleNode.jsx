@@ -204,10 +204,12 @@ export const ModuleNode = React.memo(({ id, data }) => {
         </div>
         {!isCollapsed && (
           <>
-            <RootCode
-              content={rootContent}
-              onChange={onRootCodeChangeInternal}
-            />
+            {!data.showRaw && rootContent && (
+              <RootCode
+                content={rootContent}
+                onChange={onRootCodeChangeInternal}
+              />
+            )}
             {!hasMultipleFunctions && firstChild && !data.showRaw && (
               <FunctionEditor
                 fullPath={data.fullPath}
