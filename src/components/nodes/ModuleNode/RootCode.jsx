@@ -12,12 +12,12 @@ export const RootCode = ({ content, onChange }) => {
 
   const addListeners = (editor) => {
     // editor.onDidChangeModelContent((e) => {
-    //   console.log(e);
+    //   console.log(e); 
     // });
   };
 
   return (
-    <div style={{ marginTop: '20px' }}>
+    <div style={{ marginTop: '0px' }}>
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         style={{

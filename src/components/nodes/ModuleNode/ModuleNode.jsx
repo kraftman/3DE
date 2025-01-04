@@ -160,7 +160,7 @@ export const ModuleNode = React.memo(({ id, data }) => {
     <ThemeProvider theme={darkTheme}>
       <div
         className="text-updater-node"
-        style={{ background: '#121212', padding: '2px', borderRadius: '8px', position: 'relative' }}
+        style={{ background: '#121212', padding: '30px 2px 2px', borderRadius: '8px', position: 'relative' }}
       >
         <div className="pip-container" style={{ position: 'absolute', top: '5px', right: '5px' }}>
           <Pip
@@ -197,14 +197,16 @@ export const ModuleNode = React.memo(({ id, data }) => {
               />
             )}
             {!hasMultipleFunctions && firstChild && !data.showRaw && (
-              <FunctionEditor
-                fullPath={data.fullPath}
-                functionId={firstChild.id}
-              />
+              <div style={{ marginTop: '40px' }}>
+                <FunctionEditor
+                  fullPath={data.fullPath}
+                  functionId={firstChild.id}
+                />
+              </div>
             )}
 
             {data.showRaw && (
-              <div className="editor-container">
+              <div className="editor-container" style={{ marginTop: '40px' }}>
                 <Editor
                   className="editor nodrag"
                   height="100%"
